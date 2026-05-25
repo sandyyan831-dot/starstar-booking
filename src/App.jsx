@@ -112,13 +112,13 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
   return (
     <div style={{ marginBottom:44 }}>
       <h3 style={{
-        fontFamily:"'Cormorant Garamond', serif", fontSize:22,
+        fontFamily:"Georgia, 'Times New Roman', serif", fontSize:22,
         color:"#8a7340", marginBottom:16, letterSpacing:3, textAlign:"center", fontWeight:600,
       }}>{year} 年 {month+1} 月</h3>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:4 }}>
         {dayNames.map(n => (
           <div key={n} style={{
-            textAlign:"center", fontFamily:"'Noto Sans TC', sans-serif",
+            textAlign:"center", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
             fontSize:11, color:"#b5a27a", padding:"6px 0", fontWeight:500,
           }}>{n}</div>
         ))}
@@ -130,7 +130,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
           if (!dateObj) {
             return (
               <div key={day} style={{
-                textAlign:"center", padding:"8px 2px", fontFamily:"'Noto Sans TC', sans-serif",
+                textAlign:"center", padding:"8px 2px", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                 fontSize:13, color:"#d5cbba", borderRadius:10, minHeight:78,
               }}><div>{day}</div></div>
             );
@@ -140,7 +140,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
           const allB = mB && aB;
           return (
             <div key={day} style={{
-              textAlign:"center", padding:"7px 3px", fontFamily:"'Noto Sans TC', sans-serif",
+              textAlign:"center", padding:"7px 3px", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
               fontSize:13, color:allB?"#c8bfae":"#6b5c3e",
               background:allB?"#f5f0e6":"#faf6ef",
               border:`1px solid ${allB?"#ebe5d8":"#e0d5be"}`,
@@ -160,7 +160,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
                       background:booked?"#f0ebe2":"linear-gradient(135deg, #faf5ea, #f3ecdb)",
                       color:booked?"#c5baa8":"#8a7340",
                       cursor:booked?"not-allowed":"pointer",
-                      fontFamily:"'Noto Sans TC', sans-serif",
+                      fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       textDecoration:booked?"line-through":"none",
                       transition:"all 0.2s", fontWeight:600, letterSpacing:1,
                     }}
@@ -212,10 +212,10 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
     width:"100%", padding:"11px 14px", borderRadius:10,
     border:`1.5px solid ${errors[field]?"#d4836a":"#ddd2bb"}`,
     background:"#fffdf8", color:"#5a4d35",
-    fontFamily:"'Noto Sans TC', sans-serif", fontSize:14,
+    fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
     outline:"none", transition:"border-color 0.3s", boxSizing:"border-box",
   });
-  const lbl = { display:"block", fontFamily:"'Noto Sans TC', sans-serif", fontSize:13, color:"#8a7340", marginBottom:6, fontWeight:600 };
+  const lbl = { display:"block", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13, color:"#8a7340", marginBottom:6, fontWeight:600 };
   const errS = { fontSize:11, color:"#d4836a", marginTop:3 };
   const focusH = e=>{ e.target.style.borderColor="#b09650"; };
   const blurH = field => e=>{ e.target.style.borderColor=errors[field]?"#d4836a":"#ddd2bb"; };
@@ -239,11 +239,11 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
         }}>✕</button>
 
         <h2 style={{
-          fontFamily:"'Cormorant Garamond', serif", fontSize:24,
+          fontFamily:"Georgia, 'Times New Roman', serif", fontSize:24,
           color:"#8a7340", marginBottom:4, fontWeight:600,
         }}>預約占星諮詢</h2>
         <p style={{
-          fontFamily:"'Noto Sans TC', sans-serif", fontSize:13,
+          fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
           color:"#b5a27a", marginBottom:22,
         }}>{formatDate(date)}　{slot.label}</p>
 
@@ -268,16 +268,16 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
                     <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3 }}>
                       <span style={{ fontSize:16, color:"#b09650" }}>{t.icon}</span>
                       <span style={{
-                        fontFamily:"'Noto Sans TC', sans-serif", fontSize:14,
+                        fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
                         color:sel?"#7a6530":"#6b5c3e", fontWeight:700,
                       }}>{t.label}</span>
                       <span style={{
                         fontSize:10, color:"#b5a27a", background:"rgba(176,150,80,0.1)",
-                        padding:"2px 8px", borderRadius:4, fontFamily:"'Noto Sans TC', sans-serif",
+                        padding:"2px 8px", borderRadius:4, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       }}>{t.tag}</span>
                     </div>
                     <div style={{
-                      fontFamily:"'Noto Sans TC', sans-serif", fontSize:12,
+                      fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
                       color:"#b5a27a", paddingLeft:24,
                     }}>{t.desc}　｜　費用 {t.priceLabel}</div>
                   </button>
@@ -374,7 +374,7 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
             background: submitting
               ? "#ccc"
               : "linear-gradient(135deg, #c9ab5a 0%, #b09650 50%, #a08940 100%)",
-            color:"#fffdf8", fontFamily:"'Noto Sans TC', sans-serif",
+            color:"#fffdf8", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
             fontSize:15, fontWeight:700, cursor:submitting?"wait":"pointer", letterSpacing:3,
             marginTop:4, transition:"all 0.2s",
             boxShadow:"0 2px 12px rgba(176,150,80,0.25)",
@@ -405,15 +405,15 @@ function ConfirmationModal({ date, slot, consultType, onClose }) {
       }}>
         <div style={{ fontSize:36, marginBottom:10, color:"#b09650" }}>✧</div>
         <h2 style={{
-          fontFamily:"'Cormorant Garamond', serif", fontSize:24,
+          fontFamily:"Georgia, 'Times New Roman', serif", fontSize:24,
           color:"#8a7340", marginBottom:6,
         }}>預約已送出</h2>
         <p style={{
-          fontFamily:"'Noto Sans TC', sans-serif", fontSize:13,
+          fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
           color:"#b5a27a", marginBottom:4, lineHeight:1.7,
         }}>{formatDate(date)}　{slot.label}</p>
         <p style={{
-          fontFamily:"'Noto Sans TC', sans-serif", fontSize:13,
+          fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
           color:"#8a7340", marginBottom:22, fontWeight:600,
         }}>{ct?.icon} {ct?.label}</p>
 
@@ -423,21 +423,21 @@ function ConfirmationModal({ date, slot, consultType, onClose }) {
           padding:"18px 22px", marginBottom:22, textAlign:"left",
         }}>
           <p style={{
-            fontFamily:"'Noto Sans TC', sans-serif", fontSize:14,
+            fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
             color:"#8a7340", fontWeight:700, marginBottom:10,
           }}>✦ 匯款資訊</p>
           <p style={{
-            fontFamily:"'Noto Sans TC', sans-serif", fontSize:13,
+            fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
             color:"#7a6a4a", whiteSpace:"pre-line", lineHeight:1.9, marginBottom:10,
           }}>{PAYMENT_INFO.account}</p>
           <p style={{
-            fontFamily:"'Noto Sans TC', sans-serif", fontSize:16,
+            fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:16,
             color:"#7a6530", fontWeight:700,
           }}>應匯金額：{ct?.priceLabel}</p>
         </div>
 
         <p style={{
-          fontFamily:"'Noto Sans TC', sans-serif", fontSize:12,
+          fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
           color:"#b5a27a", lineHeight:1.9, marginBottom:22,
         }}>
           請於預約後 <strong style={{color:"#8a7340"}}>3 天內</strong> 完成匯款<br/>
@@ -448,7 +448,7 @@ function ConfirmationModal({ date, slot, consultType, onClose }) {
         <button onClick={onClose} style={{
           padding:"11px 36px", borderRadius:10,
           border:"1.5px solid #cbba95", background:"transparent",
-          color:"#8a7340", fontFamily:"'Noto Sans TC', sans-serif",
+          color:"#8a7340", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
           fontSize:14, cursor:"pointer", transition:"all 0.25s", fontWeight:600,
         }}
           onMouseEnter={e=>{e.target.style.background="rgba(176,150,80,0.08)";}}
@@ -467,7 +467,7 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [lastConsultType, setLastConsultType] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const dates = useMemo(() => getNext2MonthsDates(), []);
@@ -549,14 +549,11 @@ export default function App() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
         * { margin:0; padding:0; box-sizing:border-box; }
         body { background:#faf6ef; }
         ::-webkit-scrollbar { width:5px; }
         ::-webkit-scrollbar-track { background:transparent; }
         ::-webkit-scrollbar-thumb { background:#ddd2bb; border-radius:3px; }
-        @keyframes twinkle { 0%{opacity:0.06;} 100%{opacity:0.28;} }
-        @keyframes floatIn { 0%{opacity:0;transform:translateY(12px);} 100%{opacity:1;transform:translateY(0);} }
       `}</style>
 
       <div style={{
@@ -564,7 +561,6 @@ export default function App() {
         background:"linear-gradient(180deg, #faf6ef 0%, #f5f0e6 30%, #f0eadd 70%, #ece5d6 100%)",
         color:"#5a4d35", padding:"0 0 50px 0", position:"relative", overflow:"hidden",
       }}>
-        <StarScatter />
         <ConstellationDeco style={{ width:180, top:20, right:-20 }} />
         <ConstellationDeco style={{ width:150, bottom:100, left:-30, transform:"rotate(120deg)" }} />
 
@@ -582,16 +578,16 @@ export default function App() {
             <circle cx="60" cy="60" r="3" fill="#b09650" opacity="0.5" />
           </svg>
           <h1 style={{
-            fontFamily:"'Cormorant Garamond', serif",
+            fontFamily:"Georgia, 'Times New Roman', serif",
             fontSize:"clamp(28px, 6vw, 42px)", fontWeight:600,
             color:"#7a6530", letterSpacing:6, marginBottom:8, lineHeight:1.4,
           }}>星語<span style={{color:"#c9ab5a",margin:"0 6px"}}>・</span>星心</h1>
           <p style={{
-            fontFamily:"'Noto Sans TC', sans-serif", fontSize:15,
+            fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:15,
             color:"#a08940", letterSpacing:4, marginBottom:6, fontWeight:500,
           }}>占星諮詢預約</p>
           <p style={{
-            fontFamily:"'Cormorant Garamond', serif", fontSize:13,
+            fontFamily:"Georgia, 'Times New Roman', serif", fontSize:13,
             color:"#c4b48a", letterSpacing:2, fontStyle:"italic",
           }}>explore the stars, find your direction</p>
           <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, margin:"20px auto 0" }}>
@@ -612,7 +608,7 @@ export default function App() {
               <div key={i} style={{
                 background:"rgba(201,171,90,0.06)", border:"1px solid rgba(201,171,90,0.18)",
                 borderRadius:20, padding:"7px 16px",
-                fontFamily:"'Noto Sans TC', sans-serif", fontSize:12,
+                fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
                 color:"#a08940", fontWeight:500,
               }}>{item.icon} {item.text}</div>
             ))}
@@ -635,12 +631,12 @@ export default function App() {
                 <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
                   <span style={{ fontSize:14, color:"#b09650" }}>{t.icon}</span>
                   <span style={{
-                    fontFamily:"'Noto Sans TC', sans-serif", fontSize:13,
+                    fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
                     color:"#7a6530", fontWeight:700,
                   }}>{t.label}</span>
                 </div>
                 <div style={{
-                  fontFamily:"'Noto Sans TC', sans-serif", fontSize:11,
+                  fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11,
                   color:"#b5a27a", lineHeight:1.6,
                 }}>{t.desc}　｜　{t.priceLabel}</div>
               </div>
@@ -651,7 +647,7 @@ export default function App() {
         {/* Calendar */}
         <div style={{ maxWidth:680, margin:"0 auto", padding:"0 16px", position:"relative" }}>
           {loading ? (
-            <div style={{ textAlign:"center", padding:50, fontFamily:"'Noto Sans TC', sans-serif", color:"#c4b48a" }}>載入中…</div>
+            <div style={{ textAlign:"center", padding:50, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", color:"#c4b48a" }}>載入中…</div>
           ) : (
             months.map(m=>(
               <MonthCalendar key={`${m.year}-${m.month}`}
@@ -665,7 +661,7 @@ export default function App() {
 
         <div style={{
           textAlign:"center", marginTop:40,
-          fontFamily:"'Noto Sans TC', sans-serif", fontSize:11,
+          fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11,
           color:"#c4b48a", letterSpacing:2,
         }}>✧ 點選日期時段即可開始預約 ✧</div>
 
