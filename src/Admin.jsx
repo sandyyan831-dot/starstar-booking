@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { db } from "./firebase.js";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 const ADMIN_PASSWORD = "starstar2026";
 
@@ -37,6 +37,14 @@ export default function Admin() {
       await updateDoc(doc(db, "bookings", booking.id), { paymentStatus: newStatus });
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, paymentStatus: newStatus } : b));
     } catch (e) { console.error(e); alert("更新失敗"); }
+  };
+
+  const deleteBooking = async (booking) => {
+    if (!window.confirm(`確定要刪除這筆預約嗎？\n${booking.date} ${booking.time}\nLine: ${booking.line}\n\n刪除後此時段將重新開放預約`)) return;
+    try {
+      await deleteDoc(doc(db, "bookings", booking.id));
+      setBookings(prev => prev.filter(b => b.id !== booking.id));
+    } catch (e) { console.error(e); alert("刪除失敗"); }
   };
 
   const filtered = bookings.filter(b => {
@@ -199,7 +207,20 @@ export default function Admin() {
                 <div style={{
                   fontSize:10, color:"#c4b48a", marginTop:10,
                   borderTop:"1px solid #f0eadd", paddingTop:8,
-                }}>預約時間：{b.bookedAt ? new Date(b.bookedAt).toLocaleString("zh-TW") : "—"}</div>
+                  display:"flex", justifyContent:"space-between", alignItems:"center",
+                }}>
+                  <span>預約時間：{b.bookedAt ? new Date(b.bookedAt).toLocaleString("zh-TW") : "—"}</span>
+                  <button onClick={()=>deleteBooking(b)} style={{
+                    padding:"4px 10px", borderRadius:6,
+                    border:"1px solid #e8c4c4", background:"#fdf5f5",
+                    color:"#c0392b", fontSize:11, cursor:"pointer",
+                    fontWeight:600, transition:"all 0.2s",
+                    fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                  }}
+                    onMouseEnter={e=>{e.target.style.background="#f8e0e0";}}
+                    onMouseLeave={e=>{e.target.style.background="#fdf5f5";}}
+                  >刪除預約</button>
+                </div>
               </div>
             );
           })}
