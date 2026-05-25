@@ -492,21 +492,24 @@ export default function App() {
     return Object.values(m).sort((a,b) => a.year-b.year || a.month-b.month);
   }, [dates]);
 
-  /* Load booked slots from Firestore */
+  /* Load booked + blocked slots from Firestore */
   useEffect(() => {
     (async () => {
       try {
-        const snap = await getDocs(collection(db, "bookings"));
+        const [bookSnap, blockSnap] = await Promise.all([
+          getDocs(collection(db, "bookings")),
+          getDocs(collection(db, "blockedSlots")),
+        ]);
         const slots = new Set();
-        snap.forEach(doc => {
+        bookSnap.forEach(doc => {
           const data = doc.data();
           if (data.slotKey) slots.add(data.slotKey);
         });
+        blockSnap.forEach(doc => slots.add(doc.id));
         setBookedSlots(slots);
       } catch (e) {
         console.error("Failed to load bookings:", e);
       }
-      setLoading(false);
     })();
   }, []);
 
