@@ -438,15 +438,24 @@ function ConfirmationModal({ date, slot, consultType, onClose }) {
 
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
-          color:"#b5a27a", lineHeight:1.9, marginBottom:22,
+          color:"#b5a27a", lineHeight:1.9, marginBottom:16,
         }}>
           請於預約後 <strong style={{color:"#8a7340"}}>3 天內</strong> 完成匯款<br/>
-          匯款完成後請透過 Line 傳送匯款截圖<br/>
+          匯款完成後請點下方按鈕，透過 Line 傳送匯款截圖<br/>
           確認收款後才算正式完成預約 ✧
         </p>
 
+        <a href="https://line.me/R/ti/p/@754atiwp" target="_blank" rel="noopener noreferrer" style={{
+          display:"block", width:"100%", padding:"13px 0", borderRadius:10, border:"none",
+          background:"linear-gradient(135deg, #06C755, #05a648)",
+          color:"#fff", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+          fontSize:15, fontWeight:700, cursor:"pointer", letterSpacing:2,
+          textAlign:"center", textDecoration:"none", marginBottom:12,
+          boxShadow:"0 2px 10px rgba(6,199,85,0.25)",
+        }}>💬 開啟 Line 傳送匯款截圖</a>
+
         <button onClick={onClose} style={{
-          padding:"11px 36px", borderRadius:10,
+          width:"100%", padding:"11px 0", borderRadius:10,
           border:"1.5px solid #cbba95", background:"transparent",
           color:"#8a7340", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
           fontSize:14, cursor:"pointer", transition:"all 0.25s", fontWeight:600,
