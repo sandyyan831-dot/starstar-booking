@@ -156,9 +156,20 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
               transition:"all 0.3s",
             }}>
               <div style={{ fontWeight:700, marginBottom:2, fontSize:14 }}>{day}</div>
-              {daySlots.map(slot => {
-                const booked = bookedSlots.has(dateKey(dateObj,slot.id));
+              {SLOT_CONFIG.slots.map(slot => {
                 const short = slot.id==="morning"?"上午":"下午";
+                const offered = daySlots.includes(slot);
+                if (!offered) {
+                  return (
+                    <div key={slot.id} style={{
+                      width:"92%", padding:"4px 0", borderRadius:6, fontSize:10,
+                      border:"1px solid #ece6d8", background:"#f5f2e9",
+                      color:"#d5cbba", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                      fontWeight:600, letterSpacing:1,
+                    }}>公休</div>
+                  );
+                }
+                const booked = bookedSlots.has(dateKey(dateObj,slot.id));
                 return (
                   <button key={slot.id} disabled={booked} onClick={()=>onSelect(dateObj,slot)}
                     style={{
