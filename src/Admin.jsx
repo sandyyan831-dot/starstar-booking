@@ -3,11 +3,19 @@ import { db } from "./firebase.js";
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
 
 const ADMIN_PASSWORD = "starstar2026";
-const SLOT_DAYS = [3, 4, 5];
+const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
   { label: "上午 10:00–12:00", id: "morning", short: "上午" },
   { label: "下午 2:00–4:00", id: "afternoon", short: "下午" },
 ];
+
+// 週二（getDay() === 2）上午不開放預約
+function getSlotsForDate(date) {
+  if (date.getDay() === 2) {
+    return SLOTS.filter(s => s.id !== "morning");
+  }
+  return SLOTS;
+}
 
 const font = "'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif";
 const serifFont = "Georgia, 'Times New Roman', serif";
@@ -345,7 +353,7 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, onToggle, loading }) {
                     {formatDateShort(date)}
                   </div>
                   <div style={{ display:"flex", gap:6, flex:1, justifyContent:"flex-end" }}>
-                    {SLOTS.map(slot => {
+                    {getSlotsForDate(date).map(slot => {
                       const key = dateKey(date, slot.id);
                       const isBooked = bookedKeys.has(key);
                       const isBlocked = blockedSlots.has(key);

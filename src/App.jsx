@@ -6,12 +6,20 @@ import {
 
 /* ── Config ── */
 const SLOT_CONFIG = {
-  days: [3, 4, 5],
+  days: [1, 2, 3, 4, 5],
   slots: [
     { label: "上午 10:00–12:00", id: "morning" },
     { label: "下午 2:00–4:00", id: "afternoon" },
   ],
 };
+
+// 週二（getDay() === 2）上午不開放預約
+function getSlotsForDate(date) {
+  if (date.getDay() === 2) {
+    return SLOT_CONFIG.slots.filter(s => s.id !== "morning");
+  }
+  return SLOT_CONFIG.slots;
+}
 
 const CONSULT_TYPES = [
   { id: "first", label: "本命盤解析", tag: "第一次諮詢", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "☽" },
@@ -135,9 +143,8 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
               }}><div>{day}</div></div>
             );
           }
-          const mB = bookedSlots.has(dateKey(dateObj,"morning"));
-          const aB = bookedSlots.has(dateKey(dateObj,"afternoon"));
-          const allB = mB && aB;
+          const daySlots = getSlotsForDate(dateObj);
+          const allB = daySlots.every(slot => bookedSlots.has(dateKey(dateObj,slot.id)));
           return (
             <div key={day} style={{
               textAlign:"center", padding:"7px 3px", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
@@ -149,7 +156,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
               transition:"all 0.3s",
             }}>
               <div style={{ fontWeight:700, marginBottom:2, fontSize:14 }}>{day}</div>
-              {SLOT_CONFIG.slots.map(slot => {
+              {daySlots.map(slot => {
                 const booked = bookedSlots.has(dateKey(dateObj,slot.id));
                 const short = slot.id==="morning"?"上午":"下午";
                 return (
@@ -613,7 +620,7 @@ export default function App() {
         <div style={{ maxWidth:680, margin:"20px auto 12px", padding:"0 16px" }}>
           <div style={{ display:"flex", flexWrap:"wrap", gap:10, justifyContent:"center" }}>
             {[
-              { icon:"✦", text:"每週三、四、五" },
+              { icon:"✦", text:"每週一至五（週二上午除外）" },
               { icon:"✦", text:"上午 10–12 ／ 下午 2–4" },
               { icon:"✦", text:"諮詢費 $1,500 ／半小時" },
             ].map((item,i)=>(
