@@ -263,6 +263,7 @@ export default function Admin() {
                   <div style={{ display:"grid", gridTemplateColumns:"70px 1fr", gap:"6px 8px", fontSize:13 }}>
                     {[
                       ["Line", b.line],
+                      ["性別", b.gender],
                       ["出生", `${b.birthYear}/${b.birthMonth}/${b.birthDay} ${b.birthHour}:${b.birthMinute}`],
                       ["出生地", b.birthPlace],
                       ["問題", b.question],

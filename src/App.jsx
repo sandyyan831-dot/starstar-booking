@@ -209,7 +209,7 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
   const [consultType, setConsultType] = useState(null);
   const [quickTime, setQuickTime] = useState(null);
   const [form, setForm] = useState({
-    line:"", birthYear:"", birthMonth:"", birthDay:"",
+    line:"", gender:"", birthYear:"", birthMonth:"", birthDay:"",
     birthHour:"", birthMinute:"",
     birthPlace:"", overseasCountry:"", overseasRegion:"",
     question:"",
@@ -226,6 +226,7 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
     if (!consultType) e.consultType="請選擇諮詢類型";
     if (isQuick && !quickTime) e.quickTime="請選擇時間";
     if (!form.line.trim()) e.line="請填寫";
+    if (!form.gender) e.gender="請選擇";
     if (!form.birthYear.trim()) e.birthYear="必填";
     if (!form.birthMonth.trim()) e.birthMonth="必填";
     if (!form.birthDay.trim()) e.birthDay="必填";
@@ -366,6 +367,29 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
               value={form.line} onChange={e=>update("line",e.target.value)}
               onFocus={focusH} onBlur={blurH("line")} />
             {errors.line && <div style={errS}>{errors.line}</div>}
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label style={lbl}>性別 <span style={{color:"#d4836a"}}>*</span></label>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+              {["男","女"].map(g => {
+                const sel = form.gender===g;
+                return (
+                  <button key={g} onClick={()=>update("gender",g)}
+                    style={{
+                      padding:"11px 0", borderRadius:10, fontSize:14,
+                      border:`1.5px solid ${sel?"#b09650":"#ddd2bb"}`,
+                      background:sel?"linear-gradient(135deg, #f5ecd5, #efe4c8)":"#fffdf8",
+                      color:sel?"#7a6530":"#6b5c3e",
+                      cursor:"pointer", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                      fontWeight:600, transition:"all 0.2s",
+                    }}
+                  >{g}</button>
+                );
+              })}
+            </div>
+            {errors.gender && <div style={errS}>{errors.gender}</div>}
           </div>
 
           {/* Birth date */}
@@ -605,6 +629,7 @@ export default function App() {
       consultTag: ct?.tag || "",
       price: ct?.price || 0,
       line: formData.line,
+      gender: formData.gender,
       birthYear: formData.birthYear,
       birthMonth: formData.birthMonth,
       birthDay: formData.birthDay,
