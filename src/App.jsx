@@ -35,7 +35,7 @@ const TAIWAN_CITIES = [
   "台東縣","澎湖縣","金門縣","連江縣",
 ];
 
-const PAYMENT_INFO = { account: "銀行：國泰世華（013）\n帳號：220506083214" };
+const PAYMENT_INFO = { account: "銀行：國泰世華（013）\n帳號：034505638273" };
 
 /* ── Helpers ── */
 function getNext2MonthsDates() {
