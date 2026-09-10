@@ -264,6 +264,7 @@ export default function Admin() {
                     {[
                       ["Line", b.line],
                       ["性別", b.gender],
+                      ...(b.childName ? [["孩子稱呼", b.childName]] : []),
                       ["出生", `${b.birthYear}/${b.birthMonth}/${b.birthDay} ${b.birthHour}:${b.birthMinute}`],
                       ["出生地", b.birthPlace],
                       ["問題", b.question],

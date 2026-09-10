@@ -209,7 +209,7 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
   const [consultType, setConsultType] = useState(null);
   const [quickTime, setQuickTime] = useState(null);
   const [form, setForm] = useState({
-    line:"", gender:"", birthYear:"", birthMonth:"", birthDay:"",
+    line:"", gender:"", childName:"", birthYear:"", birthMonth:"", birthDay:"",
     birthHour:"", birthMinute:"",
     birthPlace:"", overseasCountry:"", overseasRegion:"",
     question:"",
@@ -219,6 +219,7 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
 
   const selectedType = CONSULT_TYPES.find(t=>t.id===consultType);
   const isQuick = !!selectedType?.quick;
+  const isChild = consultType === "child";
   const quickOptions = QUICK_TIMES[slot.id] || [];
 
   const validate = () => {
@@ -227,6 +228,7 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
     if (isQuick && !quickTime) e.quickTime="請選擇時間";
     if (!form.line.trim()) e.line="請填寫";
     if (!form.gender) e.gender="請選擇";
+    if (isChild && !form.childName.trim()) e.childName="請填寫";
     if (!form.birthYear.trim()) e.birthYear="必填";
     if (!form.birthMonth.trim()) e.birthMonth="必填";
     if (!form.birthDay.trim()) e.birthDay="必填";
@@ -391,6 +393,17 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
             </div>
             {errors.gender && <div style={errS}>{errors.gender}</div>}
           </div>
+
+          {/* Child name — only for 解碼孩子的星盤天賦 */}
+          {isChild && (
+            <div>
+              <label style={lbl}>孩子怎麼稱呼 <span style={{color:"#d4836a"}}>*</span></label>
+              <input style={inputBase("childName")} placeholder="請輸入孩子的稱呼"
+                value={form.childName} onChange={e=>update("childName",e.target.value)}
+                onFocus={focusH} onBlur={blurH("childName")} />
+              {errors.childName && <div style={errS}>{errors.childName}</div>}
+            </div>
+          )}
 
           {/* Birth date */}
           <div>
@@ -630,6 +643,7 @@ export default function App() {
       price: ct?.price || 0,
       line: formData.line,
       gender: formData.gender,
+      childName: formData.consultType === "child" ? formData.childName : "",
       birthYear: formData.birthYear,
       birthMonth: formData.birthMonth,
       birthDay: formData.birthDay,
