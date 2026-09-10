@@ -25,6 +25,7 @@ const CONSULT_TYPES = [
   { id: "first", label: "本命盤解析", tag: "第一次諮詢", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "☽" },
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "✧" },
   { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時起算", price: 1500, priceLabel: "$1,500", icon: "◦" },
+  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎" },
 ];
 
 const TAIWAN_CITIES = [
