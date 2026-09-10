@@ -26,7 +26,7 @@ const CONSULT_TYPES = [
     reportSubtitle: "獲得個人完整報告", reportDesc: "報告內含個性特質、家庭、婚姻、事業等人生面向。" },
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "✧",
     reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。" },
-  { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時起算", price: 1500, priceLabel: "$1,500", icon: "◦" },
+  { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦" },
   { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎" },
 ];
 
