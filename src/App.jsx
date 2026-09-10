@@ -26,9 +26,15 @@ const CONSULT_TYPES = [
     reportSubtitle: "獲得個人完整報告", reportDesc: "報告內含個性特質、家庭、婚姻、事業等人生面向。" },
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "✧",
     reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。" },
-  { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦" },
-  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎" },
+  { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true },
+  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true },
 ];
+
+// 半小時起，需要分區時間的類型（問問題／流年、文字回覆），與本命盤解析等長時段類型分開管理，互不佔用
+const QUICK_TIMES = {
+  morning:   [{ id:"1000", label:"10:00–10:30" }, { id:"1030", label:"10:30–11:00" }, { id:"1100", label:"11:00–11:30" }, { id:"1130", label:"11:30–12:00" }],
+  afternoon: [{ id:"1400", label:"14:00–14:30" }, { id:"1430", label:"14:30–15:00" }, { id:"1500", label:"15:00–15:30" }, { id:"1530", label:"15:30–16:00" }],
+};
 
 const TAIWAN_CITIES = [
   "台北市","新北市","基隆市","桃園市","新竹市","新竹縣",
@@ -199,8 +205,9 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
 }
 
 /* ── Booking Form ── */
-function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
+function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }) {
   const [consultType, setConsultType] = useState(null);
+  const [quickTime, setQuickTime] = useState(null);
   const [form, setForm] = useState({
     line:"", birthYear:"", birthMonth:"", birthDay:"",
     birthHour:"", birthMinute:"",
@@ -210,9 +217,14 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
   const [errors, setErrors] = useState({});
   const update = (f,v) => { setForm(p=>({...p,[f]:v})); setErrors(e=>({...e,[f]:undefined})); };
 
+  const selectedType = CONSULT_TYPES.find(t=>t.id===consultType);
+  const isQuick = !!selectedType?.quick;
+  const quickOptions = QUICK_TIMES[slot.id] || [];
+
   const validate = () => {
     const e = {};
     if (!consultType) e.consultType="請選擇諮詢類型";
+    if (isQuick && !quickTime) e.quickTime="請選擇時間";
     if (!form.line.trim()) e.line="請填寫";
     if (!form.birthYear.trim()) e.birthYear="必填";
     if (!form.birthMonth.trim()) e.birthMonth="必填";
@@ -227,7 +239,7 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
     if (!form.question.trim()) e.question="請填寫";
     setErrors(e); return Object.keys(e).length===0;
   };
-  const handleSubmit = () => { if(validate() && !submitting) onSubmit({...form, consultType}); };
+  const handleSubmit = () => { if(validate() && !submitting) onSubmit({...form, consultType, quickTime: isQuick ? quickTime : null}); };
 
   const inputBase = (field) => ({
     width:"100%", padding:"11px 14px", borderRadius:10,
@@ -276,7 +288,7 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
               {CONSULT_TYPES.map(t => {
                 const sel = consultType===t.id;
                 return (
-                  <button key={t.id} onClick={()=>{setConsultType(t.id);setErrors(e=>({...e,consultType:undefined}));}}
+                  <button key={t.id} onClick={()=>{setConsultType(t.id);setQuickTime(null);setErrors(e=>({...e,consultType:undefined,quickTime:undefined}));}}
                     style={{
                       textAlign:"left", padding:"14px 16px", borderRadius:12,
                       border:`1.5px solid ${sel?"#b09650":"#e5ddd0"}`,
@@ -316,6 +328,36 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
             </div>
             {errors.consultType && <div style={errS}>{errors.consultType}</div>}
           </div>
+
+          {/* Quick time picker — only for half-hour types */}
+          {isQuick && (
+            <div>
+              <label style={lbl}>選擇時間 <span style={{color:"#d4836a"}}>*</span></label>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(2, 1fr)", gap:8 }}>
+                {quickOptions.map(qt => {
+                  const key = dateKey(date, qt.id);
+                  const booked = bookedSlots?.has(key);
+                  const sel = quickTime === qt.id;
+                  return (
+                    <button key={qt.id} disabled={booked}
+                      onClick={()=>{setQuickTime(qt.id);setErrors(e=>({...e,quickTime:undefined}));}}
+                      style={{
+                        padding:"10px 0", borderRadius:10, fontSize:13,
+                        border:`1.5px solid ${booked?"#e5ddd0":sel?"#b09650":"#ddd2bb"}`,
+                        background:booked?"#f0ebe2":sel?"linear-gradient(135deg, #f5ecd5, #efe4c8)":"#fdfaf3",
+                        color:booked?"#c5baa8":sel?"#7a6530":"#6b5c3e",
+                        cursor:booked?"not-allowed":"pointer",
+                        fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                        textDecoration:booked?"line-through":"none",
+                        fontWeight:600, transition:"all 0.2s",
+                      }}
+                    >{booked?`${qt.label}（已約）`:qt.label}</button>
+                  );
+                })}
+              </div>
+              {errors.quickTime && <div style={errS}>{errors.quickTime}</div>}
+            </div>
+          )}
 
           {/* Line */}
           <div>
@@ -419,7 +461,7 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
 }
 
 /* ── Confirmation ── */
-function ConfirmationModal({ date, slot, consultType, onClose }) {
+function ConfirmationModal({ date, timeLabel, consultType, onClose }) {
   const ct = CONSULT_TYPES.find(t=>t.id===consultType);
   return (
     <div style={{
@@ -441,7 +483,7 @@ function ConfirmationModal({ date, slot, consultType, onClose }) {
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
           color:"#b5a27a", marginBottom:4, lineHeight:1.7,
-        }}>{formatDate(date)}　{slot.label}</p>
+        }}>{formatDate(date)}　{timeLabel}</p>
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
           color:"#8a7340", marginBottom:22, fontWeight:600,
@@ -506,6 +548,7 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [lastConsultType, setLastConsultType] = useState(null);
+  const [lastTimeLabel, setLastTimeLabel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -549,13 +592,15 @@ export default function App() {
 
   const handleSubmit = async (formData) => {
     setSubmitting(true);
-    const key = dateKey(selectedDate, selectedSlot.id);
     const ct = CONSULT_TYPES.find(t => t.id === formData.consultType);
+    const quickOpt = ct?.quick ? (QUICK_TIMES[selectedSlot.id] || []).find(q => q.id === formData.quickTime) : null;
+    const key = quickOpt ? dateKey(selectedDate, quickOpt.id) : dateKey(selectedDate, selectedSlot.id);
+    const timeLabel = quickOpt ? quickOpt.label : selectedSlot.label;
 
     const bookingData = {
       slotKey: key,
       date: formatDate(selectedDate),
-      time: selectedSlot.label,
+      time: timeLabel,
       consultType: ct?.label || "",
       consultTag: ct?.tag || "",
       price: ct?.price || 0,
@@ -579,6 +624,7 @@ export default function App() {
       nb.add(key);
       setBookedSlots(nb);
       setLastConsultType(formData.consultType);
+      setLastTimeLabel(timeLabel);
       setShowForm(false);
       setShowConfirmation(true);
     } catch (e) {
@@ -723,11 +769,11 @@ export default function App() {
         }} />
 
         {showForm && selectedDate && selectedSlot && (
-          <BookingForm date={selectedDate} slot={selectedSlot}
+          <BookingForm date={selectedDate} slot={selectedSlot} bookedSlots={bookedSlots}
             onSubmit={handleSubmit} onCancel={()=>setShowForm(false)} submitting={submitting} />
         )}
         {showConfirmation && selectedDate && selectedSlot && (
-          <ConfirmationModal date={selectedDate} slot={selectedSlot}
+          <ConfirmationModal date={selectedDate} timeLabel={lastTimeLabel}
             consultType={lastConsultType} onClose={()=>setShowConfirmation(false)} />
         )}
       </div>
