@@ -301,6 +301,15 @@ function BookingForm({ date, slot, onSubmit, onCancel, submitting }) {
                       fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
                       color:"#b5a27a", paddingLeft:24,
                     }}>{t.desc}　｜　費用 {t.priceLabel}</div>
+                    {t.reportSubtitle && (
+                      <div style={{
+                        fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                        paddingLeft:24, marginTop:6,
+                      }}>
+                        <div style={{ fontSize:12, color:"#8a7340", fontWeight:700, marginBottom:2 }}>{t.reportSubtitle}</div>
+                        <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.6 }}>{t.reportDesc}</div>
+                      </div>
+                    )}
                   </button>
                 );
               })}
