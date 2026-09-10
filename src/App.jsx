@@ -220,6 +220,7 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
   const selectedType = CONSULT_TYPES.find(t=>t.id===consultType);
   const isQuick = !!selectedType?.quick;
   const isChild = consultType === "child";
+  const showChildName = isChild || consultType === "textOnly";
   const quickOptions = QUICK_TIMES[slot.id] || [];
 
   const validate = () => {
@@ -394,11 +395,11 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
             {errors.gender && <div style={errS}>{errors.gender}</div>}
           </div>
 
-          {/* Child name — only for 解碼孩子的星盤天賦 */}
-          {isChild && (
+          {/* Child name — 解碼孩子的星盤天賦（必填）／ 單一問題文字回覆（選填，因為也常問孩子的事） */}
+          {showChildName && (
             <div>
-              <label style={lbl}>孩子怎麼稱呼 <span style={{color:"#d4836a"}}>*</span></label>
-              <input style={inputBase("childName")} placeholder="請輸入孩子的稱呼"
+              <label style={lbl}>孩子怎麼稱呼{isChild && <span style={{color:"#d4836a"}}> *</span>}</label>
+              <input style={inputBase("childName")} placeholder={isChild ? "請輸入孩子的稱呼" : "若與孩子有關，請輸入孩子的稱呼（選填）"}
                 value={form.childName} onChange={e=>update("childName",e.target.value)}
                 onFocus={focusH} onBlur={blurH("childName")} />
               {errors.childName && <div style={errS}>{errors.childName}</div>}
@@ -643,7 +644,7 @@ export default function App() {
       price: ct?.price || 0,
       line: formData.line,
       gender: formData.gender,
-      childName: formData.consultType === "child" ? formData.childName : "",
+      childName: (formData.consultType === "child" || formData.consultType === "textOnly") ? formData.childName : "",
       birthYear: formData.birthYear,
       birthMonth: formData.birthMonth,
       birthDay: formData.birthDay,
