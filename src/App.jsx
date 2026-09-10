@@ -365,8 +365,8 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
 
           {/* Line */}
           <div>
-            <label style={lbl}>Line 帳號</label>
-            <input style={inputBase("line")} placeholder="請輸入您的 Line ID"
+            <label style={lbl}>Line 顯示名稱</label>
+            <input style={inputBase("line")} placeholder="請輸入您的 Line 顯示名稱"
               value={form.line} onChange={e=>update("line",e.target.value)}
               onFocus={focusH} onBlur={blurH("line")} />
             {errors.line && <div style={errS}>{errors.line}</div>}
