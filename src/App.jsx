@@ -22,10 +22,12 @@ function getSlotsForDate(date) {
 }
 
 const CONSULT_TYPES = [
-  { id: "first", label: "本命盤解析", tag: "第一次諮詢", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "☽",
-    reportSubtitle: "獲得個人完整報告", reportDesc: "報告內含個性特質、家庭、婚姻、事業等人生面向。" },
-  { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "至少 1 小時起", price: 3000, priceLabel: "$3,000", icon: "✧",
-    reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。" },
+  { id: "first", label: "本命盤解析", tag: "第一次諮詢", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "☽",
+    reportSubtitle: "獲得個人完整報告", reportDesc: "報告內含個性特質、家庭、婚姻、事業等人生面向。",
+    overtimeNote: "超過 1 小時，每半小時加收 $1,500" },
+  { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "✧",
+    reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。",
+    overtimeNote: "超過 1 小時，每半小時加收 $1,500" },
   { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true },
   { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true },
 ];
@@ -325,6 +327,12 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
                         <div style={{ fontSize:12, color:"#8a7340", fontWeight:700, marginBottom:2 }}>{t.reportSubtitle}</div>
                         <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.6 }}>{t.reportDesc}</div>
                       </div>
+                    )}
+                    {t.overtimeNote && (
+                      <div style={{
+                        fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11,
+                        color:"#c4a870", paddingLeft:24, marginTop:6, fontStyle:"italic",
+                      }}>⏱ {t.overtimeNote}</div>
                     )}
                   </button>
                 );
@@ -775,6 +783,12 @@ export default function App() {
                     <div style={{ fontSize:11, color:"#8a7340", fontWeight:700, marginBottom:2 }}>{t.reportSubtitle}</div>
                     <div style={{ fontSize:10.5, color:"#b5a27a", lineHeight:1.6 }}>{t.reportDesc}</div>
                   </div>
+                )}
+                {t.overtimeNote && (
+                  <div style={{
+                    fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:10,
+                    color:"#c4a870", marginTop:6, fontStyle:"italic",
+                  }}>⏱ {t.overtimeNote}</div>
                 )}
               </div>
             ))}
