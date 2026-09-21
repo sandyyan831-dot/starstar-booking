@@ -77,6 +77,7 @@ export default function Admin() {
 
   const togglePayment = async (booking) => {
     const newStatus = booking.paymentStatus === "已收款" ? "待匯款" : "已收款";
+    if (newStatus === "已收款" && !window.confirm(`確定已收到款項嗎？\n${booking.date} ${booking.time}\nLine: ${booking.line}\n\n將標記為「已收款」`)) return;
     try {
       await updateDoc(doc(db, "bookings", booking.id), { paymentStatus: newStatus });
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, paymentStatus: newStatus } : b));
@@ -233,6 +234,9 @@ export default function Admin() {
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             {filtered.map(b => {
               const isPaid = b.paymentStatus === "已收款";
+              // 預約表單要求 3 天內匯款，超過就標示逾期
+              const daysSince = b.bookedAt ? Math.floor((Date.now() - new Date(b.bookedAt).getTime()) / 86400000) : 0;
+              const overdue = !isPaid && daysSince >= 3;
               return (
                 <div key={b.id} style={{
                   background:"#fefcf7", border:"1px solid #e5ddd0",
@@ -251,6 +255,13 @@ export default function Admin() {
                       fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap",
                     }}>{isPaid?"✓ 已收款":"⏳ 待匯款"}</button>
                   </div>
+
+                  {overdue && (
+                    <div style={{
+                      background:"#fdf0ee", border:"1px solid #f0c4bc", borderRadius:8,
+                      padding:"6px 10px", marginBottom:10, fontSize:12, color:"#c0392b", fontWeight:700,
+                    }}>⚠ 已預約 {daysSince} 天仍未匯款（超過 3 天期限）</div>
+                  )}
 
                   <div style={{
                     background:"rgba(176,150,80,0.06)", borderRadius:8,
