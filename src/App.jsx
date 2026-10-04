@@ -482,6 +482,11 @@ function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }
           {/* Question */}
           <div>
             <label style={lbl}>想要問的問題</label>
+            {consultType==="returning" && (
+              <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.6, marginBottom:6, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif" }}>
+                若要合盤，請附上對方的性別、出生年月日時與出生地
+              </div>
+            )}
             <textarea style={{...inputBase("question"), minHeight:80, resize:"vertical"}}
               placeholder="請描述您想諮詢的問題方向…"
               value={form.question} onChange={e=>update("question",e.target.value)}
