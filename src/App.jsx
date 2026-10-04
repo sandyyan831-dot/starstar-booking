@@ -30,8 +30,8 @@ const CONSULT_TYPES = [
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
   { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true },
   { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true },
-  { id: "timing", label: "擇時", tag: "擇日擇時", desc: "入厝時間、出生時程等", price: 3600, priceLabel: "$3,600", icon: "❖", quick: true,
-    reportSubtitle: "提供多個時間選項", reportDesc: "預約後會說明各時間的優缺點，最後由您自己選擇。" },
+  { id: "timing", label: "擇時", tag: "擇日擇時", desc: "半小時～一小時", price: 3600, priceLabel: "$3,600", icon: "❖",
+    reportSubtitle: "提供多個時間選項", reportDesc: "適用入厝時間、出生時程等。通話中說明各時間的優缺點，最後由您自己選擇。" },
 ];
 
 // 半小時起，需要分區時間的類型（問問題／流年、文字回覆），與本命盤解析等長時段類型分開管理，互不佔用
