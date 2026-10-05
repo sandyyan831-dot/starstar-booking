@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
 import {
   collection, doc, setDoc, getDocs, query, orderBy
@@ -28,10 +28,10 @@ const CONSULT_TYPES = [
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "✧",
     reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
-  { id: "returning", label: "問問題 ／ 流年", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true },
+  { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true },
   { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true },
   { id: "timing", label: "擇時", tag: "擇日擇時", desc: "半小時～一小時", price: 3600, priceLabel: "$3,600", icon: "❖",
-    reportSubtitle: "提供多個時間選項", reportDesc: "適用入厝時間、出生時程等。通話中說明各時間的優缺點，最後由您自己選擇。" },
+    reportSubtitle: "選入厝時間、出生時程", reportDesc: "提供幾個時段的優缺參考" },
 ];
 
 // 半小時起，需要分區時間的類型（問問題／流年、文字回覆），與本命盤解析等長時段類型分開管理，互不佔用
@@ -209,8 +209,8 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
 }
 
 /* ── Booking Form ── */
-function BookingForm({ date, slot, bookedSlots, onSubmit, onCancel, submitting }) {
-  const [consultType, setConsultType] = useState(null);
+function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel, submitting }) {
+  const [consultType, setConsultType] = useState(initialType || null);
   const [quickTime, setQuickTime] = useState(null);
   const [form, setForm] = useState({
     line:"", gender:"", childName:"", birthYear:"", birthMonth:"", birthDay:"",
@@ -603,6 +603,8 @@ export default function App() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [lastConsultType, setLastConsultType] = useState(null);
   const [lastTimeLabel, setLastTimeLabel] = useState(null);
+  const [pickedType, setPickedType] = useState(null);
+  const calendarRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -639,6 +641,12 @@ export default function App() {
       }
     })();
   }, []);
+
+  // 點首頁上方的服務項目：記住選擇並捲動到月曆，點日期時段後表單會直接帶入該項目
+  const pickType = (id) => {
+    setPickedType(id);
+    setTimeout(() => calendarRef.current?.scrollIntoView({ behavior:"smooth", block:"start" }), 0);
+  };
 
   const handleSelect = (date, slot) => {
     setSelectedDate(date); setSelectedSlot(slot); setShowForm(true);
@@ -682,6 +690,7 @@ export default function App() {
       setLastConsultType(formData.consultType);
       setLastTimeLabel(timeLabel);
       setShowForm(false);
+      setPickedType(null);
       setShowConfirmation(true);
     } catch (e) {
       console.error("Booking failed:", e);
@@ -763,10 +772,13 @@ export default function App() {
         <div style={{ maxWidth:680, margin:"0 auto 36px", padding:"0 16px" }}>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(190px, 1fr))", gap:10 }}>
             {CONSULT_TYPES.map(t=>(
-              <div key={t.id} style={{
-                background:"linear-gradient(145deg, #fdfaf3, #f5ecd5)",
-                border:"1px solid #e0d5be", borderRadius:14, padding:"14px 16px",
-                position:"relative", overflow:"hidden",
+              <div key={t.id} role="button" tabIndex={0}
+                onClick={()=>pickType(t.id)}
+                onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pickType(t.id); } }}
+                style={{
+                background:pickedType===t.id?"linear-gradient(145deg, #f8efd8, #efe2bf)":"linear-gradient(145deg, #fdfaf3, #f5ecd5)",
+                border:`1.5px solid ${pickedType===t.id?"#b09650":"#e0d5be"}`, borderRadius:14, padding:"14px 16px",
+                position:"relative", overflow:"hidden", cursor:"pointer", transition:"all 0.2s",
               }}>
                 <div style={{
                   position:"absolute", top:0, right:0, width:50, height:50,
@@ -804,7 +816,29 @@ export default function App() {
         </div>
 
         {/* Calendar */}
-        <div style={{ maxWidth:680, margin:"0 auto", padding:"0 16px", position:"relative" }}>
+        <div ref={calendarRef} style={{ maxWidth:680, margin:"0 auto", padding:"0 16px", position:"relative", scrollMarginTop:8 }}>
+          {pickedType && (() => {
+            const pt = CONSULT_TYPES.find(t=>t.id===pickedType);
+            return (
+              <div style={{
+                position:"sticky", top:8, zIndex:20, marginBottom:16,
+                display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
+                background:"rgba(254,252,247,0.96)", backdropFilter:"blur(8px)",
+                border:"1.5px solid #b09650", borderRadius:12, padding:"10px 14px",
+                fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                boxShadow:"0 2px 12px rgba(176,150,80,0.15)",
+              }}>
+                <div style={{ fontSize:13, color:"#7a6530", fontWeight:700, lineHeight:1.5 }}>
+                  {pt?.icon} {pt?.label}
+                  <div style={{ fontSize:11, color:"#b5a27a", fontWeight:500 }}>請點選下方日期時段預約</div>
+                </div>
+                <button onClick={()=>setPickedType(null)} style={{
+                  flexShrink:0, padding:"5px 12px", borderRadius:8, border:"1px solid #cbba95",
+                  background:"transparent", color:"#8a7340", fontSize:12, cursor:"pointer", fontWeight:600,
+                }}>取消</button>
+              </div>
+            );
+          })()}
           {loading ? (
             <div style={{ textAlign:"center", padding:50, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", color:"#c4b48a" }}>載入中…</div>
           ) : (
@@ -831,7 +865,7 @@ export default function App() {
         }} />
 
         {showForm && selectedDate && selectedSlot && (
-          <BookingForm date={selectedDate} slot={selectedSlot} bookedSlots={bookedSlots}
+          <BookingForm date={selectedDate} slot={selectedSlot} bookedSlots={bookedSlots} initialType={pickedType}
             onSubmit={handleSubmit} onCancel={()=>setShowForm(false)} submitting={submitting} />
         )}
         {showConfirmation && selectedDate && selectedSlot && (
