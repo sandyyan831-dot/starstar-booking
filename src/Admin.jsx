@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { db } from "./firebase.js";
-import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { db, auth } from "./firebase.js";
+import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, writeBatch } from "firebase/firestore";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 
-const ADMIN_PASSWORD = "starstar2026";
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
   { label: "上午 10:00–12:00", id: "morning", short: "上午" },
@@ -43,27 +43,57 @@ function formatDateShort(date) {
 
 export default function Admin() {
   const [authed, setAuthed] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [pwError, setPwError] = useState(false);
+  const [signingIn, setSigningIn] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [blockedSlots, setBlockedSlots] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [tab, setTab] = useState("bookings"); // bookings | block
 
-  const login = () => {
-    if (pw === ADMIN_PASSWORD) { setAuthed(true); setPwError(false); }
-    else setPwError(true);
+  useEffect(() => onAuthStateChanged(auth, user => {
+    setAuthed(!!user);
+    setAuthChecked(true);
+  }), []);
+
+  const login = async () => {
+    if (signingIn) return;
+    setSigningIn(true);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), pw);
+      setPwError(false);
+      setPw("");
+    } catch (e) {
+      console.error(e);
+      setPwError(true);
+    }
+    setSigningIn(false);
   };
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const snap = await getDocs(collection(db, "bookings"));
+      const [snap, slotSnap] = await Promise.all([
+        getDocs(collection(db, "bookings")),
+        getDocs(collection(db, "bookedSlots")),
+      ]);
       const list = [];
       snap.forEach(d => list.push({ id: d.id, ...d.data() }));
       list.sort((a, b) => (b.bookedAt || "").localeCompare(a.bookedAt || ""));
       setBookings(list);
+
+      // 補上公開時段表裡缺少的預約（例如改版前的舊預約），讓前台能正確顯示已滿
+      const slotIds = new Set();
+      slotSnap.forEach(d => slotIds.add(d.id));
+      const missing = list.filter(b => !slotIds.has(b.id));
+      if (missing.length) {
+        const batch = writeBatch(db);
+        missing.forEach(b => batch.set(doc(db, "bookedSlots", b.id), { bookedAt: b.bookedAt || "" }));
+        await batch.commit();
+      }
 
       const blockSnap = await getDocs(collection(db, "blockedSlots"));
       const blocked = new Set();
@@ -87,7 +117,10 @@ export default function Admin() {
   const deleteBooking = async (booking) => {
     if (!window.confirm(`確定要刪除這筆預約嗎？\n${booking.date} ${booking.time}\nLine: ${booking.line}\n\n刪除後此時段將重新開放預約`)) return;
     try {
-      await deleteDoc(doc(db, "bookings", booking.id));
+      const batch = writeBatch(db);
+      batch.delete(doc(db, "bookings", booking.id));
+      batch.delete(doc(db, "bookedSlots", booking.id));
+      await batch.commit();
       setBookings(prev => prev.filter(b => b.id !== booking.id));
     } catch (e) { console.error(e); alert("刪除失敗"); }
   };
@@ -115,7 +148,14 @@ export default function Admin() {
   });
 
   /* ── Login ── */
+  if (!authChecked) return null;
   if (!authed) {
+    const inputStyle = {
+      width:"100%", padding:"12px 14px", borderRadius:10,
+      border:`1.5px solid ${pwError?"#d4836a":"#ddd2bb"}`,
+      background:"#fffdf8", color:"#5a4d35", fontSize:14,
+      outline:"none", boxSizing:"border-box", textAlign:"center", marginBottom:8,
+    };
     return (
       <div style={{
         minHeight:"100vh", background:"linear-gradient(180deg, #faf6ef, #f0eadd)",
@@ -131,21 +171,19 @@ export default function Admin() {
           <div style={{ fontSize:32, marginBottom:8, color:"#b09650" }}>✧</div>
           <h1 style={{ fontFamily:serifFont, fontSize:24, color:"#7a6530", marginBottom:4, fontWeight:600 }}>星語・星心</h1>
           <p style={{ fontSize:13, color:"#b5a27a", marginBottom:28 }}>管理後台</p>
-          <input type="password" placeholder="請輸入管理密碼"
+          <input type="email" placeholder="管理員 Email" autoComplete="username"
+            value={email} onChange={e=>{setEmail(e.target.value);setPwError(false);}}
+            style={inputStyle} />
+          <input type="password" placeholder="密碼" autoComplete="current-password"
             value={pw} onChange={e=>{setPw(e.target.value);setPwError(false);}}
             onKeyDown={e=>{if(e.key==="Enter")login();}}
-            style={{
-              width:"100%", padding:"12px 14px", borderRadius:10,
-              border:`1.5px solid ${pwError?"#d4836a":"#ddd2bb"}`,
-              background:"#fffdf8", color:"#5a4d35", fontSize:14,
-              outline:"none", boxSizing:"border-box", textAlign:"center", marginBottom:8,
-            }} />
-          {pwError && <p style={{ fontSize:12, color:"#d4836a", marginBottom:8 }}>密碼錯誤</p>}
-          <button onClick={login} style={{
+            style={inputStyle} />
+          {pwError && <p style={{ fontSize:12, color:"#d4836a", marginBottom:8 }}>Email 或密碼錯誤</p>}
+          <button onClick={login} disabled={signingIn} style={{
             width:"100%", padding:"12px 0", borderRadius:10, border:"none",
             background:"linear-gradient(135deg, #c9ab5a, #b09650)",
             color:"#fffdf8", fontSize:15, fontWeight:700, cursor:"pointer", letterSpacing:2, marginTop:4,
-          }}>登入</button>
+          }}>{signingIn ? "登入中…" : "登入"}</button>
         </div>
       </div>
     );
@@ -167,10 +205,16 @@ export default function Admin() {
       }}>
         <div style={{ maxWidth:600, margin:"0 auto", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <h1 style={{ fontFamily:serifFont, fontSize:20, color:"#7a6530", fontWeight:600 }}>✧ 預約管理</h1>
-          <button onClick={loadData} style={{
-            padding:"6px 14px", borderRadius:8, border:"1px solid #cbba95",
-            background:"transparent", color:"#8a7340", fontSize:12, cursor:"pointer", fontWeight:600,
-          }}>重新整理</button>
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={loadData} style={{
+              padding:"6px 14px", borderRadius:8, border:"1px solid #cbba95",
+              background:"transparent", color:"#8a7340", fontSize:12, cursor:"pointer", fontWeight:600,
+            }}>重新整理</button>
+            <button onClick={()=>signOut(auth)} style={{
+              padding:"6px 14px", borderRadius:8, border:"1px solid #ddd2bb",
+              background:"transparent", color:"#a09070", fontSize:12, cursor:"pointer",
+            }}>登出</button>
+          </div>
         </div>
       </div>
 

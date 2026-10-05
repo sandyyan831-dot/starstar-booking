@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// 星語・星心 預約網站的資料庫權限
+// - bookings：客人個資。任何人都能「新增」預約，但只有管理員登入後才能讀取、修改、刪除
+// - bookedSlots：只記錄「哪些時段已被預約」，沒有個資，公開可讀
+// - blockedSlots：管理員封鎖的時段，公開可讀，只有管理員能改
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in ["orangelfish@gmail.com"];
+    }
+
+    function slotFree(key) {
+      return !exists(/databases/$(database)/documents/bookedSlots/$(key))
+        && !exists(/databases/$(database)/documents/blockedSlots/$(key));
+    }
+
+    match /bookings/{key} {
+      allow create: if slotFree(key)
+        && existsAfter(/databases/$(database)/documents/bookedSlots/$(key))
+        && request.resource.data.slotKey == key
+        && request.resource.data.paymentStatus == "待匯款";
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /bookedSlots/{key} {
+      allow read: if true;
+      allow create: if isAdmin()
+        || (slotFree(key) && existsAfter(/databases/$(database)/documents/bookings/$(key)));
+      allow update, delete: if isAdmin();
+    }
+
+    match /blockedSlots/{key} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

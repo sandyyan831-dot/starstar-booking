@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
 import {
-  collection, doc, setDoc, getDocs, query, orderBy
+  collection, doc, getDocs, writeBatch
 } from "firebase/firestore";
 
 /* ── Config ── */
@@ -621,24 +621,22 @@ export default function App() {
     return Object.values(m).sort((a,b) => a.year-b.year || a.month-b.month);
   }, [dates]);
 
-  /* Load booked + blocked slots from Firestore */
+  /* Load booked + blocked slots from Firestore（只讀公開的時段，不讀客人個資） */
   useEffect(() => {
     (async () => {
-      try {
-        const [bookSnap, blockSnap] = await Promise.all([
-          getDocs(collection(db, "bookings")),
-          getDocs(collection(db, "blockedSlots")),
-        ]);
-        const slots = new Set();
-        bookSnap.forEach(doc => {
-          const data = doc.data();
-          if (data.slotKey) slots.add(data.slotKey);
-        });
-        blockSnap.forEach(doc => slots.add(doc.id));
-        setBookedSlots(slots);
-      } catch (e) {
-        console.error("Failed to load bookings:", e);
+      // 三個來源各自讀取：bookedSlots／blockedSlots 是公開時段；
+      // bookings 只在資料庫權限收緊前讀得到（過渡期用），之後會被拒絕，屬正常情況
+      const slots = new Set();
+      const results = await Promise.allSettled(
+        ["bookedSlots", "blockedSlots", "bookings"].map(c => getDocs(collection(db, c)))
+      );
+      results.forEach(r => {
+        if (r.status === "fulfilled") r.value.forEach(doc => slots.add(doc.id));
+      });
+      if (results[0].status === "rejected" && results[2].status === "rejected") {
+        console.error("Failed to load booked slots:", results[0].reason);
       }
+      setBookedSlots(slots);
     })();
   }, []);
 
@@ -683,7 +681,11 @@ export default function App() {
     };
 
     try {
-      await setDoc(doc(db, "bookings", key), bookingData);
+      // 客人資料寫進 bookings（只有後台看得到），時段另外寫進公開的 bookedSlots
+      const batch = writeBatch(db);
+      batch.set(doc(db, "bookings", key), bookingData);
+      batch.set(doc(db, "bookedSlots", key), { bookedAt: bookingData.bookedAt });
+      await batch.commit();
       const nb = new Set(bookedSlots);
       nb.add(key);
       setBookedSlots(nb);
@@ -694,7 +696,9 @@ export default function App() {
       setShowConfirmation(true);
     } catch (e) {
       console.error("Booking failed:", e);
-      alert("預約失敗，請稍後再試。");
+      alert(e?.code === "permission-denied"
+        ? "這個時段剛剛被預約了，請重新選擇其他時段。"
+        : "預約失敗，請稍後再試。");
     }
     setSubmitting(false);
   };
