@@ -24,7 +24,7 @@ function getNext2MonthsDates() {
   const dates = [];
   const today = new Date(); today.setHours(0,0,0,0);
   const end = new Date(today); end.setMonth(end.getMonth() + 2);
-  let d = new Date(today); d.setDate(d.getDate() + 1);
+  let d = new Date(today); d.setDate(d.getDate() + 2); // 不開放預約隔天，最早從後天開始
   while (d <= end) {
     if (SLOT_DAYS.includes(d.getDay())) dates.push(new Date(d));
     d.setDate(d.getDate() + 1);
