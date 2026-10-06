@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import {
   TESTIMONIALS, ABOUT,
-  PAIN_POINTS, REPORT_ITEMS, STEPS, FAQ,
+  PAIN_POINTS, REPORT_ITEMS, STEPS, FAQ, GETS,
 } from "./landingContent.js";
 
 /* ── 設計代幣：奶油底 ＋ 深黃色塊 ＋ 夜藍星空 ── */
 const F = "'Noto Sans TC','PingFang TC','Microsoft JhengHei','Helvetica Neue',sans-serif";
 const FS = "'Noto Serif TC','Songti TC','PMingLiU',serif";
 const C = {
-  ink:"#33281a", sub:"#8a7a5c", line:"#eadfc6", paper:"#fffaf0", cream:"#fbf5e8",
-  mustard:"#e8b13a", mustardDeep:"#b9840f", mustardPale:"#f6d77a",
-  night:"#2c2546", nightDeep:"#14102a", gold:"#f6d77a",
+  ink:"#33281a", sub:"#6f6246", gold2:"#8a5f00", line:"#eadfc6", paper:"#fffdf6", cream:"#fffbf0",
+  mustard:"#f7b500", mustardDeep:"#c48a00", mustardPale:"#ffe27a",   // 銘黃
+  night:"#3f2a66", nightDeep:"#241540", gold:"#ffe27a",              // 深紫（取代深藍，用在字與按鈕）
+  purple:"#e9e1fa", teal:"#bfe8ea", tealDeep:"#0f6a70",              // 淺紫（細直條紋）、淺藍綠（雲霧）
+  purpleLine:"#cdbdf0", tealLine:"#8fcfd4",
 };
 const wrap = { maxWidth:680, marginLeft:"auto", marginRight:"auto", padding:"0 20px", fontFamily:F, color:C.ink };
 
@@ -38,6 +40,11 @@ const STARS = [
   [6,46,1.4],[18,62,1.9],[33,78,1.2],[49,88,1.6],[64,72,1.3],[80,84,1.8],[92,64,1.2],[12,92,1.5],
 ].map(([x, y, r]) => `radial-gradient(${r}px ${r}px at ${x}% ${y}%, #f6d77a 55%, transparent 60%)`).join(",");
 
+const STRIPES = "repeating-linear-gradient(90deg, rgba(111,82,181,0.08) 0, rgba(111,82,181,0.08) 1px, transparent 1px, transparent 5px)";
+const STARS_SOFT = [[8,14,1.4],[37,22,1.5],[71,18,1.6],[93,30,1.3],[18,62,1.5],[49,88,1.4],[80,84,1.5],[12,92,1.3]]
+  .map(([x, y, r]) => `radial-gradient(${r}px ${r}px at ${x}% ${y}%, rgba(196,138,0,0.5) 55%, transparent 60%)`).join(",");
+const CLOUDS = "radial-gradient(60% 50% at 18% 22%, rgba(255,255,255,0.8), transparent 70%), radial-gradient(55% 45% at 86% 80%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(40% 35% at 72% 18%, rgba(110,195,205,0.35), transparent 70%)";
+
 function Section({ id, children, style }) {
   return <section id={id} style={{ ...wrap, padding:"30px 20px", scrollMarginTop:8, ...style }}>{children}</section>;
 }
@@ -46,15 +53,16 @@ function Section({ id, children, style }) {
 function Band({ tone = "mustard", id, children, style }) {
   const t = {
     mustard: { background:C.mustard, color:"#33281a" },
-    night:   { background:C.night, color:"#f6efdc", backgroundImage:STARS },
-    pale:    { background:"#fbe9b0", color:"#33281a" },
+    purple:  { background:C.purple, color:C.ink, backgroundImage:STARS_SOFT + "," + STRIPES },
+    teal:    { background:C.teal, color:C.ink, backgroundImage:CLOUDS },
+    pale:    { background:"#fff0bd", color:"#33281a" },
   }[tone];
   return (
     <div id={id} style={{
       position:"relative", overflow:"hidden", maxWidth:720, width:"calc(100% - 20px)", margin:"26px auto",
       borderRadius:32, fontFamily:F, scrollMarginTop:8, ...t, ...style,
     }}>
-      <div style={{ ...wrap, padding:"44px 22px" }}>{children}</div>
+      <div style={{ ...wrap, padding:"44px 22px", color:t.color }}>{children}</div>
     </div>
   );
 }
@@ -122,14 +130,56 @@ function PainChips() {
         })}
       </div>
       {picked.size > 0 && (
-        <div style={{ marginTop:18, padding:"20px 20px", borderRadius:20, background:C.night, color:"#f6efdc", position:"relative", overflow:"hidden" }}>
+        <div style={{ marginTop:18, padding:"20px 20px", borderRadius:20, background:C.purple, backgroundImage:STRIPES, color:C.ink, border:`1.5px solid ${C.purpleLine}`, position:"relative", overflow:"hidden" }}>
           <Sparkle size={20} color={C.mustard} style={{ position:"absolute", top:12, right:14 }} />
           <p style={{ margin:"0 0 16px", fontSize:17, lineHeight:1.85, fontWeight:700, fontFamily:FS }}>
-            有 {picked.size} 項符合。你缺的也許不是更多方法，<span style={{ color:C.gold, borderBottom:`2px solid ${C.mustard}` }}>而是更了解眼前這個孩子</span>。
+            有 {picked.size} 項符合。你缺的也許不是更多方法，<span style={{ color:C.night, background:`linear-gradient(transparent 58%, ${C.mustardPale} 58%)` }}>而是更了解眼前這個孩子</span>。
           </p>
           <Button onClick={() => goTo("booking")}>看看怎麼開始 ↓</Button>
         </div>
       )}
+    </Section>
+  );
+}
+
+/* ── 預約後，你會得到什麼 ── */
+function Gets() {
+  const big = [
+    { bg:C.mustard, color:C.ink, sub:"#4d3a0a", tile:C.night, tileColor:C.gold, shadow:C.mustardDeep },
+    { bg:C.teal, color:C.ink, sub:"#2f5f64", tile:C.mustard, tileColor:C.night, shadow:C.tealLine, bgImg:CLOUDS },
+  ];
+  return (
+    <Section id="gets">
+      <H2>{GETS.title}</H2>
+      <P serif style={{ fontSize:17, fontWeight:500, marginBottom:18 }}>{GETS.lead}</P>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        {GETS.main.map((g, i) => (
+          <div key={g.title} style={{
+            background:big[i].bg, backgroundImage:big[i].bgImg, color:big[i].color, borderRadius:22, padding:"22px 20px",
+            boxShadow:`0 4px 0 ${big[i].shadow}`, display:"flex", gap:14, alignItems:"flex-start",
+          }}>
+            <div style={{
+              flexShrink:0, width:46, height:46, borderRadius:14, background:big[i].tile, color:big[i].tileColor,
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:900,
+            }}>{g.icon}</div>
+            <div>
+              <div style={{ fontSize:19, fontWeight:900, lineHeight:1.45, marginBottom:6 }}>{g.title}</div>
+              <div style={{ fontSize:15.5, lineHeight:1.85, color:big[i].sub }}>{g.text}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:12, marginTop:14 }}>
+        {GETS.more.map(g => (
+          <div key={g.title} style={{ background:C.paper, border:`2px solid ${C.line}`, borderRadius:18, padding:"16px 16px", display:"flex", gap:12, alignItems:"flex-start" }}>
+            <div style={{ flexShrink:0, width:34, height:34, borderRadius:11, background:C.mustard, color:C.night, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:900 }}>{g.icon}</div>
+            <div>
+              <div style={{ fontSize:16, fontWeight:900, marginBottom:2 }}>{g.title}</div>
+              <div style={{ fontSize:14.5, lineHeight:1.75, color:"#6b5a38" }}>{g.text}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </Section>
   );
 }
@@ -160,17 +210,17 @@ function About({ onPick }) {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, margin:"22px 0 16px" }}>
         {a.credentials.map((c, i) => (
           <div key={c.big} style={{
-            background:C.mustard, borderRadius:18, padding:"16px 6px", textAlign:"center",
-            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${C.mustardDeep}`,
+            background:[C.mustard, C.teal, C.purple][i % 3], borderRadius:18, padding:"16px 3px", textAlign:"center",
+            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${[C.mustardDeep, C.tealLine, C.purpleLine][i % 3]}`,
           }}>
-            <div style={{ fontSize:16, fontWeight:900, lineHeight:1.35, color:C.night }}>{c.big}</div>
-            <div style={{ fontSize:11.5, color:"#5a4410", marginTop:4, fontWeight:500 }}>{c.small}</div>
+            <div style={{ fontSize:15, fontWeight:900, lineHeight:1.35, whiteSpace:"nowrap", color:[C.night, "#0f4e53", C.night][i % 3] }}>{c.big}</div>
+            <div style={{ fontSize:11.5, color:["#5a4410", "#2f6b70", "#5a4a80"][i % 3], marginTop:4, fontWeight:500 }}>{c.small}</div>
           </div>
         ))}
       </div>
 
       <div style={{ background:C.paper, border:`1.5px solid ${C.line}`, borderRadius:18, padding:"16px 18px", marginBottom:22 }}>
-        <div style={{ fontSize:13, fontWeight:900, color:C.mustardDeep, letterSpacing:2, marginBottom:8 }}>我也是走過來的媽媽</div>
+        <div style={{ fontSize:13, fontWeight:900, color:C.gold2, letterSpacing:2, marginBottom:8 }}>我也是走過來的媽媽</div>
         {a.journey.map(t => (
           <div key={t} style={{ display:"flex", gap:10, alignItems:"flex-start", fontSize:15.5, lineHeight:1.8, padding:"2px 0" }}>
             <Sparkle size={13} style={{ marginTop:9, flexShrink:0 }} />{t}
@@ -184,18 +234,17 @@ function About({ onPick }) {
         ))}
       </div>
       <button onClick={() => setFull(f => !f)} style={{
-        background:"none", border:"none", padding:"6px 0 0 23px", cursor:"pointer", fontFamily:F, fontSize:14.5, fontWeight:900, color:C.mustardDeep, letterSpacing:1,
+        background:"none", border:"none", padding:"6px 0 0 23px", cursor:"pointer", fontFamily:F, fontSize:14.5, fontWeight:900, color:C.gold2, letterSpacing:1,
       }}>{full ? "收合 ▴" : "看完整故事 ▾"}</button>
 
-      {/* 來找我 */}
-      <div style={{ marginTop:30, padding:"26px 22px", borderRadius:24, background:C.mustard, position:"relative", overflow:"hidden" }}>
-        <Sparkle size={26} color={C.night} style={{ position:"absolute", top:14, right:16, opacity:0.9 }} />
-        <Sparkle size={14} color={C.night} style={{ position:"absolute", top:48, right:50, opacity:0.55 }} />
-        <h3 style={{ fontSize:"clamp(20px, 5.4vw, 25px)", fontWeight:900, lineHeight:1.5, margin:"0 40px 8px 0", color:C.night }}>{a.ask.title}</h3>
-        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#3d2f0c" }}>{a.ask.text}</p>
+      {/* 直接預約整張星盤 */}
+      <div style={{ marginTop:30, padding:"26px 22px", borderRadius:24, background:C.teal, backgroundImage:CLOUDS, color:C.ink, border:`1.5px solid ${C.tealLine}`, position:"relative", overflow:"hidden" }}>
+        <Sparkle size={26} color={C.mustard} style={{ position:"absolute", top:14, right:16 }} />
+        <h3 style={{ fontSize:"clamp(20px, 5.4vw, 25px)", fontWeight:900, lineHeight:1.5, margin:"0 40px 8px 0", color:C.night }}>{a.cta.title}</h3>
+        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#2f5f64" }}>{a.cta.text}</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
-          <Button variant="dark" onClick={() => onPick ? onPick("textOnly") : goTo("booking")}>先問一個問題 $500</Button>
-          <Button variant="outline" href={LINE_URL}>LINE 找我聊聊</Button>
+          <Button onClick={() => onPick ? onPick("child") : goTo("booking")}>解碼孩子的星盤</Button>
+          <Button variant="outline" onClick={() => onPick ? onPick("first") : goTo("booking")}>本命盤解析</Button>
         </div>
       </div>
     </Section>
@@ -203,12 +252,11 @@ function About({ onPick }) {
 }
 
 /* ── 真實回饋：一塊底板，幾則短評語散落其上，點開才看全部 ── */
-const PANEL = "#f6efdc";
+const PANEL = "#ede6fb";
 const SCATTER = [
-  { w:66, align:"flex-start", rot:-1.5 },
-  { w:48, align:"flex-end",   rot:1.5 },
-  { w:56, align:"flex-start", rot:1 },
-  { w:70, align:"flex-end",   rot:-1 },
+  { w:58, align:"flex-start", rot:-1.5 },
+  { w:44, align:"flex-end",   rot:1.5 },
+  { w:52, align:"flex-start", rot:1 },
 ];
 
 function VoicesViewer({ items, onClose }) {
@@ -225,14 +273,14 @@ function VoicesViewer({ items, onClose }) {
     }}>
       <div style={{
         position:"sticky", top:0, zIndex:1, display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"14px 18px", background:"rgba(246,239,220,0.96)", backdropFilter:"blur(8px)", borderBottom:`1px solid ${C.line}`,
+        padding:"14px 18px", background:"rgba(237,230,251,0.96)", backdropFilter:"blur(8px)", borderBottom:`1px solid ${C.line}`,
       }}>
         <div style={{ fontSize:17, fontWeight:900 }}>真實回饋<span style={{ fontSize:13, fontWeight:500, color:C.sub, marginLeft:8 }}>共 {items.length} 則</span></div>
         <button onClick={onClose} aria-label="關閉" style={{
           width:38, height:38, borderRadius:"50%", border:`1.5px solid ${C.night}`, background:C.paper, color:C.night, fontSize:18, cursor:"pointer",
         }}>✕</button>
       </div>
-      <div style={{ maxWidth:520, margin:"0 auto", padding:"18px 16px 36px", display:"flex", flexDirection:"column", gap:14 }}>
+      <div style={{ maxWidth:480, margin:"0 auto", padding:"18px 16px 36px", display:"flex", flexDirection:"column", gap:14 }}>
         {items.map((t) => (
           <img key={t.image} src={t.image} alt={t.alt || "客人回饋"} loading="lazy" decoding="async"
             style={{ display:"block", width:"100%", height:"auto", mixBlendMode:"multiply", borderRadius:18 }} />
@@ -250,15 +298,15 @@ function Voices({ items }) {
   const teasers = items.filter(t => t.teaser).sort((a, b) => a.teaser - b.teaser).slice(0, SCATTER.length);
   return (
     <Section id="voices">
-      <H2>真實回饋</H2>
-      <P style={{ color:C.sub, marginBottom:16 }}>每一則，都是客人的真實分享。</P>
+      <H2 style={{ fontSize:22, marginBottom:4 }}>真實回饋</H2>
+      <P style={{ color:C.sub, fontSize:14, marginBottom:12 }}>每一則，都是客人的真實分享。</P>
       <div onClick={() => setOpen(true)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(true); } }}
         style={{
           position:"relative", overflow:"hidden", cursor:"pointer", borderRadius:24, background:PANEL,
-          border:`1.5px solid ${C.line}`, padding:"20px 16px 88px",
+          border:`1.5px solid #e2d8f3`, padding:"14px 14px 64px",
         }}>
-        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
           {teasers.map((t, i) => {
             const sc = SCATTER[i % SCATTER.length];
             return (
@@ -270,12 +318,12 @@ function Voices({ items }) {
           })}
         </div>
         <div style={{
-          position:"absolute", left:0, right:0, bottom:0, padding:"56px 18px 20px", textAlign:"center",
-          background:`linear-gradient(rgba(246,239,220,0), ${PANEL} 62%)`,
+          position:"absolute", left:0, right:0, bottom:0, padding:"34px 14px 12px", textAlign:"center",
+          background:`linear-gradient(rgba(237,230,251,0), ${PANEL} 60%)`,
         }}>
           <span style={{
-            display:"inline-block", padding:"12px 22px", borderRadius:14, background:C.mustard, color:C.night,
-            fontSize:15, fontWeight:900, letterSpacing:1, boxShadow:`0 4px 0 ${C.mustardDeep}`,
+            display:"inline-block", padding:"9px 16px", borderRadius:12, background:C.mustard, color:C.night,
+            fontSize:13.5, fontWeight:900, letterSpacing:1, boxShadow:`0 4px 0 ${C.mustardDeep}`,
           }}>點開看全部 {items.length} 則回饋 →</span>
         </div>
       </div>
@@ -300,7 +348,7 @@ export function LandingTop({ onPick }) {
         <Sparkle size={26} style={{ position:"absolute", top:30, right:22 }} />
         <Sparkle size={13} color={C.night} style={{ position:"absolute", top:68, right:58, opacity:0.5 }} />
         <Sparkle size={16} style={{ position:"absolute", top:290, right:14, opacity:0.7 }} />
-        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, letterSpacing:5, color:C.mustardDeep, fontWeight:900, marginBottom:28 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, letterSpacing:5, color:C.gold2, fontWeight:900, marginBottom:28 }}>
           <Sparkle size={14} /> 星語・星心
         </div>
         <div style={{
@@ -344,18 +392,18 @@ export function LandingTop({ onPick }) {
         <H2>換一個起點</H2>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))", gap:14 }}>
           <div style={{ padding:"22px 18px", borderRadius:22, background:"#efe6d2", border:"2px dashed #cdbd98" }}>
-            <div style={{ fontSize:13, fontWeight:900, color:C.sub, letterSpacing:3, marginBottom:12 }}>以前</div>
+            <div style={{ fontSize:13, fontWeight:900, color:"#5f5339", letterSpacing:3, marginBottom:12 }}>以前</div>
             {["照著「通用教養法」一個一個試", "孩子沒反應，就懷疑自己哪裡做錯", "看越多越慌，越慌越容易失控", "罵完，只剩下自責"].map(t => (
-              <div key={t} style={{ display:"flex", gap:8, fontSize:15, lineHeight:1.8, color:"#7a6d55", padding:"3px 0" }}>
+              <div key={t} style={{ display:"flex", gap:8, fontSize:15, lineHeight:1.8, color:"#5f5339", padding:"3px 0" }}>
                 <span style={{ flexShrink:0 }}>✕</span>{t}
               </div>
             ))}
           </div>
-          <div style={{ padding:"22px 18px", borderRadius:22, background:C.night, color:"#f6efdc", position:"relative", overflow:"hidden", backgroundImage:STARS }}>
+          <div style={{ padding:"22px 18px", borderRadius:22, background:C.teal, backgroundImage:CLOUDS, color:C.ink, border:`1.5px solid ${C.tealLine}`, position:"relative", overflow:"hidden" }}>
             <div style={{ display:"inline-block", fontSize:13, fontWeight:900, background:C.mustard, color:C.night, borderRadius:8, padding:"2px 10px", letterSpacing:3, marginBottom:12 }}>現在</div>
             {["先看懂孩子「本來的樣子」", "了解他的個性、學習、手足與同儕", "選擇適合他的回應方式", "做決定時，多一個依據，少一點猜"].map(t => (
               <div key={t} style={{ display:"flex", gap:8, fontSize:15, lineHeight:1.8, fontWeight:700, padding:"3px 0" }}>
-                <span style={{ flexShrink:0, color:C.mustard }}>✓</span>{t}
+                <span style={{ flexShrink:0, color:C.tealDeep, fontWeight:900 }}>✓</span>{t}
               </div>
             ))}
           </div>
@@ -363,23 +411,25 @@ export function LandingTop({ onPick }) {
       </Section>
 
       {/* 星盤：夜空色塊 */}
-      <Band tone="night">
+      <Band tone="purple">
         <Sparkle size={20} style={{ position:"absolute", top:22, right:24 }} />
-        <H2 color="#f6efdc">星盤，是看懂孩子的<br /><Mark dark>一個角度</Mark></H2>
-        <P serif style={{ color:"#e8dfc8", fontSize:17 }}>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子、怎麼想的。</P>
-        <div style={{ fontSize:14, fontWeight:900, color:C.gold, letterSpacing:1.5, margin:"22px 0 12px" }}>「解碼孩子的星盤天賦」報告內含</div>
+        <H2 color={C.night}>星盤，是看懂孩子的<br /><Mark>一個角度</Mark></H2>
+        <P serif style={{ color:"#4a3b5e", fontSize:17 }}>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子、怎麼想的。</P>
+        <div style={{ fontSize:14, fontWeight:900, color:C.night, letterSpacing:1.5, margin:"22px 0 12px" }}>「解碼孩子的星盤天賦」報告內含</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
           {REPORT_ITEMS.map(r => (
             <div key={r.text} style={{
               display:"flex", alignItems:"center", gap:8, fontSize:15, fontWeight:700, lineHeight:1.5, padding:"12px 12px",
-              borderRadius:14, border:"1.5px solid rgba(232,177,58,0.55)", background:"rgba(255,255,255,0.04)",
+              borderRadius:14, border:`1.5px solid ${C.purpleLine}`, background:"rgba(255,255,255,0.7)",
             }}>
-              <span style={{ color:C.mustard, fontSize:18 }}>{r.icon}</span>{r.text}
+              <span style={{ color:C.gold2, fontSize:18 }}>{r.icon}</span>{r.text}
             </div>
           ))}
         </div>
-        <p style={{ fontSize:14, lineHeight:1.9, color:"#cfc5a8", margin:"18px 0 0" }}>也可以先從自己開始：「本命盤解析」會看你的個性特質、家庭、婚姻、事業與人際。</p>
+        <p style={{ fontSize:14, lineHeight:1.9, color:"#5a4a70", margin:"18px 0 0" }}>也可以先從自己開始：「本命盤解析」會看你的個性特質、家庭、婚姻、事業與人際。</p>
       </Band>
+
+      <Gets />
 
       <About onPick={onPick} />
 
@@ -440,16 +490,16 @@ export function LandingBottom({ onPick }) {
       </Section>
 
       {/* 結尾：夜空色塊 */}
-      <Band tone="night" style={{ textAlign:"center" }}>
+      <Band tone="teal" style={{ textAlign:"center" }}>
         <Sparkle size={22} style={{ position:"absolute", top:20, left:22 }} />
         <Sparkle size={14} style={{ position:"absolute", top:54, right:30, opacity:0.7 }} />
-        <h2 style={{ fontSize:"clamp(23px, 6.4vw, 30px)", fontWeight:900, lineHeight:1.55, margin:"0 0 10px", color:"#f6efdc" }}>
-          想更知道怎麼陪他，<br />從<Mark dark>看懂他</Mark>開始。
+        <h2 style={{ fontSize:"clamp(23px, 6.4vw, 30px)", fontWeight:900, lineHeight:1.55, margin:"0 0 10px", color:C.night }}>
+          想更知道怎麼陪他，<br />從<Mark>看懂他</Mark>開始。
         </h2>
-        <p style={{ fontSize:16, lineHeight:1.9, color:"#d8cfb4", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
+        <p style={{ fontSize:16, lineHeight:1.9, color:"#2f5f64", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:14, justifyContent:"center" }}>
           <Button onClick={() => goTo("booking")}>回到上方選時段</Button>
-          <Button variant="gold" href={LINE_URL}>有問題，先 LINE 問我</Button>
+          <Button variant="outline" href={LINE_URL}>有問題，先 LINE 問我</Button>
         </div>
       </Band>
 
@@ -458,10 +508,10 @@ export function LandingBottom({ onPick }) {
           占星提供的是理解與反思的角度，不取代醫療、心理或教育專業的建議。
         </p>
         <div style={{ display:"flex", gap:22, justifyContent:"center", fontSize:14, marginBottom:10 }}>
-          <a href={LINE_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.mustardDeep, textDecoration:"none", fontWeight:900 }}>LINE 官方帳號</a>
-          <a href={IG_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.mustardDeep, textDecoration:"none", fontWeight:900 }}>Instagram</a>
+          <a href={LINE_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.gold2, textDecoration:"none", fontWeight:900 }}>LINE 官方帳號</a>
+          <a href={IG_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.gold2, textDecoration:"none", fontWeight:900 }}>Instagram</a>
         </div>
-        <p style={{ fontSize:12, color:"#b5a98c", margin:0 }}>© 2026 星語・星心</p>
+        <p style={{ fontSize:12, color:"#85785a", margin:0 }}>© 2026 星語・星心</p>
       </footer>
     </>
   );

@@ -18,9 +18,9 @@ export const TESTIMONIALS = [
   { image: "/feedback/10.jpg", alt: "家長分享：姐姐妹妹的學習方式不同" },
   { image: "/feedback/12.jpg", alt: "家長分享：這種孩子真的很難教育" },
   { image: "/feedback/13.jpg", alt: "客人分享：真是謝謝妳的解題", teaser: 3 },
-  { image: "/feedback/14.jpg", alt: "客人分享：你好會說話，讀起來有療癒的感覺", teaser: 4 },
+  { image: "/feedback/14.jpg", alt: "客人分享：你好會說話，讀起來有療癒的感覺" },
   { image: "/feedback/15.jpg", alt: "客人分享：怎麼這麼厲害", teaser: 2 },
-  { image: "/feedback/16.jpg", alt: "客人分享：我很快就再回來跟你聊", teaser: 5 },
+  { image: "/feedback/16.jpg", alt: "客人分享：我很快就再回來跟你聊" },
   { image: "/feedback/17.jpg", alt: "客人分享：原本很抗拒算命，看了分享後改觀" },
   { image: "/feedback/18.jpg", alt: "客人分享：預見未來的狀況，會更放手去做" },
   { image: "/feedback/20.jpg", alt: "客人分享：最近好多合作，回想星盤說的那些，真的欸" },
@@ -32,7 +32,7 @@ export const ABOUT = {
   name: "Sandy",
   photo: null,
   headline: "我懂媽媽，也懂孩子",
-  lead: "學的是生命科學與臨床心理，走過的是漫長的求子路，和養育高敏孩子的日子。所以你的擔心，我真的懂。",
+  lead: "學的是生命科學與臨床心理，走過的是漫長的求子路，和養育高敏孩子的日子。你的感受，我都經歷過。",
   credentials: [
     { big: "生命科學", small: "大學主修" },
     { big: "臨床心理", small: "研究所" },
@@ -58,10 +58,24 @@ export const ABOUT = {
     "直到有一天，我試著用占星、用他的星盤去理解他，也讓自己理解他。那一刻，我真的鬆了好大一口氣。",
     "現在，我想把這一口氣，也帶給正在摸索的你。",
   ],
-  ask: {
-    title: "你卡住的地方，都可以來問我",
-    text: "孩子的個性、學習、手足、人際相處……不知道從哪裡開始，就先問一個問題。",
+  cta: {
+    title: "直接預約整張星盤解讀",
+    text: "從孩子的星盤開始，看懂他本來的樣子；也可以先從自己的本命盤開始。",
   },
+};
+
+// 「預約後，你會得到什麼」區塊
+export const GETS = {
+  title: "預約後，你會得到",
+  lead: "不是一堆通用的教養方法，而是只屬於你孩子的內容。",
+  main: [
+    { icon: "☽", title: "小孩的原廠設定", text: "他本來的個性、學習狀況、手足關係、同儕相處，一次看懂。" },
+    { icon: "✧", title: "專屬於你小孩的教養建議", text: "不是通用的教養方法，而是針對這個孩子，你可以怎麼回應、怎麼陪。" },
+  ],
+  more: [
+    { icon: "❖", title: "一份完整報告", text: "報告書留給你，之後隨時翻看。" },
+    { icon: "◦", title: "一小時的解說", text: "有疑問，可以當場問。" },
+  ],
 };
 
 export const PAIN_POINTS = [
