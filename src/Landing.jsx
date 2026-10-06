@@ -8,11 +8,12 @@ import {
 const F = "'Noto Sans TC','PingFang TC','Microsoft JhengHei','Helvetica Neue',sans-serif";
 const FS = "'Noto Serif TC','Songti TC','PMingLiU',serif";
 const C = {
-  ink:"#33281a", sub:"#5a5a4a", line:"#cdeae3", paper:"#ffffff", cream:"#f4fbf9", gold2:"#8a5f00",
-  mustard:"#eaa83a", mustardDeep:"#b87f1c", mustardPale:"#f8dda0",   // 銘黃（10%：按鈕、標籤、重點）
-  night:"#3f2a66", nightDeep:"#241540", gold:"#f8dda0",              // 深紫（文字與按鈕，淺紫字看不清楚）
-  purple:"#d4bfff", purplePale:"#ece3ff", purpleLine:"#b9a0f2",      // 淺紫（30%）
-  teal:"#8ed8c7", tealPale:"#dff4ef", tealLine:"#5fc2ad", tealDeep:"#165a4f", // 淺藍綠（60%）
+  ink:"#33281a", sub:"#6f6246", gold2:"#8a5f00", line:"#eadfc6", paper:"#fffdf6", cream:"#fffbf0",
+  mustard:"#f7b500", mustardDeep:"#c48a00", mustardPale:"#ffe27a",   // 銘黃
+  night:"#3f2a66", nightDeep:"#241540", gold:"#ffe27a",              // 深紫（取代深藍，用在字與按鈕）
+  purple:"#e3d6f6", teal:"#bfe8ea", tealDeep:"#0f6a70",              // 淺紫（柔和的暖調紫，純色漸層、無底紋）、淺藍綠（雲霧）
+  purpleGrad:"linear-gradient(160deg, #eee5fb 0%, #e3d6f6 50%, #d9c7f0 100%)",
+  purpleLine:"#cbb8ec", tealLine:"#8fcfd4",
 };
 const wrap = { maxWidth:680, marginLeft:"auto", marginRight:"auto", padding:"0 20px", fontFamily:F, color:C.ink };
 
@@ -40,10 +41,7 @@ const STARS = [
   [6,46,1.4],[18,62,1.9],[33,78,1.2],[49,88,1.6],[64,72,1.3],[80,84,1.8],[92,64,1.2],[12,92,1.5],
 ].map(([x, y, r]) => `radial-gradient(${r}px ${r}px at ${x}% ${y}%, #f6d77a 55%, transparent 60%)`).join(",");
 
-const STRIPES = "repeating-linear-gradient(90deg, rgba(120,86,200,0.09) 0, rgba(120,86,200,0.09) 1px, transparent 1px, transparent 5px)";
-const STARS_SOFT = [[8,14,1.4],[37,22,1.5],[71,18,1.6],[93,30,1.3],[18,62,1.5],[49,88,1.4],[80,84,1.5],[12,92,1.3]]
-  .map(([x, y, r]) => `radial-gradient(${r}px ${r}px at ${x}% ${y}%, rgba(196,138,0,0.5) 55%, transparent 60%)`).join(",");
-const CLOUDS = "radial-gradient(60% 50% at 18% 22%, rgba(255,255,255,0.8), transparent 70%), radial-gradient(55% 45% at 86% 80%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(40% 35% at 72% 18%, rgba(60,170,150,0.28), transparent 70%)";
+const CLOUDS = "radial-gradient(60% 50% at 18% 22%, rgba(255,255,255,0.8), transparent 70%), radial-gradient(55% 45% at 86% 80%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(40% 35% at 72% 18%, rgba(110,195,205,0.35), transparent 70%)";
 
 function Section({ id, children, style }) {
   return <section id={id} style={{ ...wrap, padding:"30px 20px", scrollMarginTop:8, ...style }}>{children}</section>;
@@ -53,7 +51,7 @@ function Section({ id, children, style }) {
 function Band({ tone = "mustard", id, children, style }) {
   const t = {
     mustard: { background:C.mustard, color:"#33281a" },
-    purple:  { background:C.purple, color:C.ink, backgroundImage:STARS_SOFT + "," + STRIPES },
+    purple:  { background:C.purpleGrad, color:C.ink },
     teal:    { background:C.teal, color:C.ink, backgroundImage:CLOUDS },
     pale:    { background:"#fff0bd", color:"#33281a" },
   }[tone];
@@ -116,13 +114,13 @@ function PainChips() {
               display:"flex", alignItems:"center", gap:12, textAlign:"left",
               padding:"15px 16px", borderRadius:16, fontFamily:F, fontSize:16, fontWeight:on ? 900 : 500,
               border:`2px solid ${on ? C.night : C.line}`,
-              background:on ? C.purple : C.paper, color:C.ink, cursor:"pointer", transition:"all 0.18s",
+              background:on ? C.mustard : C.paper, color:C.ink, cursor:"pointer", transition:"all 0.18s",
               transform:on ? "translateY(-1px)" : "none",
-              boxShadow:on ? `0 3px 0 ${C.purpleLine}` : "none",
+              boxShadow:on ? `0 3px 0 ${C.night}` : "none",
             }}>
               <span style={{
                 flexShrink:0, width:24, height:24, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center",
-                border:`2px solid ${on ? C.night : "#b8cfc9"}`, background:on ? C.night : "transparent", color:C.gold, fontSize:14, fontWeight:900,
+                border:`2px solid ${on ? C.night : "#d8ccb0"}`, background:on ? C.night : "transparent", color:C.gold, fontSize:14, fontWeight:900,
               }}>{on ? "✓" : ""}</span>
               {t}
             </button>
@@ -130,7 +128,7 @@ function PainChips() {
         })}
       </div>
       {picked.size > 0 && (
-        <div style={{ marginTop:18, padding:"20px 20px", borderRadius:20, background:C.purple, backgroundImage:STRIPES, color:C.ink, border:`1.5px solid ${C.purpleLine}`, position:"relative", overflow:"hidden" }}>
+        <div style={{ marginTop:18, padding:"20px 20px", borderRadius:20, background:C.purpleGrad, color:C.ink, border:`1.5px solid ${C.purpleLine}`, position:"relative", overflow:"hidden" }}>
           <Sparkle size={20} color={C.mustard} style={{ position:"absolute", top:12, right:14 }} />
           <p style={{ margin:"0 0 16px", fontSize:17, lineHeight:1.85, fontWeight:700, fontFamily:FS }}>
             有 {picked.size} 項符合。你缺的也許不是更多方法，<span style={{ color:C.night, background:`linear-gradient(transparent 58%, ${C.mustardPale} 58%)` }}>而是更了解眼前這個孩子</span>。
@@ -145,8 +143,8 @@ function PainChips() {
 /* ── 預約後，你會得到什麼 ── */
 function Gets() {
   const big = [
-    { bg:C.purple, color:C.ink, sub:"#4a3b5e", tile:C.night, tileColor:C.gold, shadow:C.purpleLine, bgImg:STRIPES },
-    { bg:C.teal, color:C.ink, sub:"#24544c", tile:C.mustard, tileColor:C.night, shadow:C.tealLine, bgImg:CLOUDS },
+    { bg:C.mustard, color:C.ink, sub:"#4d3a0a", tile:C.night, tileColor:C.gold, shadow:C.mustardDeep },
+    { bg:C.teal, color:C.ink, sub:"#2f5f64", tile:C.mustard, tileColor:C.night, shadow:C.tealLine, bgImg:CLOUDS },
   ];
   return (
     <Section id="gets">
@@ -210,11 +208,11 @@ function About({ onPick }) {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, margin:"22px 0 16px" }}>
         {a.credentials.map((c, i) => (
           <div key={c.big} style={{
-            background:[C.teal, C.purple, C.mustard][i % 3], borderRadius:18, padding:"16px 3px", textAlign:"center",
-            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${[C.tealLine, C.purpleLine, C.mustardDeep][i % 3]}`,
+            background:[C.mustard, C.teal, C.purple][i % 3], borderRadius:18, padding:"16px 3px", textAlign:"center",
+            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${[C.mustardDeep, C.tealLine, C.purpleLine][i % 3]}`,
           }}>
-            <div style={{ fontSize:15, fontWeight:900, lineHeight:1.35, whiteSpace:"nowrap", color:C.night }}>{c.big}</div>
-            <div style={{ fontSize:11.5, color:["#24544c", "#4a3b5e", "#4d3a0a"][i % 3], marginTop:4, fontWeight:500 }}>{c.small}</div>
+            <div style={{ fontSize:15, fontWeight:900, lineHeight:1.35, whiteSpace:"nowrap", color:[C.night, "#0f4e53", C.night][i % 3] }}>{c.big}</div>
+            <div style={{ fontSize:11.5, color:["#5a4410", "#2f6b70", "#5a4a80"][i % 3], marginTop:4, fontWeight:500 }}>{c.small}</div>
           </div>
         ))}
       </div>
@@ -241,7 +239,7 @@ function About({ onPick }) {
       <div style={{ marginTop:30, padding:"26px 22px", borderRadius:24, background:C.teal, backgroundImage:CLOUDS, color:C.ink, border:`1.5px solid ${C.tealLine}`, position:"relative", overflow:"hidden" }}>
         <Sparkle size={26} color={C.mustard} style={{ position:"absolute", top:14, right:16 }} />
         <h3 style={{ fontSize:"clamp(20px, 5.4vw, 25px)", fontWeight:900, lineHeight:1.5, margin:"0 40px 8px 0", color:C.night }}>{a.cta.title}</h3>
-        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#24544c" }}>{a.cta.text}</p>
+        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#2f5f64" }}>{a.cta.text}</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
           <Button onClick={() => onPick ? onPick("child") : goTo("booking")}>解碼孩子的星盤</Button>
           <Button variant="outline" onClick={() => onPick ? onPick("first") : goTo("booking")}>本命盤解析</Button>
@@ -252,7 +250,7 @@ function About({ onPick }) {
 }
 
 /* ── 真實回饋：一塊底板，幾則短評語散落其上，點開才看全部 ── */
-const PANEL = "#ece3ff";
+const PANEL = "#ebe2f8";
 const SCATTER = [
   { w:58, align:"flex-start", rot:-1.5 },
   { w:44, align:"flex-end",   rot:1.5 },
@@ -273,7 +271,7 @@ function VoicesViewer({ items, onClose }) {
     }}>
       <div style={{
         position:"sticky", top:0, zIndex:1, display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"14px 18px", background:"rgba(236,227,255,0.96)", backdropFilter:"blur(8px)", borderBottom:`1px solid ${C.line}`,
+        padding:"14px 18px", background:"rgba(235,226,248,0.96)", backdropFilter:"blur(8px)", borderBottom:`1px solid ${C.line}`,
       }}>
         <div style={{ fontSize:17, fontWeight:900 }}>真實回饋<span style={{ fontSize:13, fontWeight:500, color:C.sub, marginLeft:8 }}>共 {items.length} 則</span></div>
         <button onClick={onClose} aria-label="關閉" style={{
@@ -304,7 +302,7 @@ function Voices({ items }) {
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(true); } }}
         style={{
           position:"relative", overflow:"hidden", cursor:"pointer", borderRadius:24, background:PANEL,
-          border:`1.5px solid ${C.purpleLine}`, padding:"14px 14px 64px",
+          border:`1.5px solid #e2d8f3`, padding:"14px 14px 64px",
         }}>
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
           {teasers.map((t, i) => {
@@ -319,7 +317,7 @@ function Voices({ items }) {
         </div>
         <div style={{
           position:"absolute", left:0, right:0, bottom:0, padding:"34px 14px 12px", textAlign:"center",
-          background:`linear-gradient(rgba(236,227,255,0), ${PANEL} 60%)`,
+          background:`linear-gradient(rgba(235,226,248,0), ${PANEL} 60%)`,
         }}>
           <span style={{
             display:"inline-block", padding:"9px 16px", borderRadius:12, background:C.mustard, color:C.night,
@@ -343,42 +341,42 @@ export function LandingTop({ onPick }) {
         details[open] > summary .lp-plus { transform: rotate(45deg); }
       `}</style>
 
-      {/* 主視覺：淺藍綠大色塊 */}
-      <Band tone="teal" style={{ marginTop:14 }}>
-        <Sparkle size={26} color={C.mustard} style={{ position:"absolute", top:26, right:24 }} />
-        <Sparkle size={13} color={C.night} style={{ position:"absolute", top:62, right:60, opacity:0.45 }} />
-        <Sparkle size={16} color={C.mustard} style={{ position:"absolute", bottom:150, right:16, opacity:0.8 }} />
-        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, letterSpacing:5, color:C.night, fontWeight:900, marginBottom:26 }}>
-          <Sparkle size={14} color={C.mustard} /> 星語・星心
+      {/* 主視覺 */}
+      <section style={{ ...wrap, padding:"38px 20px 14px", position:"relative" }}>
+        <Sparkle size={26} style={{ position:"absolute", top:30, right:22 }} />
+        <Sparkle size={13} color={C.night} style={{ position:"absolute", top:68, right:58, opacity:0.5 }} />
+        <Sparkle size={16} style={{ position:"absolute", top:290, right:14, opacity:0.7 }} />
+        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, letterSpacing:5, color:C.gold2, fontWeight:900, marginBottom:28 }}>
+          <Sparkle size={14} /> 星語・星心
         </div>
         <div style={{
           display:"inline-block", transform:"rotate(-2deg)", background:C.mustard, color:C.night, borderRadius:12,
           padding:"7px 14px", fontSize:15, fontWeight:900, letterSpacing:1, marginBottom:18, boxShadow:`0 3px 0 ${C.mustardDeep}`,
         }}>給罵完孩子就自責的爸媽</div>
-        <h1 style={{ fontSize:"clamp(24px, 7.4vw, 46px)", fontWeight:900, lineHeight:1.45, margin:"0 0 22px", letterSpacing:0.5, color:C.night }}>
+        <h1 style={{ fontSize:"clamp(26px, 8.2vw, 46px)", fontWeight:900, lineHeight:1.45, margin:"0 0 22px", letterSpacing:0.5, color:C.night }}>
           看了這麼多教養書跟<br />教養文，都只存在你的<br /><Mark>資料夾</Mark>裡嗎？
         </h1>
-        <P serif style={{ fontSize:17.5, fontWeight:500, color:C.ink }}>道理都懂，卻還是會在罵完孩子之後，自責、愧疚。</P>
-        <P serif style={{ fontSize:17.5, fontWeight:500, color:C.ink }}>也許不是你不夠努力，而是那些方法，<strong style={{ fontWeight:900 }}>從來沒有對著「你的孩子」說</strong>。</P>
+        <P serif style={{ fontSize:17.5, fontWeight:500 }}>道理都懂，卻還是會在罵完孩子之後，自責、愧疚。</P>
+        <P serif style={{ fontSize:17.5, fontWeight:500 }}>也許不是你不夠努力，而是那些方法，<strong style={{ fontWeight:900 }}>從來沒有對著「你的孩子」說</strong>。</P>
         <div style={{ display:"flex", flexWrap:"wrap", gap:14, marginTop:24 }}>
           <Button onClick={() => goTo("booking")}>預約，看懂孩子</Button>
           {testimonials.length > 0 && <Button variant="outline" onClick={() => goTo("voices")}>看真實回饋</Button>}
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:26, fontSize:13.5, color:C.ink, lineHeight:1.6 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:26, fontSize:13.5, color:C.sub, lineHeight:1.6 }}>
           <span style={{ flexShrink:0, width:34, height:34, borderRadius:"50%", background:C.night, color:C.gold, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:FS, fontWeight:900 }}>{ABOUT.name.slice(0, 1)}</span>
           <span>{ABOUT.name}｜臨床心理背景，也是花了很久才當上媽媽的人</span>
         </div>
-      </Band>
+      </section>
 
       <PainChips />
 
       {/* 共鳴：深黃色塊 */}
-      <Band tone="teal">
-        <Sparkle size={22} color={C.mustard} style={{ position:"absolute", top:20, right:22 }} />
+      <Band tone="mustard">
+        <Sparkle size={22} color={C.night} style={{ position:"absolute", top:20, right:22, opacity:0.85 }} />
         <H2 color={C.night}>你不是不夠努力</H2>
-        <P serif style={{ color:C.ink, fontSize:17 }}>收藏夾裡有幾十篇教養文，書架上也排了好幾本教養書。</P>
-        <P serif style={{ color:C.ink, fontSize:17 }}>每一篇都說得有道理，但放到自己孩子身上，不是沒用，就是做到一半又破功。</P>
-        <P serif style={{ color:C.ink, fontSize:17 }}>然後某個晚上，你又吼了孩子。等他睡著，你看著那張臉，開始自責。</P>
+        <P serif style={{ color:"#3d2f0c", fontSize:17 }}>收藏夾裡有幾十篇教養文，書架上也排了好幾本教養書。</P>
+        <P serif style={{ color:"#3d2f0c", fontSize:17 }}>每一篇都說得有道理，但放到自己孩子身上，不是沒用，就是做到一半又破功。</P>
+        <P serif style={{ color:"#3d2f0c", fontSize:17 }}>然後某個晚上，你又吼了孩子。等他睡著，你看著那張臉，開始自責。</P>
         <p style={{ margin:"22px 0 0", fontSize:18, fontWeight:900, lineHeight:1.7, color:C.night }}>
           這不是意志力的問題。<br />
           <span style={{ display:"inline-block", marginTop:6, background:C.night, color:C.gold, padding:"6px 14px", borderRadius:12, transform:"rotate(-1deg)" }}>
@@ -496,7 +494,7 @@ export function LandingBottom({ onPick }) {
         <h2 style={{ fontSize:"clamp(23px, 6.4vw, 30px)", fontWeight:900, lineHeight:1.55, margin:"0 0 10px", color:C.night }}>
           想更知道怎麼陪他，<br />從<Mark>看懂他</Mark>開始。
         </h2>
-        <p style={{ fontSize:16, lineHeight:1.9, color:"#24544c", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
+        <p style={{ fontSize:16, lineHeight:1.9, color:"#2f5f64", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:14, justifyContent:"center" }}>
           <Button onClick={() => goTo("booking")}>回到上方選時段</Button>
           <Button variant="outline" href={LINE_URL}>有問題，先 LINE 問我</Button>
