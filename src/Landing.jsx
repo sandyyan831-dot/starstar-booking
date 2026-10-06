@@ -11,9 +11,9 @@ const C = {
   ink:"#33281a", sub:"#6f6246", gold2:"#8a5f00", line:"#eadfc6", paper:"#fffdf6", cream:"#fffbf0",
   mustard:"#f7b500", mustardDeep:"#c48a00", mustardPale:"#ffe27a",   // 銘黃
   night:"#3f2a66", nightDeep:"#241540", gold:"#ffe27a",              // 深紫（取代深藍，用在字與按鈕）
-  purple:"#e3d6f6", teal:"#bfe8ea", tealDeep:"#0f6a70",              // 淺紫（柔和的暖調紫，純色漸層、無底紋）、淺藍綠（雲霧）
+  purple:"#e3d6f6", purpleMid:"#d3bff0",                              // 淺紫（柔和的暖調紫，純色、無底紋）
   purpleGrad:"linear-gradient(160deg, #eee5fb 0%, #e3d6f6 50%, #d9c7f0 100%)",
-  purpleLine:"#cbb8ec", tealLine:"#8fcfd4",
+  purpleLine:"#cbb8ec",
 };
 const wrap = { maxWidth:680, marginLeft:"auto", marginRight:"auto", padding:"0 20px", fontFamily:F, color:C.ink };
 
@@ -41,7 +41,6 @@ const STARS = [
   [6,46,1.4],[18,62,1.9],[33,78,1.2],[49,88,1.6],[64,72,1.3],[80,84,1.8],[92,64,1.2],[12,92,1.5],
 ].map(([x, y, r]) => `radial-gradient(${r}px ${r}px at ${x}% ${y}%, #f6d77a 55%, transparent 60%)`).join(",");
 
-const CLOUDS = "radial-gradient(60% 50% at 18% 22%, rgba(255,255,255,0.8), transparent 70%), radial-gradient(55% 45% at 86% 80%, rgba(255,255,255,0.7), transparent 70%), radial-gradient(40% 35% at 72% 18%, rgba(110,195,205,0.35), transparent 70%)";
 
 function Section({ id, children, style }) {
   return <section id={id} style={{ ...wrap, padding:"30px 20px", scrollMarginTop:8, ...style }}>{children}</section>;
@@ -52,7 +51,6 @@ function Band({ tone = "mustard", id, children, style }) {
   const t = {
     mustard: { background:C.mustard, color:"#33281a" },
     purple:  { background:C.purpleGrad, color:C.ink },
-    teal:    { background:C.teal, color:C.ink, backgroundImage:CLOUDS },
     pale:    { background:"#fff0bd", color:"#33281a" },
   }[tone];
   return (
@@ -144,7 +142,7 @@ function PainChips() {
 function Gets() {
   const big = [
     { bg:C.mustard, color:C.ink, sub:"#4d3a0a", tile:C.night, tileColor:C.gold, shadow:C.mustardDeep },
-    { bg:C.teal, color:C.ink, sub:"#2f5f64", tile:C.mustard, tileColor:C.night, shadow:C.tealLine, bgImg:CLOUDS },
+    { bg:C.purpleGrad, color:C.ink, sub:"#4a3b5e", tile:C.mustard, tileColor:C.night, shadow:C.purpleLine },
   ];
   return (
     <Section id="gets">
@@ -153,7 +151,7 @@ function Gets() {
       <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
         {GETS.main.map((g, i) => (
           <div key={g.title} style={{
-            background:big[i].bg, backgroundImage:big[i].bgImg, color:big[i].color, borderRadius:22, padding:"22px 20px",
+            background:big[i].bg, color:big[i].color, borderRadius:22, padding:"22px 20px",
             boxShadow:`0 4px 0 ${big[i].shadow}`, display:"flex", gap:14, alignItems:"flex-start",
           }}>
             <div style={{
@@ -208,11 +206,11 @@ function About({ onPick }) {
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, margin:"22px 0 16px" }}>
         {a.credentials.map((c, i) => (
           <div key={c.big} style={{
-            background:[C.mustard, C.teal, C.purple][i % 3], borderRadius:18, padding:"16px 3px", textAlign:"center",
-            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${[C.mustardDeep, C.tealLine, C.purpleLine][i % 3]}`,
+            background:[C.mustard, C.purpleGrad, C.purpleMid][i % 3], borderRadius:18, padding:"16px 3px", textAlign:"center",
+            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${[C.mustardDeep, C.purpleLine, "#b9a2e0"][i % 3]}`,
           }}>
-            <div style={{ fontSize:15, fontWeight:900, lineHeight:1.35, whiteSpace:"nowrap", color:[C.night, "#0f4e53", C.night][i % 3] }}>{c.big}</div>
-            <div style={{ fontSize:11.5, color:["#5a4410", "#2f6b70", "#5a4a80"][i % 3], marginTop:4, fontWeight:500 }}>{c.small}</div>
+            <div style={{ fontSize:15, fontWeight:900, lineHeight:1.35, whiteSpace:"nowrap", color:C.night }}>{c.big}</div>
+            <div style={{ fontSize:11.5, color:["#4d3a0a", "#4a3b5e", "#4a3b5e"][i % 3], marginTop:4, fontWeight:500 }}>{c.small}</div>
           </div>
         ))}
       </div>
@@ -236,12 +234,12 @@ function About({ onPick }) {
       }}>{full ? "收合 ▴" : "看完整故事 ▾"}</button>
 
       {/* 直接預約整張星盤 */}
-      <div style={{ marginTop:30, padding:"26px 22px", borderRadius:24, background:C.teal, backgroundImage:CLOUDS, color:C.ink, border:`1.5px solid ${C.tealLine}`, position:"relative", overflow:"hidden" }}>
+      <div style={{ marginTop:30, padding:"26px 22px", borderRadius:24, background:"#fff0bd", color:C.ink, border:`2px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
         <Sparkle size={26} color={C.mustard} style={{ position:"absolute", top:14, right:16 }} />
         <h3 style={{ fontSize:"clamp(20px, 5.4vw, 25px)", fontWeight:900, lineHeight:1.5, margin:"0 40px 8px 0", color:C.night }}>{a.cta.title}</h3>
-        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#2f5f64" }}>{a.cta.text}</p>
+        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#5a4410" }}>{a.cta.text}</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
-          <Button onClick={() => onPick ? onPick("child") : goTo("booking")}>解碼孩子的星盤</Button>
+          <Button variant="dark" onClick={() => onPick ? onPick("child") : goTo("booking")}>解碼孩子的星盤</Button>
           <Button variant="outline" onClick={() => onPick ? onPick("first") : goTo("booking")}>本命盤解析</Button>
         </div>
       </div>
@@ -397,11 +395,11 @@ export function LandingTop({ onPick }) {
               </div>
             ))}
           </div>
-          <div style={{ padding:"22px 18px", borderRadius:22, background:C.teal, backgroundImage:CLOUDS, color:C.ink, border:`1.5px solid ${C.tealLine}`, position:"relative", overflow:"hidden" }}>
+          <div style={{ padding:"22px 18px", borderRadius:22, background:"#fff0bd", color:C.ink, border:`2px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
             <div style={{ display:"inline-block", fontSize:13, fontWeight:900, background:C.mustard, color:C.night, borderRadius:8, padding:"2px 10px", letterSpacing:3, marginBottom:12 }}>現在</div>
             {["先看懂孩子「本來的樣子」", "了解他的個性、學習、手足與同儕", "選擇適合他的回應方式", "做決定時，多一個依據，少一點猜"].map(t => (
               <div key={t} style={{ display:"flex", gap:8, fontSize:15, lineHeight:1.8, fontWeight:700, padding:"3px 0" }}>
-                <span style={{ flexShrink:0, color:C.tealDeep, fontWeight:900 }}>✓</span>{t}
+                <span style={{ flexShrink:0, color:C.gold2, fontWeight:900 }}>✓</span>{t}
               </div>
             ))}
           </div>
@@ -487,16 +485,16 @@ export function LandingBottom({ onPick }) {
         </div>
       </Section>
 
-      {/* 結尾：夜空色塊 */}
-      <Band tone="teal" style={{ textAlign:"center" }}>
-        <Sparkle size={22} style={{ position:"absolute", top:20, left:22 }} />
-        <Sparkle size={14} style={{ position:"absolute", top:54, right:30, opacity:0.7 }} />
+      {/* 結尾：銘黃色塊 */}
+      <Band tone="mustard" style={{ textAlign:"center" }}>
+        <Sparkle size={22} color={C.night} style={{ position:"absolute", top:20, left:22, opacity:0.85 }} />
+        <Sparkle size={14} color={C.night} style={{ position:"absolute", top:54, right:30, opacity:0.5 }} />
         <h2 style={{ fontSize:"clamp(23px, 6.4vw, 30px)", fontWeight:900, lineHeight:1.55, margin:"0 0 10px", color:C.night }}>
-          想更知道怎麼陪他，<br />從<Mark>看懂他</Mark>開始。
+          想更知道怎麼陪他，<br />從<span style={{ display:"inline-block", background:C.night, color:C.gold, padding:"0 10px", borderRadius:10, transform:"rotate(-1deg)", margin:"0 2px" }}>看懂他</span>開始。
         </h2>
-        <p style={{ fontSize:16, lineHeight:1.9, color:"#2f5f64", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
+        <p style={{ fontSize:16, lineHeight:1.9, color:"#4d3a0a", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:14, justifyContent:"center" }}>
-          <Button onClick={() => goTo("booking")}>回到上方選時段</Button>
+          <Button variant="dark" onClick={() => goTo("booking")}>回到上方選時段</Button>
           <Button variant="outline" href={LINE_URL}>有問題，先 LINE 問我</Button>
         </div>
       </Band>
