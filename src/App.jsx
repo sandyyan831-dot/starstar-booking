@@ -92,7 +92,7 @@ function StarScatter() {
         <div key={i} style={{
           position:"absolute", left:s.left, top:s.top,
           width:s.size, height:s.size, borderRadius:"50%",
-          background:"#b09650", opacity:s.opacity,
+          background:"#6fa3c0", opacity:s.opacity,
           animation: `twinkle ${3+Math.random()*4}s ease-in-out ${s.delay}s infinite alternate`,
         }} />
       ))}
@@ -103,13 +103,13 @@ function StarScatter() {
 function ConstellationDeco({ style }) {
   return (
     <svg viewBox="0 0 200 200" style={{ position:"absolute", opacity:0.12, pointerEvents:"none", ...style }} xmlns="http://www.w3.org/2000/svg">
-      <g stroke="#b09650" strokeWidth="0.7" fill="none">
+      <g stroke="#6fa3c0" strokeWidth="0.7" fill="none">
         <line x1="30" y1="40" x2="80" y2="25" /><line x1="80" y1="25" x2="120" y2="60" />
         <line x1="120" y1="60" x2="90" y2="110" /><line x1="90" y1="110" x2="140" y2="140" />
         <line x1="140" y1="140" x2="170" y2="100" /><line x1="50" y1="150" x2="90" y2="110" />
         <line x1="30" y1="40" x2="50" y2="150" />
       </g>
-      <g fill="#b09650">
+      <g fill="#6fa3c0">
         <circle cx="30" cy="40" r="2.5"/><circle cx="80" cy="25" r="2"/><circle cx="120" cy="60" r="3"/>
         <circle cx="90" cy="110" r="2.5"/><circle cx="140" cy="140" r="2"/><circle cx="170" cy="100" r="1.8"/>
         <circle cx="50" cy="150" r="2.2"/>
@@ -135,13 +135,13 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
     <div style={{ marginBottom:44 }}>
       <h3 style={{
         fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif", fontSize:22,
-        color:"#3f2a66", marginBottom:16, letterSpacing:2, textAlign:"center", fontWeight:900,
+        color:"#3a4f5e", marginBottom:16, letterSpacing:2, textAlign:"center", fontWeight:900,
       }}>✦ {year} 年 {month+1} 月 ✦</h3>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:4 }}>
         {dayNames.map(n => (
           <div key={n} style={{
             textAlign:"center", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
-            fontSize:11, color:"#76674a", padding:"6px 0", fontWeight:700,
+            fontSize:11, color:"#6a737c", padding:"6px 0", fontWeight:700,
           }}>{n}</div>
         ))}
       </div>
@@ -153,7 +153,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
             return (
               <div key={day} style={{
                 textAlign:"center", padding:"8px 2px", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
-                fontSize:13, color:"#d5cbba", borderRadius:10, minHeight:78,
+                fontSize:13, color:"#cdd5db", borderRadius:10, minHeight:78,
               }}><div>{day}</div></div>
             );
           }
@@ -162,9 +162,9 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
           return (
             <div key={day} style={{
               textAlign:"center", padding:"7px 3px", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
-              fontSize:13, color:allB?"#c8bfae":"#33281a",
-              background:allB?"#f5f0e6":"#fffaf0",
-              border:`1.5px solid ${allB?"#ebe5d8":"#eadfc6"}`,
+              fontSize:13, color:allB?"#c1c9d0":"#33281a",
+              background:allB?"#f1eee6":"#fffaf0",
+              border:`1.5px solid ${allB?"#e4e9ee":"#ece4d2"}`,
               borderRadius:12, minHeight:78, opacity:allB?0.55:1,
               display:"flex", flexDirection:"column", alignItems:"center", gap:3,
               transition:"all 0.3s",
@@ -177,8 +177,8 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
                   return (
                     <div key={slot.id} style={{
                       width:"92%", padding:"4px 0", borderRadius:6, fontSize:10,
-                      border:"1px solid #ece6d8", background:"#f5f2e9",
-                      color:"#d5cbba", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                      border:"1px solid #e3e9f1", background:"#eef1f5",
+                      color:"#cdd5db", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       fontWeight:600, letterSpacing:1,
                     }}>公休</div>
                   );
@@ -188,16 +188,16 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
                   <button key={slot.id} disabled={booked} onClick={()=>onSelect(dateObj,slot)}
                     style={{
                       width:"92%", padding:"4px 0", borderRadius:6, fontSize:10,
-                      border:booked?"1px solid #e5ddd0":"1.5px solid #f7b500",
-                      background:booked?"#f0ebe2":"#fff0bd",
-                      color:booked?"#c5baa8":"#3f2a66",
+                      border:booked?"1px solid #e4e9ee":"1.5px solid #f4d675",
+                      background:booked?"#eef0f3":"#fbf0c8",
+                      color:booked?"#b4bec6":"#3a4f5e",
                       cursor:booked?"not-allowed":"pointer",
                       fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       textDecoration:booked?"line-through":"none",
                       transition:"all 0.2s", fontWeight:900, letterSpacing:1,
                     }}
-                    onMouseEnter={e=>{if(!booked){e.target.style.background="#f7b500";}}}
-                    onMouseLeave={e=>{if(!booked){e.target.style.background="#fff0bd";}}}
+                    onMouseEnter={e=>{if(!booked){e.target.style.background="#f4d675";}}}
+                    onMouseLeave={e=>{if(!booked){e.target.style.background="#fbf0c8";}}}
                   >{booked?"已約":short}</button>
                 );
               })}
@@ -252,15 +252,15 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
 
   const inputBase = (field) => ({
     width:"100%", padding:"11px 14px", borderRadius:10,
-    border:`1.5px solid ${errors[field]?"#d4836a":"#ddd2bb"}`,
-    background:"#fffdf8", color:"#5a4d35",
+    border:`1.5px solid ${errors[field]?"#d4836a":"#d5e2ec"}`,
+    background:"#fffdf8", color:"#3a4f5e",
     fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
     outline:"none", transition:"border-color 0.3s", boxSizing:"border-box",
   });
-  const lbl = { display:"block", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13, color:"#8a7340", marginBottom:6, fontWeight:600 };
+  const lbl = { display:"block", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13, color:"#3f6f8d", marginBottom:6, fontWeight:600 };
   const errS = { fontSize:11, color:"#d4836a", marginTop:3 };
-  const focusH = e=>{ e.target.style.borderColor="#b09650"; };
-  const blurH = field => e=>{ e.target.style.borderColor=errors[field]?"#d4836a":"#ddd2bb"; };
+  const focusH = e=>{ e.target.style.borderColor="#6fa3c0"; };
+  const blurH = field => e=>{ e.target.style.borderColor=errors[field]?"#d4836a":"#d5e2ec"; };
 
   return (
     <div style={{
@@ -270,23 +270,23 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     }}>
       <div style={{
         background:"linear-gradient(170deg, #fefcf7 0%, #f8f3ea 100%)",
-        border:"1.5px solid #ddd2bb", borderRadius:20,
+        border:"1.5px solid #d5e2ec", borderRadius:20,
         padding:"28px 24px", maxWidth:520, width:"100%",
         maxHeight:"92vh", overflowY:"auto", position:"relative",
         boxShadow:"0 8px 40px rgba(160,140,100,0.12)",
       }}>
         <button onClick={onCancel} style={{
           position:"absolute", top:14, right:16, background:"none",
-          border:"none", color:"#b5a27a", fontSize:20, cursor:"pointer",
+          border:"none", color:"#6a737c", fontSize:20, cursor:"pointer",
         }}>✕</button>
 
         <h2 style={{
           fontFamily:"Georgia, 'Times New Roman', serif", fontSize:24,
-          color:"#8a7340", marginBottom:4, fontWeight:600,
+          color:"#3f6f8d", marginBottom:4, fontWeight:600,
         }}>預約占星諮詢</h2>
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
-          color:"#b5a27a", marginBottom:22,
+          color:"#6a737c", marginBottom:22,
         }}>{formatDate(date)}　{slot.label}</p>
 
         <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -300,41 +300,41 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
                   <button key={t.id} onClick={()=>{setConsultType(t.id);setQuickTime(null);setErrors(e=>({...e,consultType:undefined,quickTime:undefined}));}}
                     style={{
                       textAlign:"left", padding:"14px 16px", borderRadius:12,
-                      border:`2px solid ${sel?"#3f2a66":"#e5ddd0"}`,
-                      background:sel?"#fff0bd":"#fdfaf3",
+                      border:`2px solid ${sel?"#3a4f5e":"#e4e9ee"}`,
+                      background:sel?"#e6eff5":"#ffffff",
                       cursor:"pointer", transition:"all 0.25s",
                     }}
-                    onMouseEnter={e=>{if(!sel)e.currentTarget.style.borderColor="#cbba95";}}
-                    onMouseLeave={e=>{if(!sel)e.currentTarget.style.borderColor="#e5ddd0";}}
+                    onMouseEnter={e=>{if(!sel)e.currentTarget.style.borderColor="#bccbd8";}}
+                    onMouseLeave={e=>{if(!sel)e.currentTarget.style.borderColor="#e4e9ee";}}
                   >
                     <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3 }}>
-                      <span style={{ fontSize:16, color:"#b09650" }}>{t.icon}</span>
+                      <span style={{ fontSize:16, color:"#6fa3c0" }}>{t.icon}</span>
                       <span style={{
                         fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
-                        color:sel?"#7a6530":"#6b5c3e", fontWeight:700,
+                        color:sel?"#3a4f5e":"#4a5560", fontWeight:700,
                       }}>{t.label}</span>
                       <span style={{
-                        fontSize:10, color:"#b5a27a", background:"rgba(176,150,80,0.1)",
+                        fontSize:10, color:"#6a737c", background:"rgba(176,150,80,0.1)",
                         padding:"2px 8px", borderRadius:4, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       }}>{t.tag}</span>
                     </div>
                     <div style={{
                       fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
-                      color:"#b5a27a", paddingLeft:24,
+                      color:"#6a737c", paddingLeft:24,
                     }}>{t.desc}　｜　費用 {t.priceLabel}</div>
                     {t.reportSubtitle && (
                       <div style={{
                         fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                         paddingLeft:24, marginTop:6,
                       }}>
-                        <div style={{ fontSize:12, color:"#8a7340", fontWeight:700, marginBottom:2 }}>{t.reportSubtitle}</div>
-                        <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.6 }}>{t.reportDesc}</div>
+                        <div style={{ fontSize:12, color:"#3f6f8d", fontWeight:700, marginBottom:2 }}>{t.reportSubtitle}</div>
+                        <div style={{ fontSize:11.5, color:"#6a737c", lineHeight:1.6 }}>{t.reportDesc}</div>
                       </div>
                     )}
                     {t.overtimeNote && (
                       <div style={{
                         fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11,
-                        color:"#c4a870", paddingLeft:24, marginTop:6, fontStyle:"italic",
+                        color:"#8a949c", paddingLeft:24, marginTop:6, fontStyle:"italic",
                       }}>⏱ {t.overtimeNote}</div>
                     )}
                   </button>
@@ -358,9 +358,9 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
                       onClick={()=>{setQuickTime(qt.id);setErrors(e=>({...e,quickTime:undefined}));}}
                       style={{
                         padding:"10px 0", borderRadius:10, fontSize:13,
-                        border:`1.5px solid ${booked?"#e5ddd0":sel?"#b09650":"#ddd2bb"}`,
-                        background:booked?"#f0ebe2":sel?"linear-gradient(135deg, #f5ecd5, #efe4c8)":"#fdfaf3",
-                        color:booked?"#c5baa8":sel?"#7a6530":"#6b5c3e",
+                        border:`1.5px solid ${booked?"#e4e9ee":sel?"#6fa3c0":"#d5e2ec"}`,
+                        background:booked?"#eef0f3":sel?"linear-gradient(135deg, #eef5fa, #e6eff5)":"#fdfaf3",
+                        color:booked?"#b4bec6":sel?"#3a4f5e":"#4a5560",
                         cursor:booked?"not-allowed":"pointer",
                         fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                         textDecoration:booked?"line-through":"none",
@@ -393,9 +393,9 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
                   <button key={g} onClick={()=>update("gender",g)}
                     style={{
                       padding:"11px 0", borderRadius:10, fontSize:14,
-                      border:`1.5px solid ${sel?"#b09650":"#ddd2bb"}`,
-                      background:sel?"linear-gradient(135deg, #f5ecd5, #efe4c8)":"#fffdf8",
-                      color:sel?"#7a6530":"#6b5c3e",
+                      border:`1.5px solid ${sel?"#6fa3c0":"#d5e2ec"}`,
+                      background:sel?"linear-gradient(135deg, #eef5fa, #e6eff5)":"#fffdf8",
+                      color:sel?"#3a4f5e":"#4a5560",
                       cursor:"pointer", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       fontWeight:600, transition:"all 0.2s",
                     }}
@@ -484,7 +484,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
           <div>
             <label style={lbl}>想要問的問題</label>
             {consultType==="returning" && (
-              <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.6, marginBottom:6, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif" }}>
+              <div style={{ fontSize:11.5, color:"#6a737c", lineHeight:1.6, marginBottom:6, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif" }}>
                 若要合盤，請附上對方的性別、出生年月日時與出生地
               </div>
             )}
@@ -497,11 +497,11 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
 
           <button onClick={handleSubmit} disabled={submitting} style={{
             width:"100%", padding:"14px 0", borderRadius:12, border:"none",
-            background: submitting ? "#ccc" : "#f7b500",
-            color:"#3f2a66", fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
+            background: submitting ? "#ccc" : "#f4d675",
+            color:"#3a4f5e", fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
             fontSize:16, fontWeight:900, cursor:submitting?"wait":"pointer", letterSpacing:3,
             marginTop:4, transition:"all 0.15s",
-            boxShadow:submitting?"none":"0 4px 0 #c48a00",
+            boxShadow:submitting?"none":"0 4px 0 #d9b84f",
           }}
             onMouseEnter={e=>{if(!submitting){e.currentTarget.style.transform="translateY(-1px)";}}}
             onMouseLeave={e=>{if(!submitting){e.currentTarget.style.transform="translateY(0)";}}}
@@ -523,32 +523,32 @@ function ConfirmationModal({ date, timeLabel, consultType, onClose }) {
     }}>
       <div style={{
         background:"linear-gradient(170deg, #fefcf7 0%, #f8f3ea 100%)",
-        border:"1.5px solid #ddd2bb", borderRadius:20,
+        border:"1.5px solid #d5e2ec", borderRadius:20,
         padding:"32px 24px", maxWidth:480, width:"100%", textAlign:"center",
         boxShadow:"0 8px 40px rgba(160,140,100,0.12)",
       }}>
-        <div style={{ fontSize:36, marginBottom:10, color:"#b09650" }}>✧</div>
+        <div style={{ fontSize:36, marginBottom:10, color:"#6fa3c0" }}>✧</div>
         <h2 style={{
           fontFamily:"Georgia, 'Times New Roman', serif", fontSize:24,
-          color:"#8a7340", marginBottom:6,
+          color:"#3f6f8d", marginBottom:6,
         }}>預約已送出</h2>
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
-          color:"#b5a27a", marginBottom:4, lineHeight:1.7,
+          color:"#6a737c", marginBottom:4, lineHeight:1.7,
         }}>{formatDate(date)}　{timeLabel}</p>
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
-          color:"#8a7340", marginBottom:22, fontWeight:600,
+          color:"#3f6f8d", marginBottom:22, fontWeight:600,
         }}>{ct?.icon} {ct?.label}</p>
 
         <div style={{
-          background:"linear-gradient(135deg, #f5ecd5, #efe4c8)",
-          border:"1.5px solid #ddd2bb", borderRadius:14,
+          background:"linear-gradient(135deg, #eef5fa, #e6eff5)",
+          border:"1.5px solid #d5e2ec", borderRadius:14,
           padding:"18px 22px", marginBottom:22, textAlign:"left",
         }}>
           <p style={{
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
-            color:"#8a7340", fontWeight:700, marginBottom:10,
+            color:"#3f6f8d", fontWeight:700, marginBottom:10,
           }}>✦ 匯款資訊</p>
           <p style={{
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
@@ -556,17 +556,17 @@ function ConfirmationModal({ date, timeLabel, consultType, onClose }) {
           }}>{PAYMENT_INFO.account}</p>
           <p style={{
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:16,
-            color:"#7a6530", fontWeight:700,
+            color:"#3a4f5e", fontWeight:700,
           }}>應匯金額：{ct?.priceLabel}</p>
         </div>
 
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
-          color:"#b5a27a", lineHeight:1.9, marginBottom:16,
+          color:"#6a737c", lineHeight:1.9, marginBottom:16,
         }}>
-          請於預約後 <strong style={{color:"#8a7340"}}>3 天內</strong> 完成匯款<br/>
+          請於預約後 <strong style={{color:"#3f6f8d"}}>3 天內</strong> 完成匯款<br/>
           匯款完成後請點下方按鈕，透過 Line 傳送匯款截圖<br/>
-          請使用與預約表單<strong style={{color:"#8a7340"}}>相同的 Line 顯示名稱</strong>傳送<br/>
+          請使用與預約表單<strong style={{color:"#3f6f8d"}}>相同的 Line 顯示名稱</strong>傳送<br/>
           確認收款後才算正式完成預約 ✧
         </p>
 
@@ -581,8 +581,8 @@ function ConfirmationModal({ date, timeLabel, consultType, onClose }) {
 
         <button onClick={onClose} style={{
           width:"100%", padding:"11px 0", borderRadius:10,
-          border:"1.5px solid #cbba95", background:"transparent",
-          color:"#8a7340", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+          border:"1.5px solid #bccbd8", background:"transparent",
+          color:"#3f6f8d", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
           fontSize:14, cursor:"pointer", transition:"all 0.25s", fontWeight:600,
         }}
           onMouseEnter={e=>{e.target.style.background="rgba(176,150,80,0.08)";}}
@@ -706,16 +706,16 @@ export default function App() {
     <>
       <style>{`
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { background:#fffbf0; }
+        body { background:#faf7f0; }
         ::-webkit-scrollbar { width:5px; }
         ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:#ddd2bb; border-radius:3px; }
+        ::-webkit-scrollbar-thumb { background:#d5e2ec; border-radius:3px; }
       `}</style>
 
       <div style={{
         minHeight:"100vh",
-        background:"#fffbf0",
-        color:"#5a4d35", padding:"0 0 50px 0", position:"relative", overflow:"hidden",
+        background:"#faf7f0",
+        color:"#3a4f5e", padding:"0 0 50px 0", position:"relative", overflow:"hidden",
       }}>
         <LandingTop onPick={pickType} />
         <StartHeading />
@@ -729,9 +729,9 @@ export default function App() {
               "諮詢費 $1,500 ／半小時",
             ].map((text,i)=>(
               <div key={i} style={{
-                background:"#fff0bd", borderRadius:12, padding:"6px 13px",
+                background:"#e6eff5", borderRadius:12, padding:"6px 13px",
                 fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif", fontSize:12.5,
-                color:"#3f2a66", fontWeight:700,
+                color:"#3a4f5e", fontWeight:700,
               }}>✦ {text}</div>
             ))}
           </div>
@@ -747,31 +747,31 @@ export default function App() {
                 onClick={()=>pickType(t.id)}
                 onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pickType(t.id); } }}
                 style={{
-                background:on?"#fff0bd":"#fffaf0",
-                border:`2px solid ${on?"#3f2a66":"#eadfc6"}`, borderRadius:18, padding:"16px 18px",
-                boxShadow:on?"0 4px 0 #3f2a66":"0 3px 0 #eadfc6",
+                background:on?"#e6eff5":"#ffffff",
+                border:`2px solid ${on?"#3a4f5e":"#ece4d2"}`, borderRadius:18, padding:"16px 18px",
+                boxShadow:on?"0 4px 0 #3a4f5e":"0 3px 0 #ece4d2",
                 position:"relative", cursor:"pointer", transition:"all 0.18s",
                 fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
               }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                   <span style={{
-                    flexShrink:0, width:30, height:30, borderRadius:10, background:"#f7b500", color:"#3f2a66",
+                    flexShrink:0, width:30, height:30, borderRadius:10, background:"#f4d675", color:"#3a4f5e",
                     display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:900,
                   }}>{t.icon}</span>
                   <span style={{ fontSize:16, color:"#33281a", fontWeight:900, lineHeight:1.4 }}>{t.label}</span>
                 </div>
-                <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", fontSize:13, color:"#6b5a38" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", fontSize:13, color:"#6a737c" }}>
                   <span>{t.desc}</span>
-                  <span style={{ background:"#f7b500", color:"#3f2a66", fontWeight:900, borderRadius:8, padding:"1px 10px", fontSize:14 }}>{t.priceLabel}</span>
+                  <span style={{ background:"#f4d675", color:"#3a4f5e", fontWeight:900, borderRadius:8, padding:"1px 10px", fontSize:14 }}>{t.priceLabel}</span>
                 </div>
                 {t.reportSubtitle && (
-                  <div style={{ marginTop:10, paddingTop:10, borderTop:"1.5px dashed #e2d3ac" }}>
-                    <div style={{ fontSize:13, color:"#8a5f00", fontWeight:900, marginBottom:2 }}>{t.reportSubtitle}</div>
-                    <div style={{ fontSize:12.5, color:"#6b5a38", lineHeight:1.7 }}>{t.reportDesc}</div>
+                  <div style={{ marginTop:10, paddingTop:10, borderTop:"1.5px dashed #d3e1ec" }}>
+                    <div style={{ fontSize:13, color:"#3f6f8d", fontWeight:900, marginBottom:2 }}>{t.reportSubtitle}</div>
+                    <div style={{ fontSize:12.5, color:"#6a737c", lineHeight:1.7 }}>{t.reportDesc}</div>
                   </div>
                 )}
                 {t.overtimeNote && (
-                  <div style={{ fontSize:12, color:"#7a5c0c", marginTop:8 }}>⏱ {t.overtimeNote}</div>
+                  <div style={{ fontSize:12, color:"#6a737c", marginTop:8 }}>⏱ {t.overtimeNote}</div>
                 )}
               </div>
               );
@@ -787,24 +787,24 @@ export default function App() {
               <div style={{
                 position:"sticky", top:8, zIndex:20, marginBottom:16,
                 display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
-                background:"#fff0bd",
-                border:"2px solid #3f2a66", borderRadius:14, padding:"10px 14px",
+                background:"#e6eff5",
+                border:"2px solid #3a4f5e", borderRadius:14, padding:"10px 14px",
                 fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
-                boxShadow:"0 4px 0 #3f2a66",
+                boxShadow:"0 4px 0 #3a4f5e",
               }}>
-                <div style={{ fontSize:14, color:"#3f2a66", fontWeight:900, lineHeight:1.5 }}>
+                <div style={{ fontSize:14, color:"#3a4f5e", fontWeight:900, lineHeight:1.5 }}>
                   {pt?.icon} {pt?.label}
-                  <div style={{ fontSize:12, color:"#6b5a38", fontWeight:500 }}>請點選下方日期時段預約</div>
+                  <div style={{ fontSize:12, color:"#6a737c", fontWeight:500 }}>請點選下方日期時段預約</div>
                 </div>
                 <button onClick={()=>setPickedType(null)} style={{
-                  flexShrink:0, padding:"5px 12px", borderRadius:8, border:"1.5px solid #3f2a66",
-                  background:"transparent", color:"#3f2a66", fontSize:12.5, cursor:"pointer", fontWeight:900,
+                  flexShrink:0, padding:"5px 12px", borderRadius:8, border:"1.5px solid #3a4f5e",
+                  background:"transparent", color:"#3a4f5e", fontSize:12.5, cursor:"pointer", fontWeight:900,
                 }}>取消</button>
               </div>
             );
           })()}
           {loading ? (
-            <div style={{ textAlign:"center", padding:50, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", color:"#c4b48a" }}>載入中…</div>
+            <div style={{ textAlign:"center", padding:50, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", color:"#8a949c" }}>載入中…</div>
           ) : (
             months.map(m=>(
               <MonthCalendar key={`${m.year}-${m.month}`}
@@ -819,14 +819,14 @@ export default function App() {
         <div style={{
           textAlign:"center", marginTop:40,
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11,
-          color:"#76674a", letterSpacing:2,
+          color:"#6a737c", letterSpacing:2,
         }}>✧ 點選日期時段即可開始預約 ✧</div>
 
         <LandingBottom onPick={pickType} />
 
         <div style={{
           position:"absolute", bottom:0, left:0, right:0, height:1,
-          background:"linear-gradient(90deg, transparent 10%, #c9ab5a 40%, #dcc470 50%, #c9ab5a 60%, transparent 90%)",
+          background:"linear-gradient(90deg, transparent 10%, #f4d675 40%, #f4d675 50%, #f4d675 60%, transparent 90%)",
           opacity:0.3,
         }} />
 
