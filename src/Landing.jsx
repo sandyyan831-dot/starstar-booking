@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  TESTIMONIALS, STORY, DEMO_TESTIMONIALS, DEMO_STORY,
+  TESTIMONIALS, STORY, DEMO_STORY,
   PAIN_POINTS, REPORT_ITEMS, STEPS, FAQ,
 } from "./landingContent.js";
 
@@ -12,7 +12,7 @@ const LINE_URL = "https://line.me/R/ti/p/@754atiwp";
 const IG_URL = "https://www.instagram.com/starstarlive";
 
 const demo = typeof window !== "undefined" && import.meta.env.DEV && window.location.search.includes("demo");
-const testimonials = demo ? DEMO_TESTIMONIALS : TESTIMONIALS;
+const testimonials = TESTIMONIALS;
 const story = demo ? DEMO_STORY : STORY;
 
 function goTo(id) {
@@ -85,6 +85,89 @@ function PainChips() {
   );
 }
 
+/* ── 真實回饋：一塊底板，幾則短評語散落其上，點開才看全部 ── */
+const PANEL = "#f6efdc";
+// 錯落的位置（寬度%、靠左/靠右、微微旋轉），讓評語看起來「散落」在底板上
+const SCATTER = [
+  { w:66, align:"flex-start", rot:-1.5 },
+  { w:48, align:"flex-end",   rot:1.5 },
+  { w:56, align:"flex-start", rot:1 },
+  { w:70, align:"flex-end",   rot:-1 },
+];
+
+function VoicesViewer({ items, onClose }) {
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => { document.body.style.overflow = prev; window.removeEventListener("keydown", onKey); };
+  }, [onClose]);
+  return (
+    <div role="dialog" aria-modal="true" aria-label="真實回饋" style={{
+      position:"fixed", inset:0, zIndex:2000, background:PANEL, overflowY:"auto", WebkitOverflowScrolling:"touch", fontFamily:F, color:C.ink,
+    }}>
+      <div style={{
+        position:"sticky", top:0, zIndex:1, display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"14px 18px", background:"rgba(246,239,220,0.96)", backdropFilter:"blur(8px)", borderBottom:`1px solid ${C.line}`,
+      }}>
+        <div style={{ fontSize:17, fontWeight:900 }}>真實回饋<span style={{ fontSize:13, fontWeight:500, color:C.sub, marginLeft:8 }}>共 {items.length} 則</span></div>
+        <button onClick={onClose} aria-label="關閉" style={{
+          width:38, height:38, borderRadius:"50%", border:`1px solid ${C.line}`, background:"#fffdf8", color:C.ink, fontSize:18, cursor:"pointer",
+        }}>✕</button>
+      </div>
+      <div style={{ maxWidth:520, margin:"0 auto", padding:"18px 16px 36px", display:"flex", flexDirection:"column", gap:14 }}>
+        {items.map((t) => (
+          <img key={t.image} src={t.image} alt={t.alt || "客人回饋"} loading="lazy" decoding="async"
+            style={{ display:"block", width:"100%", height:"auto", mixBlendMode:"multiply", borderRadius:18 }} />
+        ))}
+        <div style={{ textAlign:"center", paddingTop:12 }}>
+          <Button onClick={() => { onClose(); setTimeout(() => goTo("booking"), 60); }}>我也想預約</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Voices({ items }) {
+  const [open, setOpen] = useState(false);
+  const teasers = items.filter(t => t.teaser).sort((a, b) => a.teaser - b.teaser).slice(0, SCATTER.length);
+  return (
+    <Section id="voices">
+      <H2>真實回饋</H2>
+      <P style={{ color:C.sub, marginBottom:16 }}>每一則，都是客人的真實分享。</P>
+      <div onClick={() => setOpen(true)} role="button" tabIndex={0}
+        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(true); } }}
+        style={{
+          position:"relative", overflow:"hidden", cursor:"pointer", borderRadius:22, background:PANEL,
+          border:`1px solid ${C.line}`, padding:"20px 16px 88px",
+        }}>
+        <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+          {teasers.map((t, i) => {
+            const sc = SCATTER[i % SCATTER.length];
+            return (
+              <img key={t.image} src={t.image} alt={t.alt || "客人回饋"} loading="lazy" decoding="async" style={{
+                display:"block", width:`${sc.w}%`, alignSelf:sc.align, transform:`rotate(${sc.rot}deg)`,
+                mixBlendMode:"multiply", borderRadius:16,
+              }} />
+            );
+          })}
+        </div>
+        <div style={{
+          position:"absolute", left:0, right:0, bottom:0, padding:"56px 18px 20px", textAlign:"center",
+          background:`linear-gradient(rgba(246,239,220,0), ${PANEL} 62%)`,
+        }}>
+          <span style={{
+            display:"inline-block", padding:"12px 22px", borderRadius:999, background:"#fffdf8", border:`1.5px solid ${C.gold}`,
+            color:C.deep, fontSize:15, fontWeight:700, letterSpacing:1, boxShadow:"0 2px 10px rgba(176,150,80,0.18)",
+          }}>點開看全部 {items.length} 則回饋 →</span>
+        </div>
+      </div>
+      {open && <VoicesViewer items={items} onClose={() => setOpen(false)} />}
+    </Section>
+  );
+}
+
 export function LandingTop() {
   return (
     <>
@@ -126,7 +209,7 @@ export function LandingTop() {
           </div>
           <div style={{ padding:"20px 18px", borderRadius:16, background:"#fbf3d9", border:`1.5px solid ${C.gold}` }}>
             <div style={{ fontSize:13, fontWeight:700, color:C.deep, letterSpacing:2, marginBottom:12 }}>現在</div>
-            {["先看懂孩子「本來的樣子」", "了解他的個性、學習節奏、手足與同儕相處", "選擇適合他的回應方式", "做決定時，多一個依據，少一點猜"].map(t => (
+            {["先看懂孩子「本來的樣子」", "了解他的個性、學習、手足與同儕", "選擇適合他的回應方式", "做決定時，多一個依據，少一點猜"].map(t => (
               <div key={t} style={{ fontSize:15, lineHeight:1.8, color:C.ink, fontWeight:600, padding:"3px 0" }}>・{t}</div>
             ))}
           </div>
@@ -136,7 +219,7 @@ export function LandingTop() {
       {/* 星盤是什麼 */}
       <Section>
         <H2>星盤，是看懂孩子的<Mark>一個角度</Mark></H2>
-        <P>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子。</P>
+        <P>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子、怎麼想的。</P>
         <div style={{ padding:"18px 18px", borderRadius:16, background:C.card, border:`1px solid ${C.line}`, margin:"18px 0 14px" }}>
           <div style={{ fontSize:14, fontWeight:700, color:C.deep, marginBottom:12, letterSpacing:1 }}>「解碼孩子的星盤天賦」報告內含</div>
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
@@ -159,30 +242,7 @@ export function LandingTop() {
       )}
 
       {/* 真實回饋（有填才顯示） */}
-      {testimonials.length > 0 && (
-        <Section id="voices" style={{ paddingRight:0 }}>
-          <H2>真實回饋</H2>
-          <P style={{ color:C.sub, marginBottom:14 }}>每一則，都是客人預約後的真實分享。</P>
-          <div className="voices-row" style={{
-            display:"flex", gap:12, overflowX:"auto", scrollSnapType:"x mandatory",
-            padding:"4px 20px 14px 0", scrollbarWidth:"none",
-          }}>
-            {testimonials.map((t, i) => (
-              <figure key={i} style={{
-                flex:"0 0 82%", maxWidth:340, scrollSnapAlign:"start", margin:0,
-                padding:"20px 18px", borderRadius:16, background:C.card, border:`1px solid ${C.line}`,
-                boxShadow:"0 2px 14px rgba(160,140,100,0.08)", display:"flex", flexDirection:"column", gap:12,
-              }}>
-                {t.image && <img src={t.image} alt="" style={{ width:"100%", borderRadius:10, display:"block" }} />}
-                <blockquote style={{ margin:0, fontSize:15.5, lineHeight:1.9, color:C.ink, whiteSpace:"pre-wrap" }}>{t.text}</blockquote>
-                <figcaption style={{ fontSize:13, color:C.sub, marginTop:"auto" }}>
-                  <strong style={{ color:C.deep }}>{t.name}</strong>　{t.service}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </Section>
-      )}
+      {testimonials.length > 0 && <Voices items={testimonials} />}
     </>
   );
 }
@@ -213,7 +273,6 @@ export function LandingBottom() {
   return (
     <>
       <style>{`
-        .voices-row::-webkit-scrollbar { display:none; }
         details > summary::-webkit-details-marker { display:none; }
         details[open] > summary > span:last-child { transform:rotate(45deg); }
       `}</style>

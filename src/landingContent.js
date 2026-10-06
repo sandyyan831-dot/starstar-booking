@@ -1,20 +1,35 @@
 // 宣傳區塊的文字都集中在這個檔案，改文案不用動版面程式。
 
-// 客人回饋：把整理好的心得貼在這裡，網頁就會自動出現「真實回饋」區塊。
-// 沒有任何一筆時，整個區塊（和上方的「看真實回饋」按鈕）都不會顯示。
-// 格式：{ name: "稱呼", service: "預約的項目", text: "心得內容", image: "截圖網址（可不填）" }
-export const TESTIMONIALS = [];
+// 客人回饋（對話泡泡截圖）：圖片放在 public/feedback/，這裡依「點開後」的順序列出。
+// teaser 有填數字的，會「散落」在首頁的底板上當預告（數字是出現順序），建議放短的。
+// 想新增：把裁好的圖放進 public/feedback/，再加一行 { image: "/feedback/檔名.jpg", alt: "..." }。
+// 沒有任何一筆時，整個「真實回饋」區塊（和上方的「看真實回饋」按鈕）都不會顯示。
+export const TESTIMONIALS = [
+  { image: "/feedback/01.jpg", alt: "家長分享：接受孩子的原廠設定後，調整互動方式，孩子變得自動自發" },
+  { image: "/feedback/02.jpg", alt: "家長分享：週末去戶外跑跑、上喜歡的畫畫課" },
+  { image: "/feedback/03.jpg", alt: "家長分享：謝謝妳讓我重新認識孩子一次", teaser: 1 },
+  { image: "/feedback/04.jpg", alt: "家長分享：兩個孩子的個性、情緒表達與相處方式" },
+  { image: "/feedback/05.jpg", alt: "家長分享：這一小時和這份報告真是太寶貴了" },
+  { image: "/feedback/06.jpg", alt: "家長分享：改把時間用來帶孩子到戶外玩" },
+  { image: "/feedback/07.jpg", alt: "家長分享：孩子的個性與人際相處" },
+  { image: "/feedback/08.jpg", alt: "家長分享：我會朝這幾個方向嘗試" },
+  { image: "/feedback/09.jpg", alt: "家長推薦：育兒遇到瓶頸，可以用不同角度認識孩子" },
+  { image: "/feedback/10.jpg", alt: "家長分享：姐姐妹妹的學習方式不同" },
+  { image: "/feedback/11.jpg", alt: "家長分享：孩子的學習與情緒" },
+  { image: "/feedback/12.jpg", alt: "家長分享：這種孩子真的很難教育" },
+  { image: "/feedback/13.jpg", alt: "客人分享：真是謝謝妳的解題", teaser: 3 },
+  { image: "/feedback/14.jpg", alt: "客人分享：你好會說話，讀起來有療癒的感覺", teaser: 4 },
+  { image: "/feedback/15.jpg", alt: "客人分享：怎麼這麼厲害", teaser: 2 },
+  { image: "/feedback/16.jpg", alt: "客人分享：我很快就再回來跟你聊", teaser: 5 },
+  { image: "/feedback/17.jpg", alt: "客人分享：原本很抗拒算命，看了分享後改觀" },
+  { image: "/feedback/18.jpg", alt: "客人分享：預見未來的狀況，會更放手去做" },
+];
 
 // 你的故事：填了就會出現「為什麼是我」區塊；維持 null 就不顯示。
 // 格式：{ title: "標題", paragraphs: ["第一段", "第二段"] }
 export const STORY = null;
 
-// 開發預覽用：網址後面加 ?demo 才會顯示範例，正式網站不會出現。
-export const DEMO_TESTIMONIALS = [
-  { name: "（範例）媽咪 A", service: "解碼孩子的星盤天賦", text: "這裡會放客人的真實心得。範例文字，請換成你整理好的回饋。" },
-  { name: "（範例）爸爸 B", service: "解碼孩子的星盤天賦", text: "每一則回饋會是一張卡片，手機上可以左右滑動。範例文字。" },
-  { name: "（範例）媽咪 C", service: "本命盤解析", text: "也可以附上客人同意公開的對話截圖。範例文字。" },
-];
+// 開發預覽用：網址後面加 ?demo 才會顯示範例故事，正式網站不會出現。
 export const DEMO_STORY = {
   title: "（範例）為什麼是我",
   paragraphs: ["這裡放你的故事：你為什麼開始做占星、為什麼想幫爸媽看懂孩子。範例文字。", "第二段。範例文字。"],
