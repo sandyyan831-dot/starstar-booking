@@ -58,6 +58,16 @@ export const ABOUT = {
     "直到有一天，我試著用占星、用他的星盤去理解他，也讓自己理解他。那一刻，我真的鬆了好大一口氣。",
     "現在，我想把這一口氣，也帶給正在摸索的你。",
   ],
+  // 把故事拍成的影片（Instagram 貼文連結），依觀看順序列出
+  videos: [
+    { label: "第 1 部", url: "https://www.instagram.com/p/DRUbnhbEiqG/" },
+    { label: "第 2 部", url: "https://www.instagram.com/p/DRcKivnkpPl/" },
+    { label: "第 3 部", url: "https://www.instagram.com/p/DRmdJWfEkU1/" },
+    { label: "第 4 部", url: "https://www.instagram.com/p/DRpCek2EtcV/" },
+    { label: "第 5 部", url: "https://www.instagram.com/p/DR4es3nkg3Q/" },
+    { label: "第 6 部", url: "https://www.instagram.com/p/DSKghHeEuhg/" },
+    { label: "第 7 部", url: "https://www.instagram.com/p/DScih3CkoW8/" },
+  ],
   cta: {
     title: "直接預約整張星盤解讀",
     text: "從孩子的星盤開始，看懂他本來的樣子；也可以先從自己的本命盤開始。",

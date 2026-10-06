@@ -221,6 +221,21 @@ function About({ onPick }) {
         background:"none", border:"none", padding:"4px 0 0 20px", cursor:"pointer", fontFamily:F, fontSize:14.5, fontWeight:700, color:C.gold2, letterSpacing:1,
       }}>{full ? "收合 ▴" : "看完整故事 ▾"}</button>
 
+      {/* 故事影片 */}
+      {a.videos && a.videos.length > 0 && (
+        <div style={{ marginTop:16, background:C.paper, border:`1.5px solid ${C.line}`, borderRadius:20, padding:"16px 18px" }}>
+          <div style={{ fontSize:14, fontWeight:700, color:C.gold2, letterSpacing:1, marginBottom:10 }}>▶ 我把這段故事拍成了 {a.videos.length} 部影片</div>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:8 }}>
+            {a.videos.map(v => (
+              <a key={v.url} href={v.url} target="_blank" rel="noopener noreferrer" style={{
+                display:"flex", alignItems:"center", justifyContent:"center", gap:4, minHeight:42, borderRadius:12,
+                background:C.sky, color:C.ink, border:`1.5px solid ${C.skyLine}`, textDecoration:"none", fontSize:13, fontWeight:700, whiteSpace:"nowrap",
+              }}>{v.label}</a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 直接預約整張星盤 */}
       <div style={{ marginTop:20, padding:"18px 20px", borderRadius:20, background:"#fbf0c8", color:C.ink, border:`1.5px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
         <Sparkle size={20} color={C.mustard} style={{ position:"absolute", top:14, right:16 }} />
