@@ -42,7 +42,7 @@ const STARS = [
 
 
 function Section({ id, children, style }) {
-  return <section id={id} style={{ ...wrap, padding:"30px 20px", scrollMarginTop:8, ...style }}>{children}</section>;
+  return <section id={id} style={{ ...wrap, padding:"20px 20px", scrollMarginTop:8, ...style }}>{children}</section>;
 }
 
 // 圓角色塊：一段一段交錯，讓頁面有節奏
@@ -54,19 +54,19 @@ function Band({ tone = "mustard", id, children, style }) {
   }[tone];
   return (
     <div id={id} style={{
-      position:"relative", overflow:"hidden", maxWidth:720, width:"calc(100% - 20px)", margin:"26px auto",
-      borderRadius:32, fontFamily:F, scrollMarginTop:8, ...t, ...style,
+      position:"relative", overflow:"hidden", maxWidth:640, width:"calc(100% - 40px)", margin:"14px auto",
+      borderRadius:20, fontFamily:F, scrollMarginTop:8, ...t, ...style,
     }}>
-      <div style={{ ...wrap, padding:"44px 22px", color:t.color }}>{children}</div>
+      <div style={{ ...wrap, padding:"26px 20px", color:t.color }}>{children}</div>
     </div>
   );
 }
 
 function H2({ children, color, style }) {
-  return <h2 style={{ fontSize:"clamp(24px, 6.4vw, 31px)", fontWeight:900, lineHeight:1.45, margin:"0 0 14px", letterSpacing:0.5, color:color || C.ink, ...style }}>{children}</h2>;
+  return <h2 style={{ fontSize:"clamp(21px, 5.4vw, 26px)", fontWeight:700, lineHeight:1.45, margin:"0 0 12px", letterSpacing:0.5, color:color || C.ink, ...style }}>{children}</h2>;
 }
 function P({ children, style, serif }) {
-  return <p style={{ fontSize:16, lineHeight:1.95, margin:"0 0 14px", color:"#4a5560", fontFamily:serif ? FS : F, ...style }}>{children}</p>;
+  return <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 12px", color:"#4a5560", fontFamily:serif ? FS : F, ...style }}>{children}</p>;
 }
 // 螢光筆劃線
 function Mark({ children, dark }) {
@@ -80,12 +80,12 @@ function Button({ children, onClick, href, variant = "primary" }) {
   const v = {
     primary: { background:C.mustard, color:C.night, border:"none", boxShadow:`0 4px 0 ${C.mustardDeep}`, shadow:C.mustardDeep },
     dark:    { background:C.night, color:C.gold, border:"none", boxShadow:`0 4px 0 ${C.nightDeep}`, shadow:C.nightDeep },
-    outline: { background:"transparent", color:C.night, border:`2px solid ${C.night}`, boxShadow:"none" },
-    gold:    { background:"transparent", color:C.gold, border:`2px solid ${C.mustard}`, boxShadow:"none" },
+    outline: { background:"transparent", color:C.night, border:`1.5px solid ${C.night}`, boxShadow:"none" },
+    gold:    { background:"transparent", color:C.gold, border:`1.5px solid ${C.mustard}`, boxShadow:"none" },
   }[variant];
   const { shadow, ...rest } = v;
   const style = {
-    display:"inline-block", padding:"14px 22px", borderRadius:14, fontFamily:F, fontSize:16, fontWeight:900,
+    display:"inline-block", padding:"14px 22px", borderRadius:14, fontFamily:F, fontSize:16, fontWeight:700,
     textDecoration:"none", cursor:"pointer", letterSpacing:1, textAlign:"center", ...rest,
   };
   return href
@@ -99,25 +99,25 @@ function PainChips() {
   const toggle = (i) => setPicked(prev => { const n = new Set(prev); n.has(i) ? n.delete(i) : n.add(i); return n; });
   return (
     <Section>
-      <div style={{ display:"inline-block", transform:"rotate(-2deg)", background:C.night, color:C.gold, borderRadius:10, padding:"4px 12px", fontSize:13, fontWeight:700, letterSpacing:1, marginBottom:12 }}>
+      <div style={{ display:"inline-block", background:C.night, color:C.gold, borderRadius:10, padding:"4px 12px", fontSize:13, fontWeight:700, letterSpacing:1, marginBottom:12 }}>
         符合的就點一下
       </div>
       <H2>這是在講你嗎？</H2>
-      <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:6 }}>
+      <div style={{ display:"grid", gridAutoRows:"1fr", gap:10, marginTop:6 }}>
         {PAIN_POINTS.map((t, i) => {
           const on = picked.has(i);
           return (
             <button key={t} onClick={() => toggle(i)} style={{
               display:"flex", alignItems:"center", gap:12, textAlign:"left",
-              padding:"15px 16px", borderRadius:16, fontFamily:F, fontSize:16, fontWeight:on ? 900 : 500,
-              border:`2px solid ${on ? C.night : C.line}`,
+              padding:"10px 16px", borderRadius:14, fontFamily:F, fontSize:15.5, fontWeight:on ? 700 : 500,
+              border:`1.5px solid ${on ? C.night : C.line}`,
               background:on ? C.mustard : C.paper, color:C.ink, cursor:"pointer", transition:"all 0.18s",
               transform:on ? "translateY(-1px)" : "none",
               boxShadow:on ? `0 3px 0 ${C.night}` : "none",
             }}>
               <span style={{
                 flexShrink:0, width:24, height:24, borderRadius:8, display:"flex", alignItems:"center", justifyContent:"center",
-                border:`2px solid ${on ? C.night : "#c9c2ae"}`, background:on ? C.night : "transparent", color:C.gold, fontSize:14, fontWeight:900,
+                border:`1.5px solid ${on ? C.night : "#c9c2ae"}`, background:on ? C.night : "transparent", color:C.gold, fontSize:14, fontWeight:700,
               }}>{on ? "✓" : ""}</span>
               {t}
             </button>
@@ -125,9 +125,9 @@ function PainChips() {
         })}
       </div>
       {picked.size > 0 && (
-        <div style={{ marginTop:18, padding:"20px 20px", borderRadius:20, background:C.skyGrad, color:C.ink, border:`1.5px solid ${C.skyLine}`, position:"relative", overflow:"hidden" }}>
+        <div style={{ marginTop:14, padding:"16px 18px", borderRadius:20, background:C.skyGrad, color:C.ink, border:`1.5px solid ${C.skyLine}`, position:"relative", overflow:"hidden" }}>
           <Sparkle size={20} color={C.mustard} style={{ position:"absolute", top:12, right:14 }} />
-          <p style={{ margin:"0 0 16px", fontSize:17, lineHeight:1.85, fontWeight:700, fontFamily:FS }}>
+          <p style={{ margin:"0 0 12px", fontSize:16, lineHeight:1.8, fontWeight:700, fontFamily:FS }}>
             有 {picked.size} 項符合。你缺的也許不是更多方法，<span style={{ color:C.night, background:`linear-gradient(transparent 58%, ${C.mustardPale} 58%)` }}>而是更了解眼前這個孩子</span>。
           </p>
           <Button onClick={() => goTo("booking")}>看看怎麼開始 ↓</Button>
@@ -139,38 +139,27 @@ function PainChips() {
 
 /* ── 預約後，你會得到什麼 ── */
 function Gets() {
-  const big = [
-    { bg:C.mustard, color:C.ink, sub:"#4a5560", tile:C.night, tileColor:C.gold, shadow:C.mustardDeep },
-    { bg:C.skyGrad, color:C.ink, sub:"#4a5560", tile:C.mustard, tileColor:C.night, shadow:C.skyLine },
+  // 四張卡同樣的尺寸與版型，只有前兩張（最重要的）上色
+  const items = [
+    ...GETS.main.map((g, i) => ({ ...g, bg:[C.butter, C.skyGrad][i], border:[C.mustardDeep, C.skyLine][i] })),
+    ...GETS.more.map(g => ({ ...g, bg:C.paper, border:C.line })),
   ];
   return (
     <Section id="gets">
       <H2>{GETS.title}</H2>
-      <P serif style={{ fontSize:17, fontWeight:500, marginBottom:18 }}>{GETS.lead}</P>
-      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-        {GETS.main.map((g, i) => (
+      <P serif style={{ fontWeight:500, marginBottom:14 }}>{GETS.lead}</P>
+      <div style={{ display:"grid", gridAutoRows:"1fr", gap:10 }}>
+        {items.map(g => (
           <div key={g.title} style={{
-            background:big[i].bg, color:big[i].color, borderRadius:22, padding:"22px 20px",
-            boxShadow:`0 4px 0 ${big[i].shadow}`, display:"flex", gap:14, alignItems:"flex-start",
+            background:g.bg, border:`1.5px solid ${g.border}`, borderRadius:20, padding:"16px 18px", display:"flex", gap:14, alignItems:"center",
           }}>
             <div style={{
-              flexShrink:0, width:46, height:46, borderRadius:14, background:big[i].tile, color:big[i].tileColor,
-              display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, fontWeight:900,
+              flexShrink:0, width:40, height:40, borderRadius:12, background:C.night, color:C.gold,
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:700,
             }}>{g.icon}</div>
             <div>
-              <div style={{ fontSize:19, fontWeight:900, lineHeight:1.45, marginBottom:6 }}>{g.title}</div>
-              <div style={{ fontSize:15.5, lineHeight:1.85, color:big[i].sub }}>{g.text}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(200px, 1fr))", gap:12, marginTop:14 }}>
-        {GETS.more.map(g => (
-          <div key={g.title} style={{ background:C.paper, border:`2px solid ${C.line}`, borderRadius:18, padding:"16px 16px", display:"flex", gap:12, alignItems:"flex-start" }}>
-            <div style={{ flexShrink:0, width:34, height:34, borderRadius:11, background:C.mustard, color:C.night, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:900 }}>{g.icon}</div>
-            <div>
-              <div style={{ fontSize:16, fontWeight:900, marginBottom:2 }}>{g.title}</div>
-              <div style={{ fontSize:14.5, lineHeight:1.75, color:"#6a737c" }}>{g.text}</div>
+              <div style={{ fontSize:16.5, fontWeight:700, lineHeight:1.45, marginBottom:3 }}>{g.title}</div>
+              <div style={{ fontSize:14.5, lineHeight:1.75, color:"#4a5560" }}>{g.text}</div>
             </div>
           </div>
         ))}
@@ -188,9 +177,9 @@ function About({ onPick }) {
     <Section id="about" style={{ paddingTop:20 }}>
       <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:16 }}>
         <div style={{
-          flexShrink:0, width:64, height:64, borderRadius:"50%", overflow:"hidden", background:C.mustard, color:C.night,
-          display:"flex", alignItems:"center", justifyContent:"center", fontSize:28, fontWeight:900, fontFamily:FS,
-          border:`3px solid ${C.night}`, boxShadow:`0 3px 0 ${C.night}`,
+          flexShrink:0, width:60, height:60, borderRadius:"50%", overflow:"hidden", background:C.mustard, color:C.night,
+          display:"flex", alignItems:"center", justifyContent:"center", fontSize:26, fontWeight:700, fontFamily:FS,
+          border:`2px solid ${C.mustard}`,
         }}>
           {a.photo ? <img src={a.photo} alt={a.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : a.name.slice(0, 1)}
         </div>
@@ -200,22 +189,22 @@ function About({ onPick }) {
         </div>
       </div>
       <H2>{a.headline}</H2>
-      <P serif style={{ fontSize:17, fontWeight:500 }}>{a.lead}</P>
+      <P serif style={{ fontSize:16.5, fontWeight:500 }}>{a.lead}</P>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, margin:"22px 0 16px" }}>
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", gap:10, margin:"16px 0 12px" }}>
         {a.credentials.map((c, i) => (
           <div key={c.big} style={{
-            background:[C.butter, C.skyGrad, C.skyMid][i % 3], borderRadius:18, padding:"16px 3px", textAlign:"center",
-            transform:`rotate(${[-1.5, 1, -0.8][i % 3]}deg)`, boxShadow:`0 3px 0 ${[C.mustardDeep, C.skyLine, "#8fb4cc"][i % 3]}`,
+            background:[C.butter, C.skyGrad, C.skyMid][i % 3], borderRadius:20, padding:"0 3px", textAlign:"center",
+            minHeight:76, display:"flex", flexDirection:"column", justifyContent:"center",
           }}>
-            <div style={{ fontSize:15, fontWeight:900, lineHeight:1.35, whiteSpace:"nowrap", color:C.night }}>{c.big}</div>
+            <div style={{ fontSize:15, fontWeight:700, lineHeight:1.35, whiteSpace:"nowrap", color:C.night }}>{c.big}</div>
             <div style={{ fontSize:11.5, color:["#4a5560", "#4a5560", "#4a5560"][i % 3], marginTop:4, fontWeight:500 }}>{c.small}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background:C.paper, border:`1.5px solid ${C.line}`, borderRadius:18, padding:"16px 18px", marginBottom:22 }}>
-        <div style={{ fontSize:13, fontWeight:900, color:C.gold2, letterSpacing:2, marginBottom:8 }}>我也是走過來的媽媽</div>
+      <div style={{ background:C.paper, border:`1.5px solid ${C.line}`, borderRadius:20, padding:"16px 18px", marginBottom:16 }}>
+        <div style={{ fontSize:13, fontWeight:700, color:C.gold2, letterSpacing:2, marginBottom:6 }}>我也是走過來的媽媽</div>
         {a.journey.map(t => (
           <div key={t} style={{ display:"flex", gap:10, alignItems:"flex-start", fontSize:15.5, lineHeight:1.8, padding:"2px 0" }}>
             <Sparkle size={13} style={{ marginTop:9, flexShrink:0 }} />{t}
@@ -223,20 +212,20 @@ function About({ onPick }) {
         ))}
       </div>
 
-      <div style={{ borderLeft:`5px solid ${C.mustard}`, padding:"4px 0 4px 18px", margin:"0 0 6px" }}>
+      <div style={{ borderLeft:`4px solid ${C.mustard}`, padding:"2px 0 2px 16px", margin:"0 0 6px" }}>
         {story.map((t, i) => (
-          <P key={i} serif style={{ fontSize:16.5, lineHeight:2, margin:"0 0 12px" }}>{t}</P>
+          <P key={i} serif style={{ fontSize:16, lineHeight:1.95, margin:"0 0 10px" }}>{t}</P>
         ))}
       </div>
       <button onClick={() => setFull(f => !f)} style={{
-        background:"none", border:"none", padding:"6px 0 0 23px", cursor:"pointer", fontFamily:F, fontSize:14.5, fontWeight:900, color:C.gold2, letterSpacing:1,
+        background:"none", border:"none", padding:"4px 0 0 20px", cursor:"pointer", fontFamily:F, fontSize:14.5, fontWeight:700, color:C.gold2, letterSpacing:1,
       }}>{full ? "收合 ▴" : "看完整故事 ▾"}</button>
 
       {/* 直接預約整張星盤 */}
-      <div style={{ marginTop:30, padding:"26px 22px", borderRadius:24, background:"#fbf0c8", color:C.ink, border:`2px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
-        <Sparkle size={26} color={C.mustard} style={{ position:"absolute", top:14, right:16 }} />
-        <h3 style={{ fontSize:"clamp(20px, 5.4vw, 25px)", fontWeight:900, lineHeight:1.5, margin:"0 40px 8px 0", color:C.night }}>{a.cta.title}</h3>
-        <p style={{ fontSize:15.5, lineHeight:1.9, margin:"0 0 18px", color:"#4a5560" }}>{a.cta.text}</p>
+      <div style={{ marginTop:20, padding:"18px 20px", borderRadius:20, background:"#fbf0c8", color:C.ink, border:`1.5px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
+        <Sparkle size={20} color={C.mustard} style={{ position:"absolute", top:14, right:16 }} />
+        <h3 style={{ fontSize:"clamp(18px, 4.8vw, 21px)", fontWeight:700, lineHeight:1.5, margin:"0 32px 6px 0", color:C.night }}>{a.cta.title}</h3>
+        <p style={{ fontSize:14.5, lineHeight:1.8, margin:"0 0 14px", color:"#4a5560" }}>{a.cta.text}</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:12 }}>
           <Button variant="dark" onClick={() => onPick ? onPick("child") : goTo("booking")}>解碼孩子的星盤</Button>
           <Button variant="outline" onClick={() => onPick ? onPick("first") : goTo("booking")}>本命盤解析</Button>
@@ -270,7 +259,7 @@ function VoicesViewer({ items, onClose }) {
         position:"sticky", top:0, zIndex:1, display:"flex", alignItems:"center", justifyContent:"space-between",
         padding:"14px 18px", background:"rgba(230,239,245,0.96)", backdropFilter:"blur(8px)", borderBottom:`1px solid ${C.line}`,
       }}>
-        <div style={{ fontSize:17, fontWeight:900 }}>真實回饋<span style={{ fontSize:13, fontWeight:500, color:C.sub, marginLeft:8 }}>共 {items.length} 則</span></div>
+        <div style={{ fontSize:17, fontWeight:700 }}>真實回饋<span style={{ fontSize:13, fontWeight:500, color:C.sub, marginLeft:8 }}>共 {items.length} 則</span></div>
         <button onClick={onClose} aria-label="關閉" style={{
           width:38, height:38, borderRadius:"50%", border:`1.5px solid ${C.night}`, background:C.paper, color:C.night, fontSize:18, cursor:"pointer",
         }}>✕</button>
@@ -298,7 +287,7 @@ function Voices({ items }) {
       <div onClick={() => setOpen(true)} role="button" tabIndex={0}
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(true); } }}
         style={{
-          position:"relative", overflow:"hidden", cursor:"pointer", borderRadius:24, background:PANEL,
+          position:"relative", overflow:"hidden", cursor:"pointer", borderRadius:20, background:PANEL,
           border:`1.5px solid #c9dce9`, padding:"14px 14px 64px",
         }}>
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
@@ -318,7 +307,7 @@ function Voices({ items }) {
         }}>
           <span style={{
             display:"inline-block", padding:"9px 16px", borderRadius:12, background:C.mustard, color:C.night,
-            fontSize:13.5, fontWeight:900, letterSpacing:1, boxShadow:`0 4px 0 ${C.mustardDeep}`,
+            fontSize:13.5, fontWeight:700, letterSpacing:1, boxShadow:`0 4px 0 ${C.mustardDeep}`,
           }}>點開看全部 {items.length} 則回饋 →</span>
         </div>
       </div>
@@ -339,28 +328,30 @@ export function LandingTop({ onPick }) {
       `}</style>
 
       {/* 主視覺 */}
-      <section style={{ ...wrap, padding:"38px 20px 14px", position:"relative" }}>
-        <Sparkle size={26} style={{ position:"absolute", top:30, right:22 }} />
+      <section style={{ ...wrap, padding:"24px 20px 8px", position:"relative" }}>
+        <Sparkle size={20} style={{ position:"absolute", top:24, right:22 }} />
         <Sparkle size={13} color={C.night} style={{ position:"absolute", top:68, right:58, opacity:0.5 }} />
-        <Sparkle size={16} style={{ position:"absolute", top:290, right:14, opacity:0.7 }} />
-        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, letterSpacing:5, color:C.gold2, fontWeight:900, marginBottom:28 }}>
+        <Sparkle size={13} style={{ position:"absolute", top:230, right:14, opacity:0.7 }} />
+        <div style={{ display:"flex", alignItems:"center", gap:8, fontSize:14, letterSpacing:5, color:C.gold2, fontWeight:700, marginBottom:18 }}>
           <Sparkle size={14} /> 星語・星心
         </div>
         <div style={{
-          display:"inline-block", transform:"rotate(-2deg)", background:C.mustard, color:C.night, borderRadius:12,
-          padding:"7px 14px", fontSize:15, fontWeight:900, letterSpacing:1, marginBottom:18, boxShadow:`0 3px 0 ${C.mustardDeep}`,
+          display:"inline-block", background:C.mustard, color:C.night, borderRadius:12,
+          padding:"6px 14px", fontSize:14.5, fontWeight:700, letterSpacing:1, marginBottom:14,
         }}>給罵完孩子就自責的爸媽</div>
-        <h1 style={{ fontSize:"clamp(26px, 8.2vw, 46px)", fontWeight:900, lineHeight:1.45, margin:"0 0 22px", letterSpacing:0.5, color:C.night }}>
+        <h1 style={{ fontSize:"clamp(23px, 6.9vw, 40px)", fontWeight:700, lineHeight:1.45, margin:"0 0 16px", letterSpacing:0.5, color:C.night }}>
           看了這麼多教養書跟<br />教養文，都只存在你的<br /><Mark>資料夾</Mark>裡嗎？
         </h1>
-        <P serif style={{ fontSize:17.5, fontWeight:500 }}>道理都懂，卻還是會在罵完孩子之後，自責、愧疚。</P>
-        <P serif style={{ fontSize:17.5, fontWeight:500 }}>也許不是你不夠努力，而是那些方法，<strong style={{ fontWeight:900 }}>從來沒有對著「你的孩子」說</strong>。</P>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:14, marginTop:24 }}>
+        <P serif style={{ fontSize:16.5, fontWeight:500 }}>道理都懂，卻還是會在罵完孩子之後，自責、愧疚。</P>
+        <P serif style={{ fontSize:16.5, fontWeight:500 }}>也許不是你不夠努力，而是那些方法，<strong style={{ fontWeight:700 }}>從來沒有對著「你的孩子」說</strong>。</P>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:12, marginTop:18 }}>
           <Button onClick={() => goTo("booking")}>預約，看懂孩子</Button>
           {testimonials.length > 0 && <Button variant="outline" onClick={() => goTo("voices")}>看真實回饋</Button>}
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:26, fontSize:13.5, color:C.sub, lineHeight:1.6 }}>
-          <span style={{ flexShrink:0, width:34, height:34, borderRadius:"50%", background:C.night, color:C.gold, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:FS, fontWeight:900 }}>{ABOUT.name.slice(0, 1)}</span>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:20, fontSize:13.5, color:C.sub, lineHeight:1.6 }}>
+          <span style={{ flexShrink:0, width:36, height:36, borderRadius:"50%", overflow:"hidden", background:C.night, color:C.gold, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:FS, fontWeight:700 }}>
+            {ABOUT.photo ? <img src={ABOUT.photo} alt={ABOUT.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : ABOUT.name.slice(0, 1)}
+          </span>
           <span>{ABOUT.name}｜臨床心理背景，也是花了很久才當上媽媽的人</span>
         </div>
       </section>
@@ -374,7 +365,7 @@ export function LandingTop({ onPick }) {
         <P serif style={{ color:"#4a5560", fontSize:17 }}>收藏夾裡有幾十篇教養文，書架上也排了好幾本教養書。</P>
         <P serif style={{ color:"#4a5560", fontSize:17 }}>每一篇都說得有道理，但放到自己孩子身上，不是沒用，就是做到一半又破功。</P>
         <P serif style={{ color:"#4a5560", fontSize:17 }}>然後某個晚上，你又吼了孩子。等他睡著，你看著那張臉，開始自責。</P>
-        <p style={{ margin:"22px 0 0", fontSize:18, fontWeight:900, lineHeight:1.7, color:C.night }}>
+        <p style={{ margin:"16px 0 0", fontSize:16.5, fontWeight:700, lineHeight:1.7, color:C.night }}>
           這不是意志力的問題。<br />
           <span style={{ display:"inline-block", marginTop:6, background:C.night, color:C.gold, padding:"6px 14px", borderRadius:12, transform:"rotate(-1deg)" }}>
             同一套方法，不一定適合每一個孩子。
@@ -386,19 +377,19 @@ export function LandingTop({ onPick }) {
       <Section>
         <H2>換一個起點</H2>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(240px, 1fr))", gap:14 }}>
-          <div style={{ padding:"22px 18px", borderRadius:22, background:"#f1eee6", border:"2px dashed #d9d2c0" }}>
-            <div style={{ fontSize:13, fontWeight:900, color:"#55606a", letterSpacing:3, marginBottom:12 }}>以前</div>
+          <div style={{ padding:"18px 18px", borderRadius:20, background:"#f1eee6", border:"2px dashed #d9d2c0" }}>
+            <div style={{ fontSize:13, fontWeight:700, color:"#55606a", letterSpacing:3, marginBottom:12 }}>以前</div>
             {["照著「通用教養法」一個一個試", "孩子沒反應，就懷疑自己哪裡做錯", "看越多越慌，越慌越容易失控", "罵完，只剩下自責"].map(t => (
               <div key={t} style={{ display:"flex", gap:8, fontSize:15, lineHeight:1.8, color:"#55606a", padding:"3px 0" }}>
-                <span style={{ flexShrink:0, color:"#c4472c", fontWeight:900 }}>✕</span>{t}
+                <span style={{ flexShrink:0, color:"#b53a22", fontWeight:700 }}>✕</span>{t}
               </div>
             ))}
           </div>
-          <div style={{ padding:"22px 18px", borderRadius:22, background:"#fbf0c8", color:C.ink, border:`2px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
-            <div style={{ display:"inline-block", fontSize:13, fontWeight:900, background:C.mustard, color:C.night, borderRadius:8, padding:"2px 10px", letterSpacing:3, marginBottom:12 }}>現在</div>
+          <div style={{ padding:"18px 18px", borderRadius:20, background:"#fbf0c8", color:C.ink, border:`1.5px solid ${C.mustard}`, position:"relative", overflow:"hidden" }}>
+            <div style={{ display:"inline-block", fontSize:13, fontWeight:700, background:C.mustard, color:C.night, borderRadius:8, padding:"2px 10px", letterSpacing:3, marginBottom:12 }}>現在</div>
             {["先看懂孩子「本來的樣子」", "了解他的個性、學習、手足與同儕", "選擇適合他的回應方式", "做決定時，多一個依據，少一點猜"].map(t => (
               <div key={t} style={{ display:"flex", gap:8, fontSize:15, lineHeight:1.8, fontWeight:700, padding:"3px 0" }}>
-                <span style={{ flexShrink:0, color:C.gold2, fontWeight:900 }}>✓</span>{t}
+                <span style={{ flexShrink:0, color:C.gold2, fontWeight:700 }}>✓</span>{t}
               </div>
             ))}
           </div>
@@ -409,12 +400,12 @@ export function LandingTop({ onPick }) {
       <Band tone="sky">
         <Sparkle size={20} style={{ position:"absolute", top:22, right:24 }} />
         <H2 color={C.night}>星盤，是看懂孩子的<br /><Mark>一個角度</Mark></H2>
-        <P serif style={{ color:"#4a5560", fontSize:17 }}>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子、怎麼想的。</P>
-        <div style={{ fontSize:14, fontWeight:900, color:C.night, letterSpacing:1.5, margin:"22px 0 12px" }}>「解碼孩子的星盤天賦」報告內含</div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+        <P serif style={{ color:"#4a5560", fontSize:16 }}>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子、怎麼想的。</P>
+        <div style={{ fontSize:14, fontWeight:700, color:C.night, letterSpacing:1.5, margin:"22px 0 12px" }}>「解碼孩子的星盤天賦」報告內含</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gridAutoRows:"1fr", gap:10 }}>
           {REPORT_ITEMS.map(r => (
             <div key={r.text} style={{
-              display:"flex", alignItems:"center", gap:8, fontSize:15, fontWeight:700, lineHeight:1.5, padding:"12px 12px",
+              display:"flex", alignItems:"center", gap:8, fontSize:15, fontWeight:700, lineHeight:1.5, padding:"8px 12px", minHeight:54,
               borderRadius:14, border:`1.5px solid ${C.skyLine}`, background:"rgba(255,255,255,0.7)",
             }}>
               <span style={{ color:C.gold2, fontSize:18 }}>{r.icon}</span>{r.text}
@@ -436,7 +427,7 @@ export function LandingTop({ onPick }) {
 /* 接在預約區塊前面的標題（也是「預約」錨點） */
 export function StartHeading() {
   return (
-    <section id="booking" style={{ ...wrap, padding:"34px 20px 4px", scrollMarginTop:8 }}>
+    <section id="booking" style={{ ...wrap, padding:"22px 20px 2px", scrollMarginTop:8 }}>
       <H2>從這裡開始</H2>
       <P style={{ color:C.sub, marginBottom:6 }}>點選想預約的項目，再選日期與時段。</P>
     </section>
@@ -447,7 +438,7 @@ export function StartHeading() {
 function FaqItem({ q, a }) {
   return (
     <details style={{ borderBottom:`1px solid ${C.line}`, padding:"2px 0" }}>
-      <summary style={{ cursor:"pointer", listStyle:"none", display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, padding:"14px 0", fontSize:16, fontWeight:900, lineHeight:1.6 }}>
+      <summary style={{ cursor:"pointer", listStyle:"none", display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, padding:"14px 0", fontSize:16, fontWeight:700, lineHeight:1.6 }}>
         <span>{q}</span>
         <span className="lp-plus" style={{ flexShrink:0, width:26, height:26, borderRadius:"50%", background:C.mustard, color:C.night, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, lineHeight:1, transition:"transform .2s" }}>＋</span>
       </summary>
@@ -459,17 +450,17 @@ function FaqItem({ q, a }) {
 export function LandingBottom({ onPick }) {
   return (
     <>
-      <Section style={{ marginTop:34 }}>
+      <Section style={{ marginTop:16 }}>
         <H2>預約流程</H2>
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
           {STEPS.map((s, i) => (
-            <div key={s.title} style={{ display:"flex", gap:14, padding:"16px 16px", borderRadius:18, background:C.paper, border:`1.5px solid ${C.line}` }}>
+            <div key={s.title} style={{ display:"flex", gap:14, padding:"14px 16px", borderRadius:20, background:C.paper, border:`1.5px solid ${C.line}` }}>
               <div style={{
                 flexShrink:0, width:36, height:36, borderRadius:12, display:"flex", alignItems:"center", justifyContent:"center",
-                background:C.mustard, color:C.night, fontWeight:900, fontSize:17, boxShadow:`0 3px 0 ${C.mustardDeep}`,
+                background:C.mustard, color:C.night, fontWeight:700, fontSize:17, boxShadow:`0 3px 0 ${C.mustardDeep}`,
               }}>{i + 1}</div>
               <div>
-                <div style={{ fontSize:16, fontWeight:900, marginBottom:2 }}>{s.title}</div>
+                <div style={{ fontSize:16, fontWeight:700, marginBottom:2 }}>{s.title}</div>
                 <div style={{ fontSize:14.5, lineHeight:1.8, color:"#6a737c" }}>{s.text}</div>
               </div>
             </div>
@@ -488,10 +479,10 @@ export function LandingBottom({ onPick }) {
       <Band tone="mustard" style={{ textAlign:"center" }}>
         <Sparkle size={22} color={C.night} style={{ position:"absolute", top:20, left:22, opacity:0.85 }} />
         <Sparkle size={14} color={C.night} style={{ position:"absolute", top:54, right:30, opacity:0.5 }} />
-        <h2 style={{ fontSize:"clamp(23px, 6.4vw, 30px)", fontWeight:900, lineHeight:1.55, margin:"0 0 10px", color:C.night }}>
-          想更知道怎麼陪他，<br />從<span style={{ display:"inline-block", background:C.night, color:C.gold, padding:"0 10px", borderRadius:10, transform:"rotate(-1deg)", margin:"0 2px" }}>看懂他</span>開始。
+        <h2 style={{ fontSize:"clamp(20px, 5.4vw, 25px)", fontWeight:700, lineHeight:1.55, margin:"0 0 8px", color:C.night }}>
+          想更知道怎麼陪他，<br />從<span style={{ display:"inline-block", background:C.night, color:C.gold, padding:"0 10px", borderRadius:10, margin:"0 2px" }}>看懂他</span>開始。
         </h2>
-        <p style={{ fontSize:16, lineHeight:1.9, color:"#4a5560", margin:"0 0 22px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
+        <p style={{ fontSize:15, lineHeight:1.85, color:"#4a5560", margin:"0 0 16px", fontFamily:FS }}>選一個你方便的時間，<br />剩下的交給我。</p>
         <div style={{ display:"flex", flexWrap:"wrap", gap:14, justifyContent:"center" }}>
           <Button variant="dark" onClick={() => goTo("booking")}>回到上方選時段</Button>
           <Button variant="outline" href={LINE_URL}>有問題，先 LINE 問我</Button>
@@ -503,8 +494,8 @@ export function LandingBottom({ onPick }) {
           占星提供的是理解與反思的角度，不取代醫療、心理或教育專業的建議。
         </p>
         <div style={{ display:"flex", gap:22, justifyContent:"center", fontSize:14, marginBottom:10 }}>
-          <a href={LINE_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.gold2, textDecoration:"none", fontWeight:900 }}>LINE 官方帳號</a>
-          <a href={IG_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.gold2, textDecoration:"none", fontWeight:900 }}>Instagram</a>
+          <a href={LINE_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.gold2, textDecoration:"none", fontWeight:700 }}>LINE 官方帳號</a>
+          <a href={IG_URL} target="_blank" rel="noopener noreferrer" style={{ color:C.gold2, textDecoration:"none", fontWeight:700 }}>Instagram</a>
         </div>
         <p style={{ fontSize:12, color:"#6a737c", margin:0 }}>© 2026 星語・星心</p>
       </footer>

@@ -29,8 +29,10 @@ const CONSULT_TYPES = [
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "✧",
     reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
-  { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true },
-  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true },
+  { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true,
+    reportSubtitle: "適合已看過本命盤的人", reportDesc: "追問、流年、合盤，半小時就能聊。" },
+  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true,
+    reportSubtitle: "純文字回覆", reportDesc: "一次問一個問題，用文字回覆，不用通話。" },
   { id: "timing", label: "擇時", tag: "擇日擇時", desc: "半小時～一小時", price: 3600, priceLabel: "$3,600", icon: "❖",
     reportSubtitle: "選入厝時間、出生時程", reportDesc: "提供幾個時段的優缺參考" },
 ];
@@ -135,7 +137,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
     <div style={{ marginBottom:44 }}>
       <h3 style={{
         fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif", fontSize:22,
-        color:"#3a4f5e", marginBottom:16, letterSpacing:2, textAlign:"center", fontWeight:900,
+        color:"#3a4f5e", marginBottom:16, letterSpacing:2, textAlign:"center", fontWeight:700,
       }}>✦ {year} 年 {month+1} 月 ✦</h3>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:4 }}>
         {dayNames.map(n => (
@@ -177,8 +179,8 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
                   return (
                     <div key={slot.id} style={{
                       width:"92%", padding:"4px 0", borderRadius:6, fontSize:10,
-                      border:"1px solid #e3e9f1", background:"#eef1f5",
-                      color:"#cdd5db", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                      border:"1px solid #dedede", background:"#ececec",
+                      color:"#9a9a9a", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       fontWeight:600, letterSpacing:1,
                     }}>公休</div>
                   );
@@ -194,7 +196,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
                       cursor:booked?"not-allowed":"pointer",
                       fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
                       textDecoration:booked?"line-through":"none",
-                      transition:"all 0.2s", fontWeight:900, letterSpacing:1,
+                      transition:"all 0.2s", fontWeight:700, letterSpacing:1,
                     }}
                     onMouseEnter={e=>{if(!booked){e.target.style.background="#f4d675";}}}
                     onMouseLeave={e=>{if(!booked){e.target.style.background="#fbf0c8";}}}
@@ -499,7 +501,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
             width:"100%", padding:"14px 0", borderRadius:12, border:"none",
             background: submitting ? "#ccc" : "#f4d675",
             color:"#3a4f5e", fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
-            fontSize:16, fontWeight:900, cursor:submitting?"wait":"pointer", letterSpacing:3,
+            fontSize:16, fontWeight:700, cursor:submitting?"wait":"pointer", letterSpacing:3,
             marginTop:4, transition:"all 0.15s",
             boxShadow:submitting?"none":"0 4px 0 #d9b84f",
           }}
@@ -739,7 +741,7 @@ export default function App() {
 
         {/* Consult type cards */}
         <div style={{ maxWidth:680, margin:"0 auto 36px", padding:"0 20px" }}>
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(230px, 1fr))", gap:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(230px, 1fr))", gridAutoRows:"1fr", gap:12 }}>
             {CONSULT_TYPES.map(t=>{
               const on = pickedType===t.id;
               return (
@@ -748,25 +750,25 @@ export default function App() {
                 onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pickType(t.id); } }}
                 style={{
                 background:on?"#e6eff5":"#ffffff",
-                border:`2px solid ${on?"#3a4f5e":"#ece4d2"}`, borderRadius:18, padding:"16px 18px",
-                boxShadow:on?"0 4px 0 #3a4f5e":"0 3px 0 #ece4d2",
+                border:`1.5px solid ${on?"#3a4f5e":"#ece4d2"}`, borderRadius:20, padding:"14px 18px",
+                boxShadow:on?"0 0 0 1.5px #3a4f5e":"none",
                 position:"relative", cursor:"pointer", transition:"all 0.18s",
                 fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
               }}>
                 <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                   <span style={{
                     flexShrink:0, width:30, height:30, borderRadius:10, background:"#f4d675", color:"#3a4f5e",
-                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:900,
+                    display:"flex", alignItems:"center", justifyContent:"center", fontSize:16, fontWeight:700,
                   }}>{t.icon}</span>
-                  <span style={{ fontSize:16, color:"#33281a", fontWeight:900, lineHeight:1.4 }}>{t.label}</span>
+                  <span style={{ fontSize:16, color:"#3a4f5e", fontWeight:700, lineHeight:1.4 }}>{t.label}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", fontSize:13, color:"#6a737c" }}>
                   <span>{t.desc}</span>
-                  <span style={{ background:"#f4d675", color:"#3a4f5e", fontWeight:900, borderRadius:8, padding:"1px 10px", fontSize:14 }}>{t.priceLabel}</span>
+                  <span style={{ background:"#f4d675", color:"#3a4f5e", fontWeight:700, borderRadius:8, padding:"1px 10px", fontSize:14 }}>{t.priceLabel}</span>
                 </div>
                 {t.reportSubtitle && (
                   <div style={{ marginTop:10, paddingTop:10, borderTop:"1.5px dashed #d3e1ec" }}>
-                    <div style={{ fontSize:13, color:"#3f6f8d", fontWeight:900, marginBottom:2 }}>{t.reportSubtitle}</div>
+                    <div style={{ fontSize:13, color:"#3f6f8d", fontWeight:700, marginBottom:2 }}>{t.reportSubtitle}</div>
                     <div style={{ fontSize:12.5, color:"#6a737c", lineHeight:1.7 }}>{t.reportDesc}</div>
                   </div>
                 )}
@@ -788,17 +790,17 @@ export default function App() {
                 position:"sticky", top:8, zIndex:20, marginBottom:16,
                 display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
                 background:"#e6eff5",
-                border:"2px solid #3a4f5e", borderRadius:14, padding:"10px 14px",
+                border:"1.5px solid #3a4f5e", borderRadius:20, padding:"10px 16px",
                 fontFamily:"'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif",
-                boxShadow:"0 4px 0 #3a4f5e",
+                boxShadow:"none",
               }}>
-                <div style={{ fontSize:14, color:"#3a4f5e", fontWeight:900, lineHeight:1.5 }}>
+                <div style={{ fontSize:14, color:"#3a4f5e", fontWeight:700, lineHeight:1.5 }}>
                   {pt?.icon} {pt?.label}
                   <div style={{ fontSize:12, color:"#6a737c", fontWeight:500 }}>請點選下方日期時段預約</div>
                 </div>
                 <button onClick={()=>setPickedType(null)} style={{
                   flexShrink:0, padding:"5px 12px", borderRadius:8, border:"1.5px solid #3a4f5e",
-                  background:"transparent", color:"#3a4f5e", fontSize:12.5, cursor:"pointer", fontWeight:900,
+                  background:"transparent", color:"#3a4f5e", fontSize:12.5, cursor:"pointer", fontWeight:700,
                 }}>取消</button>
               </div>
             );

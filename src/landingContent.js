@@ -30,7 +30,7 @@ export const TESTIMONIALS = [
 // photo 填大頭照路徑（放在 public/，例如 "/sandy.jpg"）就會顯示照片，維持 null 則顯示姓名縮寫。
 export const ABOUT = {
   name: "Sandy",
-  photo: null,
+  photo: "/sandy.jpg",
   headline: "我懂媽媽，也懂孩子",
   lead: "學的是生命科學與臨床心理，走過的是漫長的求子路，和養育高敏孩子的日子。你的感受，我都經歷過。",
   credentials: [
@@ -69,8 +69,8 @@ export const GETS = {
   title: "預約後，你會得到",
   lead: "不是一堆通用的教養方法，而是只屬於你孩子的內容。",
   main: [
-    { icon: "☽", title: "小孩的原廠設定", text: "他本來的個性、學習狀況、手足關係、同儕相處，一次看懂。" },
-    { icon: "✧", title: "專屬於你小孩的教養建議", text: "不是通用的教養方法，而是針對這個孩子，你可以怎麼回應、怎麼陪。" },
+    { icon: "☽", title: "小孩的原廠設定", text: "個性、學習、手足、同儕，一次看懂。" },
+    { icon: "✧", title: "專屬於你小孩的教養建議", text: "針對這個孩子，你可以怎麼回應、怎麼陪。" },
   ],
   more: [
     { icon: "❖", title: "一份完整報告", text: "報告書留給你，之後隨時翻看。" },
