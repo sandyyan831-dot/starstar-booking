@@ -7,6 +7,7 @@
 export const TESTIMONIALS = [
   { image: "/feedback/01.jpg", alt: "家長分享：接受孩子的原廠設定後，調整互動方式，孩子變得自動自發" },
   { image: "/feedback/02.jpg", alt: "家長分享：週末去戶外跑跑、上喜歡的畫畫課" },
+  { image: "/feedback/19.jpg", alt: "家長分享：理解老二做事的方式，也感受到老三在姐姐的愛下成長" },
   { image: "/feedback/03.jpg", alt: "家長分享：謝謝妳讓我重新認識孩子一次", teaser: 1 },
   { image: "/feedback/04.jpg", alt: "家長分享：兩個孩子的個性、情緒表達與相處方式" },
   { image: "/feedback/05.jpg", alt: "家長分享：這一小時和這份報告真是太寶貴了" },
@@ -15,7 +16,6 @@ export const TESTIMONIALS = [
   { image: "/feedback/08.jpg", alt: "家長分享：我會朝這幾個方向嘗試" },
   { image: "/feedback/09.jpg", alt: "家長推薦：育兒遇到瓶頸，可以用不同角度認識孩子" },
   { image: "/feedback/10.jpg", alt: "家長分享：姐姐妹妹的學習方式不同" },
-  { image: "/feedback/11.jpg", alt: "家長分享：孩子的學習與情緒" },
   { image: "/feedback/12.jpg", alt: "家長分享：這種孩子真的很難教育" },
   { image: "/feedback/13.jpg", alt: "客人分享：真是謝謝妳的解題", teaser: 3 },
   { image: "/feedback/14.jpg", alt: "客人分享：你好會說話，讀起來有療癒的感覺", teaser: 4 },
@@ -23,6 +23,7 @@ export const TESTIMONIALS = [
   { image: "/feedback/16.jpg", alt: "客人分享：我很快就再回來跟你聊", teaser: 5 },
   { image: "/feedback/17.jpg", alt: "客人分享：原本很抗拒算命，看了分享後改觀" },
   { image: "/feedback/18.jpg", alt: "客人分享：預見未來的狀況，會更放手去做" },
+  { image: "/feedback/20.jpg", alt: "客人分享：最近好多合作，回想星盤說的那些，真的欸" },
 ];
 
 // 你的故事：填了就會出現「為什麼是我」區塊；維持 null 就不顯示。
