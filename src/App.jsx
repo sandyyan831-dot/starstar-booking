@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
+import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
 import {
   collection, doc, getDocs, writeBatch
 } from "firebase/firestore";
@@ -727,32 +728,8 @@ export default function App() {
           opacity:0.5,
         }} />
 
-        {/* Header */}
-        <div style={{ textAlign:"center", padding:"48px 20px 16px", position:"relative", animation:"floatIn 0.8s ease-out" }}>
-          <svg viewBox="0 0 120 120" style={{ width:60, height:60, margin:"0 auto 12px", display:"block", opacity:0.3 }}>
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#b09650" strokeWidth="0.8" strokeDasharray="3 5" />
-            <circle cx="60" cy="60" r="38" fill="none" stroke="#b09650" strokeWidth="0.5" strokeDasharray="2 4" />
-            <circle cx="60" cy="60" r="3" fill="#b09650" opacity="0.5" />
-          </svg>
-          <h1 style={{
-            fontFamily:"Georgia, 'Times New Roman', serif",
-            fontSize:"clamp(28px, 6vw, 42px)", fontWeight:600,
-            color:"#7a6530", letterSpacing:6, marginBottom:8, lineHeight:1.4,
-          }}>星語<span style={{color:"#c9ab5a",margin:"0 6px"}}>・</span>星心</h1>
-          <p style={{
-            fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:15,
-            color:"#a08940", letterSpacing:4, marginBottom:6, fontWeight:500,
-          }}>占星諮詢預約</p>
-          <p style={{
-            fontFamily:"Georgia, 'Times New Roman', serif", fontSize:13,
-            color:"#c4b48a", letterSpacing:2, fontStyle:"italic",
-          }}>explore the stars, find your direction</p>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:10, margin:"20px auto 0" }}>
-            <div style={{ width:40, height:1, background:"linear-gradient(90deg, transparent, #c9ab5a)" }} />
-            <div style={{ width:5, height:5, borderRadius:"50%", background:"#c9ab5a", opacity:0.5 }} />
-            <div style={{ width:40, height:1, background:"linear-gradient(270deg, transparent, #c9ab5a)" }} />
-          </div>
-        </div>
+        <LandingTop />
+        <StartHeading />
 
         {/* Info pills */}
         <div style={{ maxWidth:680, margin:"20px auto 12px", padding:"0 16px" }}>
@@ -861,6 +838,8 @@ export default function App() {
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11,
           color:"#c4b48a", letterSpacing:2,
         }}>✧ 點選日期時段即可開始預約 ✧</div>
+
+        <LandingBottom />
 
         <div style={{
           position:"absolute", bottom:0, left:0, right:0, height:1,
