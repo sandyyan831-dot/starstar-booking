@@ -34,7 +34,7 @@ export const ABOUT = {
   headline: "我懂媽媽，也懂孩子",
   lead: "學的是生命科學與臨床心理，走過的是漫長的求子路，和養育高敏孩子的日子。你的感受，我都經歷過。",
   credentials: [
-    { big: "生命科學", small: "大學主修" },
+    { big: "生命科學", small: "大學" },
     { big: "臨床心理", small: "研究所" },
     { big: "亞斯伯格症", small: "畢業論文主題" },
   ],

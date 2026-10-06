@@ -352,7 +352,7 @@ export function LandingTop({ onPick }) {
           <span style={{ flexShrink:0, width:36, height:36, borderRadius:"50%", overflow:"hidden", background:C.night, color:C.gold, display:"flex", alignItems:"center", justifyContent:"center", fontFamily:FS, fontWeight:700 }}>
             {ABOUT.photo ? <img src={ABOUT.photo} alt={ABOUT.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} /> : ABOUT.name.slice(0, 1)}
           </span>
-          <span>{ABOUT.name}｜臨床心理背景，也是花了很久才當上媽媽的人</span>
+          <span>{ABOUT.name}｜臨床心理背景，花了很久才當上媽媽的人</span>
         </div>
       </section>
 
