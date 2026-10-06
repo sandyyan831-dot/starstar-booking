@@ -9,7 +9,7 @@ const C = { ink:"#4a3b22", sub:"#8a7a5c", gold:"#b09650", deep:"#8a7340", line:"
 const wrap = { maxWidth:680, margin:"0 auto", padding:"0 20px", fontFamily:F, color:C.ink };
 
 const LINE_URL = "https://line.me/R/ti/p/@754atiwp";
-const IG_URL = "https://www.instagram.com/starstarlive";
+const IG_URL = "https://www.instagram.com/starpsyastro";
 
 const demo = typeof window !== "undefined" && import.meta.env.DEV && window.location.search.includes("demo");
 const testimonials = TESTIMONIALS;
