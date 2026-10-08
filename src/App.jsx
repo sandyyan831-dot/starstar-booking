@@ -53,7 +53,7 @@ const TAIWAN_CITIES = [
   "台東縣","澎湖縣","金門縣","連江縣",
 ];
 
-const PAYMENT_INFO = { account: "銀行：國泰世華（013）\n帳號：034505638273" };
+const PAYMENT_QR = "/payment-qr.png";
 
 /* ── Helpers ── */
 function getNext2MonthsDates() {
@@ -631,10 +631,9 @@ function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
             color:"#3f6f8d", fontWeight:700, marginBottom:10,
           }}>✦ 匯款資訊</p>
-          <p style={{
-            fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
-            color:"#7a6a4a", whiteSpace:"pre-line", lineHeight:1.9, marginBottom:10,
-          }}>{PAYMENT_INFO.account}</p>
+          <div style={{ textAlign:"center", marginBottom:12 }}>
+            <img src={PAYMENT_QR} alt="匯款 QR code" style={{ width:"min(220px, 70%)", height:"auto", borderRadius:10, background:"#fff", border:"1.5px solid #d5e2ec" }} />
+          </div>
           <p style={{
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:16,
             color:"#3a4f5e", fontWeight:700,
