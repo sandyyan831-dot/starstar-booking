@@ -11,7 +11,7 @@ const placeText = (place, country, region) =>
 export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, discountCode = "", now = new Date() }) {
   const isChild = ct?.id === "child";
   const listPrice = ct?.price || 0;
-  const discountAmount = discountCode ? Math.min(DISCOUNT_AMOUNT, listPrice) : 0;
+  const discountAmount = discountCode && !ct?.noDiscount ? Math.min(DISCOUNT_AMOUNT, listPrice) : 0;
 
   const data = {
     slotKey: key,

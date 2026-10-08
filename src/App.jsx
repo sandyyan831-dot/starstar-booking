@@ -34,7 +34,7 @@ const CONSULT_TYPES = [
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
   { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true,
     reportSubtitle: "適合已看過本命盤的人", reportDesc: "追問、流年、合盤，半小時就能聊。" },
-  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true,
+  { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true, noDiscount: true,
     reportSubtitle: "純文字回覆", reportDesc: "一次問一個問題，用文字回覆，不用通話。" },
   { id: "timing", label: "擇時", tag: "擇日擇時", desc: "半小時～一小時", price: 3600, priceLabel: "$3,600", icon: "❖",
     reportSubtitle: "選入厝時間、出生時程", reportDesc: "提供幾個時段的優缺參考" },
@@ -236,7 +236,8 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const isChild = consultType === "child";
   const showChildName = isChild || consultType === "textOnly";
   const quickOptions = QUICK_TIMES[slot.id] || [];
-  const discountOk = discount.status === "valid";
+  const canDiscount = !selectedType?.noDiscount;   // 單一問題（文字回覆）不能使用折扣碼
+  const discountOk = canDiscount && discount.status === "valid";
   const listPrice = selectedType?.price ?? null;
   const payable = listPrice === null ? null : priceAfterDiscount(listPrice, discountOk);
 
@@ -274,7 +275,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
         if (!form.momOverseasRegion.trim()) e.momOverseasRegion="請填寫地區";
       }
     }
-    if (codeInput.trim() && !discountOk) e.discount = discount.status==="checking" ? "折扣碼檢查中，請稍候" : "請先按「套用」確認折扣碼，或清空這個欄位";
+    if (canDiscount && codeInput.trim() && !discountOk) e.discount = discount.status==="checking" ? "折扣碼檢查中，請稍候" : "請先按「套用」確認折扣碼，或清空這個欄位";
     if (!form.question.trim()) e.question="請填寫";
     setErrors(e); return Object.keys(e).length===0;
   };
@@ -543,8 +544,8 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
             {errors.question && <div style={errS}>{errors.question}</div>}
           </div>
 
-          {/* 折扣碼 */}
-          <div>
+          {/* 折扣碼（單一問題不適用） */}
+          {canDiscount && <div>
             <label style={lbl}>折扣碼（選填）</label>
             <div style={{ display:"flex", gap:8 }}>
               <input style={{...inputBase("discount"), flex:1, textTransform:"uppercase", letterSpacing:1}} placeholder="有折扣碼的話請輸入"
@@ -564,7 +565,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
             {discount.status==="invalid" && <div style={errS}>這組折扣碼無效，請確認後再輸入</div>}
             {discount.status==="unavailable" && <div style={errS}>目前無法驗證折扣碼，你可以先清空這個欄位完成預約，之後再用 LINE 告訴我</div>}
             {errors.discount && <div style={errS}>{errors.discount}</div>}
-          </div>
+          </div>}
 
           {/* 金額摘要 */}
           {payable !== null && (
