@@ -1,6 +1,6 @@
 // 折扣碼的共用計算（不碰資料庫，方便測試）
 
-export const DISCOUNT_AMOUNT = 100; // 所有折扣碼一律折 $100
+export const DISCOUNT_AMOUNT = 200; // 所有折扣碼一律折 $200
 
 const SAFE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 去掉容易看錯的 0/O、1/I
 

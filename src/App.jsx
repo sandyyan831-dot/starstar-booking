@@ -29,7 +29,7 @@ const CONSULT_TYPES = [
   { id: "first", label: "本命盤解析", tag: "第一次諮詢", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "☽",
     reportSubtitle: "獲得個人完整報告", reportDesc: "報告內含個性特質、家庭、婚姻、事業等人生面向。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
-  { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "✧",
+  { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3600, priceLabel: "$3,600", icon: "✧",
     reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處，並附親子合盤建議。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
   { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true,
@@ -266,7 +266,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
       if (!form.overseasCountry.trim()) e.overseasCountry="請填寫國家";
       if (!form.overseasRegion.trim()) e.overseasRegion="請填寫地區";
     }
-    if (isChild) {   // 親子合盤需要媽媽的出生資料
+    if (isChild) {   // 親子合盤需要媽媽（或主要照顧者）的出生資料
       ["momBirthYear","momBirthMonth","momBirthDay","momBirthHour","momBirthMinute"].forEach(k=>{ if (!form[k].trim()) e[k]="必填"; });
       if (!form.momBirthPlace) e.momBirthPlace="請選擇";
       if (form.momBirthPlace==="國外") {
@@ -521,10 +521,10 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
           {isChild && (
             <div style={{ borderTop:"1.5px dashed #c9d8ea", paddingTop:16, display:"flex", flexDirection:"column", gap:16 }}>
               <div>
-                <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e", marginBottom:2 }}>媽媽的出生資料 <span style={{color:"#d4836a"}}>*</span></div>
-                <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.6 }}>報告會加入「親子合盤」的建議，所以需要媽媽的出生資料。</div>
+                <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e", marginBottom:2 }}>媽媽（或主要照顧者）的出生資料 <span style={{color:"#d4836a"}}>*</span></div>
+                <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.6 }}>報告會加入「親子合盤」的建議，所以需要媽媽（或主要照顧者）的出生資料。</div>
               </div>
-              {renderBirth(BIRTH_KEYS.mom, "媽媽的")}
+              {renderBirth(BIRTH_KEYS.mom, "媽媽（或主要照顧者）的")}
             </div>
           )}
 

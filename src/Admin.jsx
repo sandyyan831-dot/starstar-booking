@@ -373,8 +373,8 @@ export default function Admin() {
                         [`${who}出生`, `${b.birthYear}/${b.birthMonth}/${b.birthDay} ${b.birthHour}:${b.birthMinute}`],
                         [`${who}出生地`, b.birthPlace],
                         ...(b.momBirthYear ? [
-                          ["媽媽出生", `${b.momBirthYear}/${b.momBirthMonth}/${b.momBirthDay} ${b.momBirthHour}:${b.momBirthMinute}`],
-                          ["媽媽出生地", b.momBirthPlace],
+                          ["媽媽／照顧者出生", `${b.momBirthYear}/${b.momBirthMonth}/${b.momBirthDay} ${b.momBirthHour}:${b.momBirthMinute}`],
+                          ["媽媽／照顧者出生地", b.momBirthPlace],
                         ] : []),
                         ["問題", b.question],
                       ];
