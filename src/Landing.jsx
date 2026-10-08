@@ -421,10 +421,10 @@ export function LandingTop({ onPick }) {
           {REPORT_ITEMS.map((r, i) => (
             <div key={r.text} style={{
               gridColumn: (REPORT_ITEMS.length % 2 === 1 && i === REPORT_ITEMS.length - 1) ? "1 / -1" : undefined,
-              display:"flex", alignItems:"center", gap:8, fontSize:15, fontWeight:700, lineHeight:1.5, padding:"8px 12px", minHeight:54,
+              display:"flex", alignItems:"center", gap:6, fontSize:"clamp(12.5px, 3.6vw, 15px)", fontWeight:700, lineHeight:1.5, padding:"8px 10px", minHeight:54, whiteSpace:"nowrap",
               borderRadius:14, border:`1.5px solid ${C.skyLine}`, background:"rgba(255,255,255,0.7)",
             }}>
-              <span style={{ color:C.gold2, fontSize:18 }}>{r.icon}</span>{r.text}
+              <span style={{ color:C.gold2, fontSize:16, flexShrink:0 }}>{r.icon}</span>{r.text}
             </div>
           ))}
         </div>
