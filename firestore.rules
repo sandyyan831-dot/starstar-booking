@@ -4,6 +4,7 @@ rules_version = '2';
 // - bookings：客人個資。任何人都能「新增」預約，但只有管理員登入後才能讀取、修改、刪除
 // - bookedSlots：只記錄「哪些時段已被預約」，沒有個資，公開可讀
 // - blockedSlots：管理員封鎖的時段，公開可讀，只有管理員能改
+// - discountCodes：折扣碼。預約表單只能查單一代碼，管理員才能列出與管理
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -35,6 +36,12 @@ service cloud.firestore {
     match /blockedSlots/{key} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // discountCodes：折扣碼。預約表單只能「一組一組查」（get），不能列出全部；新增、停用、刪除、列表只有管理員能做
+    match /discountCodes/{code} {
+      allow get: if true;
+      allow list, write: if isAdmin();
     }
   }
 }

@@ -418,8 +418,9 @@ export function LandingTop({ onPick }) {
         <P serif style={{ color:"#4a5560", fontSize:16 }}>它不是標準答案，也不會替你決定怎麼教孩子。它像是一份線索，讓你先知道這個孩子本來是什麼樣子、怎麼想的。</P>
         <div style={{ fontSize:14, fontWeight:700, color:C.night, letterSpacing:1.5, margin:"22px 0 12px" }}>「解碼孩子的星盤天賦」報告內含</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gridAutoRows:"1fr", gap:10 }}>
-          {REPORT_ITEMS.map(r => (
+          {REPORT_ITEMS.map((r, i) => (
             <div key={r.text} style={{
+              gridColumn: (REPORT_ITEMS.length % 2 === 1 && i === REPORT_ITEMS.length - 1) ? "1 / -1" : undefined,
               display:"flex", alignItems:"center", gap:8, fontSize:15, fontWeight:700, lineHeight:1.5, padding:"8px 12px", minHeight:54,
               borderRadius:14, border:`1.5px solid ${C.skyLine}`, background:"rgba(255,255,255,0.7)",
             }}>

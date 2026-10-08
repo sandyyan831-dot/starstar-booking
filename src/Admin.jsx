@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { db, auth } from "./firebase.js";
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, writeBatch } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import DiscountPanel from "./DiscountPanel.jsx";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -52,7 +53,9 @@ export default function Admin() {
   const [blockedSlots, setBlockedSlots] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
-  const [tab, setTab] = useState("bookings"); // bookings | block
+  const [tab, setTab] = useState("bookings"); // bookings | block | codes
+  const [codes, setCodes] = useState([]);
+  const [codesError, setCodesError] = useState(""); // "" | "rules" | "other"
 
   useEffect(() => onAuthStateChanged(auth, user => {
     setAuthed(!!user);
@@ -100,7 +103,45 @@ export default function Admin() {
       blockSnap.forEach(d => blocked.add(d.id));
       setBlockedSlots(blocked);
     } catch (e) { console.error(e); }
+
+    try {
+      const codeSnap = await getDocs(collection(db, "discountCodes"));
+      const list = [];
+      codeSnap.forEach(d => list.push({ code: d.id, ...d.data() }));
+      setCodes(list);
+      setCodesError("");
+    } catch (e) {
+      console.error(e);
+      setCodes([]);
+      setCodesError(e?.code === "permission-denied" ? "rules" : "other");
+    }
     setLoading(false);
+  };
+
+  const addCode = async (code, referrer) => {
+    try {
+      await setDoc(doc(db, "discountCodes", code), { referrer, active: true, createdAt: new Date().toISOString() });
+      setCodes(prev => [...prev, { code, referrer, active: true }]);
+      return true;
+    } catch (e) { console.error(e); return false; }
+  };
+  const toggleCode = async (code, active) => {
+    try {
+      await updateDoc(doc(db, "discountCodes", code), { active });
+      setCodes(prev => prev.map(c => c.code === code ? { ...c, active } : c));
+    } catch (e) { console.error(e); alert("更新失敗"); }
+  };
+  const deleteCode = async (code) => {
+    try {
+      await deleteDoc(doc(db, "discountCodes", code));
+      setCodes(prev => prev.filter(c => c.code !== code));
+    } catch (e) { console.error(e); alert("刪除失敗"); }
+  };
+
+  // 預約卡片上顯示推薦人：以代碼表為準
+  const referrerOf = (code) => {
+    const c = codes.find(x => String(x.code).toUpperCase() === String(code || "").toUpperCase());
+    return c ? (c.referrer || "（未填推薦人）") : "（未登錄的代碼）";
   };
 
   useEffect(() => { if (authed) loadData(); }, [authed]);
@@ -222,7 +263,7 @@ export default function Admin() {
 
         {/* Main tabs: 預約列表 / 封鎖時段 */}
         <div style={{ display:"flex", gap:0, marginBottom:16, background:"#e5ddd0", borderRadius:12, padding:3 }}>
-          {[{key:"bookings",label:"📋 預約列表"},{key:"block",label:"🔒 封鎖時段"}].map(t=>(
+          {[{key:"bookings",label:"📋 預約列表"},{key:"codes",label:"🎟 折扣碼"},{key:"block",label:"🔒 封鎖時段"}].map(t=>(
             <button key={t.key} onClick={()=>setTab(t.key)} style={{
               flex:1, padding:"10px 0", borderRadius:10, border:"none",
               background:tab===t.key?"#fefcf7":"transparent",
@@ -312,18 +353,32 @@ export default function Admin() {
                     padding:"6px 10px", marginBottom:10, display:"inline-block",
                   }}>
                     <span style={{ fontSize:12, color:"#8a7340", fontWeight:600 }}>{b.consultTag} — {b.consultType}</span>
-                    <span style={{ fontSize:12, color:"#b5a27a", marginLeft:8 }}>${b.price?.toLocaleString()}</span>
+                    <span style={{ fontSize:12, color:"#b5a27a", marginLeft:8 }}>應匯 ${b.price?.toLocaleString()}</span>
+                    {b.discountAmount > 0 && <span style={{ fontSize:11, color:"#6a9a5b", marginLeft:6 }}>（原價 ${b.listPrice?.toLocaleString()}，折抵 ${b.discountAmount}）</span>}
                   </div>
+                  {b.discountCode && (
+                    <div style={{ fontSize:12, color:"#6a9a5b", marginBottom:10, fontWeight:600 }}>
+                      🎟 折扣碼 {b.discountCode}｜推薦人：{referrerOf(b.discountCode)}
+                    </div>
+                  )}
 
                   <div style={{ display:"grid", gridTemplateColumns:"70px 1fr", gap:"6px 8px", fontSize:13 }}>
-                    {[
-                      ["Line", b.line],
-                      ["性別", b.gender],
-                      ...(b.childName ? [["孩子稱呼", b.childName]] : []),
-                      ["出生", `${b.birthYear}/${b.birthMonth}/${b.birthDay} ${b.birthHour}:${b.birthMinute}`],
-                      ["出生地", b.birthPlace],
-                      ["問題", b.question],
-                    ].map(([label, value]) => (
+                    {(() => {
+                      const isChildBooking = b.consultId === "child" || b.consultTag === "親子星盤";
+                      const who = isChildBooking ? "孩子" : "";
+                      return [
+                        ["Line", b.line],
+                        [`${who}性別`, b.gender],
+                        ...(b.childName ? [["孩子稱呼", b.childName]] : []),
+                        [`${who}出生`, `${b.birthYear}/${b.birthMonth}/${b.birthDay} ${b.birthHour}:${b.birthMinute}`],
+                        [`${who}出生地`, b.birthPlace],
+                        ...(b.momBirthYear ? [
+                          ["媽媽出生", `${b.momBirthYear}/${b.momBirthMonth}/${b.momBirthDay} ${b.momBirthHour}:${b.momBirthMinute}`],
+                          ["媽媽出生地", b.momBirthPlace],
+                        ] : []),
+                        ["問題", b.question],
+                      ];
+                    })().map(([label, value]) => (
                       <React.Fragment key={label}>
                         <div style={{ color:"#b5a27a", fontWeight:500 }}>{label}</div>
                         <div style={{ color:"#5a4d35", lineHeight:1.6, wordBreak:"break-word" }}>{value}</div>
@@ -352,6 +407,14 @@ export default function Admin() {
             })}
           </div>
         </>)}
+
+        {/* ══════ TAB: 折扣碼 ══════ */}
+        {tab === "codes" && (
+          <DiscountPanel
+            codes={codes} bookings={bookings} error={codesError} loading={loading}
+            onAdd={addCode} onToggle={toggleCode} onDelete={deleteCode}
+          />
+        )}
 
         {/* ══════ TAB: Block Slots ══════ */}
         {tab === "block" && (

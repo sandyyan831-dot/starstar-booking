@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
 import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
+import { lookupDiscountCode } from "./lookupDiscount.js";
+import { DISCOUNT_AMOUNT, priceAfterDiscount } from "./discountUtils.js";
+import { buildBookingData } from "./bookingData.js";
 import {
   collection, doc, getDocs, writeBatch
 } from "firebase/firestore";
@@ -27,7 +30,7 @@ const CONSULT_TYPES = [
     reportSubtitle: "獲得個人完整報告", reportDesc: "報告內含個性特質、家庭、婚姻、事業等人生面向。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3000, priceLabel: "$3,000", icon: "✧",
-    reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處。",
+    reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處，並附親子合盤建議。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
   { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true,
     reportSubtitle: "適合已看過本命盤的人", reportDesc: "追問、流年、合盤，半小時就能聊。" },
@@ -219,8 +222,12 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     line:"", gender:"", childName:"", birthYear:"", birthMonth:"", birthDay:"",
     birthHour:"", birthMinute:"",
     birthPlace:"", overseasCountry:"", overseasRegion:"",
+    momBirthYear:"", momBirthMonth:"", momBirthDay:"", momBirthHour:"", momBirthMinute:"",
+    momBirthPlace:"", momOverseasCountry:"", momOverseasRegion:"",
     question:"",
   });
+  const [codeInput, setCodeInput] = useState("");
+  const [discount, setDiscount] = useState({ status:"idle", code:"" }); // idle | checking | valid | invalid | unavailable
   const [errors, setErrors] = useState({});
   const update = (f,v) => { setForm(p=>({...p,[f]:v})); setErrors(e=>({...e,[f]:undefined})); };
 
@@ -229,6 +236,18 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const isChild = consultType === "child";
   const showChildName = isChild || consultType === "textOnly";
   const quickOptions = QUICK_TIMES[slot.id] || [];
+  const discountOk = discount.status === "valid";
+  const listPrice = selectedType?.price ?? null;
+  const payable = listPrice === null ? null : priceAfterDiscount(listPrice, discountOk);
+
+  const applyCode = async () => {
+    if (!codeInput.trim()) { setDiscount({ status:"idle", code:"" }); return; }
+    setDiscount({ status:"checking", code:"" });
+    setErrors(e=>({...e, discount:undefined}));
+    const r = await lookupDiscountCode(codeInput);
+    setDiscount(r.status === "valid" ? { status:"valid", code:r.code } : { status:r.status, code:"" });
+  };
+  const clearCode = () => { setCodeInput(""); setDiscount({ status:"idle", code:"" }); setErrors(e=>({...e, discount:undefined})); };
 
   const validate = () => {
     const e = {};
@@ -247,10 +266,19 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
       if (!form.overseasCountry.trim()) e.overseasCountry="請填寫國家";
       if (!form.overseasRegion.trim()) e.overseasRegion="請填寫地區";
     }
+    if (isChild) {   // 親子合盤需要媽媽的出生資料
+      ["momBirthYear","momBirthMonth","momBirthDay","momBirthHour","momBirthMinute"].forEach(k=>{ if (!form[k].trim()) e[k]="必填"; });
+      if (!form.momBirthPlace) e.momBirthPlace="請選擇";
+      if (form.momBirthPlace==="國外") {
+        if (!form.momOverseasCountry.trim()) e.momOverseasCountry="請填寫國家";
+        if (!form.momOverseasRegion.trim()) e.momOverseasRegion="請填寫地區";
+      }
+    }
+    if (codeInput.trim() && !discountOk) e.discount = discount.status==="checking" ? "折扣碼檢查中，請稍候" : "請先按「套用」確認折扣碼，或清空這個欄位";
     if (!form.question.trim()) e.question="請填寫";
     setErrors(e); return Object.keys(e).length===0;
   };
-  const handleSubmit = () => { if(validate() && !submitting) onSubmit({...form, consultType, quickTime: isQuick ? quickTime : null}); };
+  const handleSubmit = () => { if(validate() && !submitting) onSubmit({...form, consultType, quickTime: isQuick ? quickTime : null, discountCode: discountOk ? discount.code : ""}); };
 
   const inputBase = (field) => ({
     width:"100%", padding:"11px 14px", borderRadius:10,
@@ -263,6 +291,73 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const errS = { fontSize:11, color:"#d4836a", marginTop:3 };
   const focusH = e=>{ e.target.style.borderColor="#6fa3c0"; };
   const blurH = field => e=>{ e.target.style.borderColor=errors[field]?"#d4836a":"#d5e2ec"; };
+
+  // 出生日期／時間／地點（孩子與媽媽共用；k 是欄位名稱對照，who 是標題前綴）
+  const BIRTH_KEYS = {
+    me:  { year:"birthYear",    month:"birthMonth",    day:"birthDay",    hour:"birthHour",    minute:"birthMinute",    place:"birthPlace",    country:"overseasCountry",    region:"overseasRegion" },
+    mom: { year:"momBirthYear", month:"momBirthMonth", day:"momBirthDay", hour:"momBirthHour", minute:"momBirthMinute", place:"momBirthPlace", country:"momOverseasCountry", region:"momOverseasRegion" },
+  };
+  const renderBirth = (k, who) => (
+    <>
+      <div>
+        <label style={lbl}>{who}出生日期</label>
+        <div style={{ display:"grid", gridTemplateColumns:"1.3fr 0.85fr 0.85fr", gap:8 }}>
+          {[[k.year,"年（如 1990）"],[k.month,"月"],[k.day,"日"]].map(([f,ph])=>(
+            <div key={f}>
+              <input style={{...inputBase(f), textAlign:"center"}} placeholder={ph}
+                value={form[f]} onChange={e=>update(f,e.target.value)}
+                onFocus={focusH} onBlur={blurH(f)} />
+              {errors[f] && <div style={errS}>{errors[f]}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label style={lbl}>{who}出生時間</label>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          {[[k.hour,"時（24hr）"],[k.minute,"分"]].map(([f,ph])=>(
+            <div key={f}>
+              <input style={{...inputBase(f), textAlign:"center"}} placeholder={ph}
+                value={form[f]} onChange={e=>update(f,e.target.value)}
+                onFocus={focusH} onBlur={blurH(f)} />
+              {errors[f] && <div style={errS}>{errors[f]}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label style={lbl}>{who}出生地</label>
+        <select style={{...inputBase(k.place), appearance:"none",
+          backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23b09650' stroke-width='1.5'/%3E%3C/svg%3E")`,
+          backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", paddingRight:32,
+        }}
+          value={form[k.place]} onChange={e=>update(k.place,e.target.value)}
+          onFocus={focusH} onBlur={blurH(k.place)}
+        >
+          <option value="">請選擇出生地</option>
+          {TAIWAN_CITIES.map(c=><option key={c} value={c}>{c}</option>)}
+          <option value="國外">國外</option>
+        </select>
+        {errors[k.place] && <div style={errS}>{errors[k.place]}</div>}
+        {form[k.place]==="國外" && (
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:10 }}>
+            <div>
+              <input style={inputBase(k.country)} placeholder="國家"
+                value={form[k.country]} onChange={e=>update(k.country,e.target.value)}
+                onFocus={focusH} onBlur={blurH(k.country)} />
+              {errors[k.country] && <div style={errS}>{errors[k.country]}</div>}
+            </div>
+            <div>
+              <input style={inputBase(k.region)} placeholder="地區／城市"
+                value={form[k.region]} onChange={e=>update(k.region,e.target.value)}
+                onFocus={focusH} onBlur={blurH(k.region)} />
+              {errors[k.region] && <div style={errS}>{errors[k.region]}</div>}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
 
   return (
     <div style={{
@@ -387,7 +482,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
 
           {/* Gender */}
           <div>
-            <label style={lbl}>性別 <span style={{color:"#d4836a"}}>*</span></label>
+            <label style={lbl}>{isChild ? "孩子的性別" : "性別"} <span style={{color:"#d4836a"}}>*</span></label>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
               {["男","女"].map(g => {
                 const sel = form.gender===g;
@@ -419,68 +514,19 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
             </div>
           )}
 
-          {/* Birth date */}
-          <div>
-            <label style={lbl}>出生日期</label>
-            <div style={{ display:"grid", gridTemplateColumns:"1.3fr 0.85fr 0.85fr", gap:8 }}>
-              {[["birthYear","年（如 1990）"],["birthMonth","月"],["birthDay","日"]].map(([f,ph])=>(
-                <div key={f}>
-                  <input style={{...inputBase(f), textAlign:"center"}} placeholder={ph}
-                    value={form[f]} onChange={e=>update(f,e.target.value)}
-                    onFocus={focusH} onBlur={blurH(f)} />
-                  {errors[f] && <div style={errS}>{errors[f]}</div>}
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* 出生資料（解碼孩子：這一組是「孩子的」） */}
+          {renderBirth(BIRTH_KEYS.me, isChild ? "孩子的" : "")}
 
-          {/* Birth time */}
-          <div>
-            <label style={lbl}>出生時間</label>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-              {[["birthHour","時（24hr）"],["birthMinute","分"]].map(([f,ph])=>(
-                <div key={f}>
-                  <input style={{...inputBase(f), textAlign:"center"}} placeholder={ph}
-                    value={form[f]} onChange={e=>update(f,e.target.value)}
-                    onFocus={focusH} onBlur={blurH(f)} />
-                  {errors[f] && <div style={errS}>{errors[f]}</div>}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Birth place */}
-          <div>
-            <label style={lbl}>出生地</label>
-            <select style={{...inputBase("birthPlace"), appearance:"none",
-              backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%23b09650' stroke-width='1.5'/%3E%3C/svg%3E")`,
-              backgroundRepeat:"no-repeat", backgroundPosition:"right 12px center", paddingRight:32,
-            }}
-              value={form.birthPlace} onChange={e=>update("birthPlace",e.target.value)}
-              onFocus={focusH} onBlur={blurH("birthPlace")}
-            >
-              <option value="">請選擇出生地</option>
-              {TAIWAN_CITIES.map(c=><option key={c} value={c}>{c}</option>)}
-              <option value="國外">國外</option>
-            </select>
-            {errors.birthPlace && <div style={errS}>{errors.birthPlace}</div>}
-            {form.birthPlace==="國外" && (
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:10 }}>
-                <div>
-                  <input style={inputBase("overseasCountry")} placeholder="國家"
-                    value={form.overseasCountry} onChange={e=>update("overseasCountry",e.target.value)}
-                    onFocus={focusH} onBlur={blurH("overseasCountry")} />
-                  {errors.overseasCountry && <div style={errS}>{errors.overseasCountry}</div>}
-                </div>
-                <div>
-                  <input style={inputBase("overseasRegion")} placeholder="地區／城市"
-                    value={form.overseasRegion} onChange={e=>update("overseasRegion",e.target.value)}
-                    onFocus={focusH} onBlur={blurH("overseasRegion")} />
-                  {errors.overseasRegion && <div style={errS}>{errors.overseasRegion}</div>}
-                </div>
+          {/* 媽媽的出生資料：解碼孩子的星盤天賦會加做親子合盤 */}
+          {isChild && (
+            <div style={{ borderTop:"1.5px dashed #c9d8ea", paddingTop:16, display:"flex", flexDirection:"column", gap:16 }}>
+              <div>
+                <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e", marginBottom:2 }}>媽媽的出生資料 <span style={{color:"#d4836a"}}>*</span></div>
+                <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.6 }}>報告會加入「親子合盤」的建議，所以需要媽媽的出生資料。</div>
               </div>
-            )}
-          </div>
+              {renderBirth(BIRTH_KEYS.mom, "媽媽的")}
+            </div>
+          )}
 
           {/* Question */}
           <div>
@@ -496,6 +542,38 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
               onFocus={focusH} onBlur={blurH("question")} />
             {errors.question && <div style={errS}>{errors.question}</div>}
           </div>
+
+          {/* 折扣碼 */}
+          <div>
+            <label style={lbl}>折扣碼（選填）</label>
+            <div style={{ display:"flex", gap:8 }}>
+              <input style={{...inputBase("discount"), flex:1, textTransform:"uppercase", letterSpacing:1}} placeholder="有折扣碼的話請輸入"
+                value={codeInput} disabled={discountOk}
+                onChange={e=>{ setCodeInput(e.target.value); if (discount.status!=="idle") setDiscount({ status:"idle", code:"" }); setErrors(er=>({...er, discount:undefined})); }}
+                onFocus={focusH} onBlur={blurH("discount")} />
+              {discountOk ? (
+                <button onClick={clearCode} style={{ flexShrink:0, padding:"0 16px", borderRadius:10, border:"1.5px solid #3a4f5e", background:"transparent", color:"#3a4f5e", fontSize:14, fontWeight:700, cursor:"pointer" }}>移除</button>
+              ) : (
+                <button onClick={applyCode} disabled={discount.status==="checking" || !codeInput.trim()} style={{
+                  flexShrink:0, padding:"0 18px", borderRadius:10, border:"none", background:"#f4d675", color:"#3a4f5e",
+                  fontSize:14, fontWeight:700, cursor:(discount.status==="checking"||!codeInput.trim())?"not-allowed":"pointer", opacity:!codeInput.trim()?0.55:1,
+                }}>{discount.status==="checking" ? "檢查中…" : "套用"}</button>
+              )}
+            </div>
+            {discountOk && <div style={{ fontSize:12.5, color:"#2f6f4a", marginTop:5, fontWeight:700 }}>✓ 已套用折扣碼，折抵 ${DISCOUNT_AMOUNT}</div>}
+            {discount.status==="invalid" && <div style={errS}>這組折扣碼無效，請確認後再輸入</div>}
+            {discount.status==="unavailable" && <div style={errS}>目前無法驗證折扣碼，你可以先清空這個欄位完成預約，之後再用 LINE 告訴我</div>}
+            {errors.discount && <div style={errS}>{errors.discount}</div>}
+          </div>
+
+          {/* 金額摘要 */}
+          {payable !== null && (
+            <div style={{ background:"#eef5fa", border:"1.5px solid #d5e2ec", borderRadius:14, padding:"12px 16px", fontSize:14, color:"#3a4f5e" }}>
+              <div style={{ display:"flex", justifyContent:"space-between" }}><span>諮詢費用</span><span>${listPrice.toLocaleString()}</span></div>
+              {discountOk && <div style={{ display:"flex", justifyContent:"space-between", color:"#2f6f4a" }}><span>折扣碼</span><span>−${DISCOUNT_AMOUNT}</span></div>}
+              <div style={{ display:"flex", justifyContent:"space-between", fontWeight:700, fontSize:16, marginTop:6, paddingTop:6, borderTop:"1px dashed #b7c4d6" }}><span>應匯金額</span><span>${payable.toLocaleString()}</span></div>
+            </div>
+          )}
 
           <button onClick={handleSubmit} disabled={submitting} style={{
             width:"100%", padding:"14px 0", borderRadius:12, border:"none",
@@ -515,7 +593,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
 }
 
 /* ── Confirmation ── */
-function ConfirmationModal({ date, timeLabel, consultType, onClose }) {
+function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
   const ct = CONSULT_TYPES.find(t=>t.id===consultType);
   return (
     <div style={{
@@ -559,7 +637,13 @@ function ConfirmationModal({ date, timeLabel, consultType, onClose }) {
           <p style={{
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:16,
             color:"#3a4f5e", fontWeight:700,
-          }}>應匯金額：{ct?.priceLabel}</p>
+          }}>應匯金額：{pay ? `$${pay.price.toLocaleString()}` : ct?.priceLabel}</p>
+          {pay?.discount > 0 && (
+            <p style={{
+              fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12.5,
+              color:"#2f6f4a", marginTop:4,
+            }}>已套用折扣碼，折抵 ${pay.discount}</p>
+          )}
         </div>
 
         <p style={{
@@ -604,6 +688,7 @@ export default function App() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [lastConsultType, setLastConsultType] = useState(null);
   const [lastTimeLabel, setLastTimeLabel] = useState(null);
+  const [lastPay, setLastPay] = useState(null);
   const [pickedType, setPickedType] = useState(null);
   const calendarRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -658,28 +743,10 @@ export default function App() {
     const key = quickOpt ? dateKey(selectedDate, quickOpt.id) : dateKey(selectedDate, selectedSlot.id);
     const timeLabel = quickOpt ? quickOpt.label : selectedSlot.label;
 
-    const bookingData = {
-      slotKey: key,
-      date: formatDate(selectedDate),
-      time: timeLabel,
-      consultType: ct?.label || "",
-      consultTag: ct?.tag || "",
-      price: ct?.price || 0,
-      line: formData.line,
-      gender: formData.gender,
-      childName: (formData.consultType === "child" || formData.consultType === "textOnly") ? formData.childName : "",
-      birthYear: formData.birthYear,
-      birthMonth: formData.birthMonth,
-      birthDay: formData.birthDay,
-      birthHour: formData.birthHour,
-      birthMinute: formData.birthMinute,
-      birthPlace: formData.birthPlace === "國外"
-        ? `國外 — ${formData.overseasCountry}・${formData.overseasRegion}`
-        : formData.birthPlace,
-      question: formData.question,
-      bookedAt: new Date().toISOString(),
-      paymentStatus: "待匯款",
-    };
+    const bookingData = buildBookingData({
+      key, dateLabel: formatDate(selectedDate), timeLabel, ct, formData,
+      discountCode: formData.discountCode || "",
+    });
 
     try {
       // 客人資料寫進 bookings（只有後台看得到），時段另外寫進公開的 bookedSlots
@@ -692,6 +759,7 @@ export default function App() {
       setBookedSlots(nb);
       setLastConsultType(formData.consultType);
       setLastTimeLabel(timeLabel);
+      setLastPay({ price: bookingData.price, discount: bookingData.discountAmount });
       setShowForm(false);
       setPickedType(null);
       setShowConfirmation(true);
@@ -838,7 +906,7 @@ export default function App() {
         )}
         {showConfirmation && selectedDate && selectedSlot && (
           <ConfirmationModal date={selectedDate} timeLabel={lastTimeLabel}
-            consultType={lastConsultType} onClose={()=>setShowConfirmation(false)} />
+            consultType={lastConsultType} pay={lastPay} onClose={()=>setShowConfirmation(false)} />
         )}
       </div>
     </>
