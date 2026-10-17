@@ -6,6 +6,11 @@
 
 const FIREBASE_API_KEY = "AIzaSyBcoTgoJX6Nz7drf9lYB39_epJKGKK7zhE";
 const ADMIN_EMAILS = ["orangelfish@gmail.com"];
+const CALENDAR_NAME = "工作"; // 放進這個名稱的行事曆；找不到就放預設行事曆
+
+function calendar_() {
+  return CalendarApp.getCalendarsByName(CALENDAR_NAME)[0] || CalendarApp.getDefaultCalendar();
+}
 
 function doPost(e) {
   try {
@@ -30,7 +35,7 @@ function doPost(e) {
 
 // 第一次部署前，先在編輯器裡選這個函式按「執行」，讓 Google 詢問行事曆權限
 function 授權測試() {
-  Logger.log("可以使用的行事曆：" + CalendarApp.getDefaultCalendar().getName());
+  Logger.log("預約會放進這個行事曆：" + calendar_().getName());
 }
 
 function isAdmin_(idToken) {
@@ -46,7 +51,7 @@ function isAdmin_(idToken) {
 
 // 每筆預約只會有一個行事曆活動：用預約代碼記住活動編號，重複送出只會更新、不會重複新增
 function upsertEvent_(item) {
-  const cal = CalendarApp.getDefaultCalendar();
+  const cal = calendar_();
   const props = PropertiesService.getScriptProperties();
   const start = new Date(item.start), end = new Date(item.end);
   const existingId = props.getProperty(item.id);
@@ -65,7 +70,7 @@ function removeEvent_(id) {
   const props = PropertiesService.getScriptProperties();
   const eventId = props.getProperty(id);
   if (!eventId) return;
-  const ev = CalendarApp.getDefaultCalendar().getEventById(eventId);
+  const ev = calendar_().getEventById(eventId);
   if (ev) ev.deleteEvent();
   props.deleteProperty(id);
 }
