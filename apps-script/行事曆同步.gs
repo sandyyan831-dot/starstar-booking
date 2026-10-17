@@ -5,7 +5,7 @@
 // 讀得到才算是管理員本人（跟資料庫權限規則一致），其他人就算知道網址也加不了、刪不了行事曆。
 
 const FIREBASE_PROJECT = "starstar-booking";
-const CALENDAR_NAME = "工作"; // 放進這個名稱的行事曆；找不到就放預設行事曆
+const CALENDAR_NAME = "家庭"; // 放進這個名稱的行事曆；找不到就放預設行事曆
 
 function calendar_() {
   return CalendarApp.getCalendarsByName(CALENDAR_NAME)[0] || CalendarApp.getDefaultCalendar();
