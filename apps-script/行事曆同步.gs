@@ -1,11 +1,10 @@
 // 星語・星心：後台按「已收款」時，自動把預約放進 Google 行事曆
 // 這段程式貼在 Google Apps Script（script.google.com），部署成「網頁應用程式」後使用。
 //
-// 安全性：每次呼叫都會帶後台登入的憑證，這裡會向 Firebase 確認真的是管理員本人，
-// 其他人就算知道網址也加不了、刪不了行事曆。
+// 安全性：每次呼叫都會帶後台登入的憑證，這裡會拿它去讀一筆「只有管理員讀得到」的資料庫內容，
+// 讀得到才算是管理員本人（跟資料庫權限規則一致），其他人就算知道網址也加不了、刪不了行事曆。
 
-const FIREBASE_API_KEY = "AIzaSyBcoTgoJX6Nz7drf9lYB39_epJKGKK7zhE";
-const ADMIN_EMAILS = ["orangelfish@gmail.com"];
+const FIREBASE_PROJECT = "starstar-booking";
 const CALENDAR_NAME = "工作"; // 放進這個名稱的行事曆；找不到就放預設行事曆
 
 function calendar_() {
@@ -40,19 +39,16 @@ function 授權測試() {
 }
 
 // 回傳 { ok, reason }：沒過的時候 reason 說明卡在哪一步，方便除錯
+// 折扣碼列表只有管理員能讀（見 firestore.rules），用它來確認身分
 function checkAdmin_(idToken) {
   if (!idToken) return { ok: false, reason: "沒有帶登入憑證" };
   const res = UrlFetchApp.fetch(
-    "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + FIREBASE_API_KEY,
-    { method: "post", contentType: "application/json", payload: JSON.stringify({ idToken }), muteHttpExceptions: true }
+    "https://firestore.googleapis.com/v1/projects/" + FIREBASE_PROJECT +
+      "/databases/(default)/documents/discountCodes?pageSize=1&mask.fieldPaths=active",
+    { headers: { Authorization: "Bearer " + idToken }, muteHttpExceptions: true }
   );
-  if (res.getResponseCode() !== 200) {
-    return { ok: false, reason: "Firebase 回應 " + res.getResponseCode() + "：" + res.getContentText().slice(0, 200) };
-  }
-  const user = (JSON.parse(res.getContentText()).users || [])[0];
-  const email = String((user && user.email) || "").toLowerCase();
-  if (!ADMIN_EMAILS.includes(email)) return { ok: false, reason: "登入帳號是 " + (email || "（沒有 email）") };
-  return { ok: true };
+  if (res.getResponseCode() === 200) return { ok: true };
+  return { ok: false, reason: "資料庫回應 " + res.getResponseCode() + "：" + res.getContentText().slice(0, 200) };
 }
 
 // 每筆預約只會有一個行事曆活動：用預約代碼記住活動編號，重複送出只會更新、不會重複新增
