@@ -2,7 +2,7 @@
 import { auth } from "./firebase.js";
 
 // 部署 Apps Script 後拿到的「網頁應用程式」網址；空白代表還沒設定，就不會同步
-export const CALENDAR_SYNC_URL = "";
+export const CALENDAR_SYNC_URL = "https://script.google.com/macros/s/AKfycbw4TmnDJOJrurwnWscSRRdeghqvxg6Qjtly_ifnREXQAsVMti-Zw702Tu29wjSkqDjx/exec";
 
 const SLOT_TIMES = { morning: ["10:00", "12:00"], afternoon: ["14:00", "16:00"] };
 
