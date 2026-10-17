@@ -15,7 +15,8 @@ function calendar_() {
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
-    if (!isAdmin_(body.idToken)) return reply_({ ok: false, error: "沒有權限" });
+    const who = checkAdmin_(body.idToken);
+    if (!who.ok) return reply_({ ok: false, error: "沒有權限（" + who.reason + "）" });
 
     const results = (body.items || []).map(item => {
       try {
@@ -38,15 +39,20 @@ function 授權測試() {
   Logger.log("預約會放進這個行事曆：" + calendar_().getName());
 }
 
-function isAdmin_(idToken) {
-  if (!idToken) return false;
+// 回傳 { ok, reason }：沒過的時候 reason 說明卡在哪一步，方便除錯
+function checkAdmin_(idToken) {
+  if (!idToken) return { ok: false, reason: "沒有帶登入憑證" };
   const res = UrlFetchApp.fetch(
     "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=" + FIREBASE_API_KEY,
     { method: "post", contentType: "application/json", payload: JSON.stringify({ idToken }), muteHttpExceptions: true }
   );
-  if (res.getResponseCode() !== 200) return false;
+  if (res.getResponseCode() !== 200) {
+    return { ok: false, reason: "Firebase 回應 " + res.getResponseCode() + "：" + res.getContentText().slice(0, 200) };
+  }
   const user = (JSON.parse(res.getContentText()).users || [])[0];
-  return !!user && ADMIN_EMAILS.includes(user.email);
+  const email = String((user && user.email) || "").toLowerCase();
+  if (!ADMIN_EMAILS.includes(email)) return { ok: false, reason: "登入帳號是 " + (email || "（沒有 email）") };
+  return { ok: true };
 }
 
 // 每筆預約只會有一個行事曆活動：用預約代碼記住活動編號，重複送出只會更新、不會重複新增
