@@ -3,6 +3,7 @@ import { db, auth } from "./firebase.js";
 import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, writeBatch } from "firebase/firestore";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 import DiscountPanel from "./DiscountPanel.jsx";
+import { CALENDAR_SYNC_URL, syncCalendar } from "./calendarSync.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -152,7 +153,27 @@ export default function Admin() {
     try {
       await updateDoc(doc(db, "bookings", booking.id), { paymentStatus: newStatus });
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, paymentStatus: newStatus } : b));
-    } catch (e) { console.error(e); alert("更新失敗"); }
+    } catch (e) { console.error(e); alert("更新失敗"); return; }
+    // 已收款 → 放進行事曆；改回待匯款 → 從行事曆拿掉
+    const r = await syncCalendar(newStatus === "已收款" ? "upsert" : "remove", [booking]);
+    if (!r.ok) alert(`付款狀態已更新，但行事曆沒有${newStatus === "已收款" ? "加" : "刪"}成功：\n${r.error}`);
+  };
+
+  // 把所有已收款、還沒過的預約補進行事曆（已經在行事曆上的只會更新，不會重複）
+  const [syncingAll, setSyncingAll] = useState(false);
+  const syncAllPaid = async () => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayKey = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
+    const upcoming = bookings.filter(b => {
+      if (b.paymentStatus !== "已收款") return false;
+      const m = /^(\d{4})-(\d{1,2})-(\d{1,2})_/.exec(b.id);
+      return m && Number(m[1])*10000 + Number(m[2])*100 + Number(m[3]) >= todayKey;
+    });
+    if (!window.confirm(`要把 ${upcoming.length} 筆已收款、還沒到的預約放進行事曆嗎？\n（已經在行事曆上的不會重複）`)) return;
+    setSyncingAll(true);
+    const r = await syncCalendar("upsert", upcoming);
+    setSyncingAll(false);
+    alert(r.ok ? "行事曆同步完成 ✓" : `有些沒有同步成功：\n${r.error}`);
   };
 
   const deleteBooking = async (booking) => {
@@ -163,7 +184,11 @@ export default function Admin() {
       batch.delete(doc(db, "bookedSlots", booking.id));
       await batch.commit();
       setBookings(prev => prev.filter(b => b.id !== booking.id));
-    } catch (e) { console.error(e); alert("刪除失敗"); }
+    } catch (e) { console.error(e); alert("刪除失敗"); return; }
+    if (booking.paymentStatus === "已收款") {
+      const r = await syncCalendar("remove", [booking]);
+      if (!r.ok) alert(`預約已刪除，但行事曆上的活動沒有刪成功，請手動刪除：\n${r.error}`);
+    }
   };
 
   const toggleBlock = async (key) => {
@@ -306,6 +331,14 @@ export default function Admin() {
               }}>{f.label}</button>
             ))}
           </div>
+
+          {CALENDAR_SYNC_URL && filter === "paid" && (
+            <button onClick={syncAllPaid} disabled={syncingAll} style={{
+              width:"100%", padding:"9px 0", marginBottom:12, borderRadius:10,
+              border:"1px dashed #c9b88a", background:"transparent", color:"#8a7340",
+              fontSize:13, fontWeight:600, cursor:syncingAll?"wait":"pointer",
+            }}>{syncingAll ? "同步中…" : "📅 把已收款的預約補進行事曆"}</button>
+          )}
 
           {loading && <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>}
 
