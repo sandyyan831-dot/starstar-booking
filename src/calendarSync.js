@@ -64,7 +64,7 @@ export async function syncCalendar(action, bookings) {
       body: JSON.stringify({ action, idToken, items }),
     });
     const data = await res.json();
-    if (data.ok) return { ok: true };
+    if (data.ok) return { ok: true, sent: items.length, sample: action === "upsert" ? items.slice(0, 3) : undefined };
     const failed = (data.results || []).filter(r => !r.ok).map(r => `${r.id}：${r.error}`);
     return { ok: false, error: data.error || failed.join("\n") };
   } catch (e) {
