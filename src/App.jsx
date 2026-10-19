@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
 import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
 import { lookupDiscountCode } from "./lookupDiscount.js";
-import { DISCOUNT_AMOUNT, priceAfterDiscount } from "./discountUtils.js";
-import { buildBookingData } from "./bookingData.js";
+import { DISCOUNT_AMOUNT, priceAfterDiscount, discountTotal } from "./discountUtils.js";
+import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN } from "./bookingData.js";
 import {
   collection, doc, getDocs, writeBatch
 } from "firebase/firestore";
@@ -224,6 +224,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     birthPlace:"", overseasCountry:"", overseasRegion:"",
     momBirthYear:"", momBirthMonth:"", momBirthDay:"", momBirthHour:"", momBirthMinute:"",
     momBirthPlace:"", momOverseasCountry:"", momOverseasRegion:"",
+    childCount:1, ...emptyChildFields(),
     question:"",
   });
   const [codeInput, setCodeInput] = useState("");
@@ -238,8 +239,11 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const quickOptions = QUICK_TIMES[slot.id] || [];
   const canDiscount = !selectedType?.noDiscount;   // 「問問題／流年／合盤」與「單一問題（文字回覆）」不能使用折扣碼
   const discountOk = canDiscount && discount.status === "valid";
-  const listPrice = selectedType?.price ?? null;
-  const payable = listPrice === null ? null : priceAfterDiscount(listPrice, discountOk);
+  const childCount = isChild ? clampChildCount(form.childCount) : 1;   // 解碼孩子：一次可以看 1～3 位孩子
+  const listPrice = selectedType ? selectedType.price * childCount : null;
+  const discountAmt = listPrice === null ? 0 : discountTotal(listPrice, childCount);   // 每位孩子各折一次
+  const payable = listPrice === null ? null : priceAfterDiscount(listPrice, discountOk, childCount);
+  const childPrefix = isChild ? (childCount > 1 ? "第 1 個孩子的" : "孩子的") : "";
 
   const applyCode = async () => {
     if (!codeInput.trim()) { setDiscount({ status:"idle", code:"" }); return; }
@@ -267,6 +271,19 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
       if (!form.overseasCountry.trim()) e.overseasCountry="請填寫國家";
       if (!form.overseasRegion.trim()) e.overseasRegion="請填寫地區";
     }
+    if (isChild) {   // 第 2、3 位孩子
+      for (let n = 2; n <= childCount; n++) {
+        const k = childKeys(n);
+        if (!form[k.name].trim()) e[k.name] = "請填寫";
+        if (!form[k.gender]) e[k.gender] = "請選擇";
+        [k.year, k.month, k.day, k.hour, k.minute].forEach(f => { if (!form[f].trim()) e[f] = "必填"; });
+        if (!form[k.place]) e[k.place] = "請選擇";
+        if (form[k.place] === "國外") {
+          if (!form[k.country].trim()) e[k.country] = "請填寫國家";
+          if (!form[k.region].trim()) e[k.region] = "請填寫地區";
+        }
+      }
+    }
     if (isChild) {   // 親子合盤需要媽媽（或主要照顧者）的出生資料
       ["momBirthYear","momBirthMonth","momBirthDay","momBirthHour","momBirthMinute"].forEach(k=>{ if (!form[k].trim()) e[k]="必填"; });
       if (!form.momBirthPlace) e.momBirthPlace="請選擇";
@@ -279,7 +296,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     if (!form.question.trim()) e.question="請填寫";
     setErrors(e); return Object.keys(e).length===0;
   };
-  const handleSubmit = () => { if(validate() && !submitting) onSubmit({...form, consultType, quickTime: isQuick ? quickTime : null, discountCode: discountOk ? discount.code : ""}); };
+  const handleSubmit = () => { if(validate() && !submitting) onSubmit({...form, childCount, consultType, quickTime: isQuick ? quickTime : null, discountCode: discountOk ? discount.code : ""}); };
 
   const inputBase = (field) => ({
     width:"100%", padding:"11px 14px", borderRadius:10,
@@ -298,6 +315,29 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     me:  { year:"birthYear",    month:"birthMonth",    day:"birthDay",    hour:"birthHour",    minute:"birthMinute",    place:"birthPlace",    country:"overseasCountry",    region:"overseasRegion" },
     mom: { year:"momBirthYear", month:"momBirthMonth", day:"momBirthDay", hour:"momBirthHour", minute:"momBirthMinute", place:"momBirthPlace", country:"momOverseasCountry", region:"momOverseasRegion" },
   };
+  const renderGender = (field, label) => (
+    <div>
+      <label style={lbl}>{label} <span style={{color:"#d4836a"}}>*</span></label>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+        {["男","女"].map(g => {
+          const sel = form[field]===g;
+          return (
+            <button key={g} onClick={()=>update(field,g)}
+              style={{
+                padding:"11px 0", borderRadius:10, fontSize:14,
+                border:`1.5px solid ${sel?"#6fa3c0":"#d5e2ec"}`,
+                background:sel?"linear-gradient(135deg, #eef5fa, #e6eff5)":"#fffdf8",
+                color:sel?"#3a4f5e":"#4a5560",
+                cursor:"pointer", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                fontWeight:600, transition:"all 0.2s",
+              }}
+            >{g}</button>
+          );
+        })}
+      </div>
+      {errors[field] && <div style={errS}>{errors[field]}</div>}
+    </div>
+  );
   const renderBirth = (k, who) => (
     <>
       <div>
@@ -481,33 +521,43 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
             {errors.line && <div style={errS}>{errors.line}</div>}
           </div>
 
-          {/* Gender */}
-          <div>
-            <label style={lbl}>{isChild ? "孩子的性別" : "性別"} <span style={{color:"#d4836a"}}>*</span></label>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-              {["男","女"].map(g => {
-                const sel = form.gender===g;
-                return (
-                  <button key={g} onClick={()=>update("gender",g)}
-                    style={{
-                      padding:"11px 0", borderRadius:10, fontSize:14,
-                      border:`1.5px solid ${sel?"#6fa3c0":"#d5e2ec"}`,
-                      background:sel?"linear-gradient(135deg, #eef5fa, #e6eff5)":"#fffdf8",
-                      color:sel?"#3a4f5e":"#4a5560",
-                      cursor:"pointer", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
-                      fontWeight:600, transition:"all 0.2s",
-                    }}
-                  >{g}</button>
-                );
-              })}
+          {/* 孩子人數：解碼孩子的星盤天賦可以一次看 1～3 位 */}
+          {isChild && (
+            <div>
+              <label style={lbl}>這次要看幾個孩子？ <span style={{color:"#d4836a"}}>*</span></label>
+              <div style={{ display:"grid", gridTemplateColumns:`repeat(${MAX_CHILDREN}, 1fr)`, gap:8 }}>
+                {Array.from({ length: MAX_CHILDREN }, (_, i) => i + 1).map(n => {
+                  const sel = childCount === n;
+                  return (
+                    <button key={n} onClick={()=>update("childCount", n)}
+                      style={{
+                        padding:"11px 0", borderRadius:10, fontSize:14,
+                        border:`1.5px solid ${sel?"#6fa3c0":"#d5e2ec"}`,
+                        background:sel?"linear-gradient(135deg, #eef5fa, #e6eff5)":"#fffdf8",
+                        color:sel?"#3a4f5e":"#4a5560",
+                        cursor:"pointer", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+                        fontWeight:600, transition:"all 0.2s",
+                      }}
+                    >{n} 個孩子</button>
+                  );
+                })}
+              </div>
+              {childCount > 1 && (
+                <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.7, marginTop:8 }}>
+                  每個孩子 ${selectedType.price.toLocaleString()}（共 ${listPrice.toLocaleString()}），折扣碼每位孩子各折 ${DISCOUNT_AMOUNT}。孩子們會排在同一個時段一起看
+                  {childCount === 3 ? "；3 位孩子約需 3 小時，比預約的 2 小時時段長，我會再透過 LINE 跟你確認時間" : ""}。
+                </div>
+              )}
             </div>
-            {errors.gender && <div style={errS}>{errors.gender}</div>}
-          </div>
+          )}
+
+          {/* Gender */}
+          {renderGender("gender", `${childPrefix}性別`)}
 
           {/* Child name — 解碼孩子的星盤天賦（必填）／ 單一問題文字回覆（選填，因為也常問孩子的事） */}
           {showChildName && (
             <div>
-              <label style={lbl}>孩子怎麼稱呼{isChild && <span style={{color:"#d4836a"}}> *</span>}</label>
+              <label style={lbl}>{isChild ? `${childPrefix}稱呼` : "孩子怎麼稱呼"}{isChild && <span style={{color:"#d4836a"}}> *</span>}</label>
               <input style={inputBase("childName")} placeholder={isChild ? "請輸入孩子的稱呼" : "若與孩子有關，請輸入孩子的稱呼（選填）"}
                 value={form.childName} onChange={e=>update("childName",e.target.value)}
                 onFocus={focusH} onBlur={blurH("childName")} />
@@ -516,7 +566,26 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
           )}
 
           {/* 出生資料（解碼孩子：這一組是「孩子的」） */}
-          {renderBirth(BIRTH_KEYS.me, isChild ? "孩子的" : "")}
+          {renderBirth(BIRTH_KEYS.me, childPrefix)}
+
+          {/* 第 2、3 位孩子 */}
+          {isChild && Array.from({ length: childCount - 1 }, (_, i) => i + 2).map(n => {
+            const k = childKeys(n);
+            return (
+              <div key={n} style={{ borderTop:"1.5px dashed #c9d8ea", paddingTop:16, display:"flex", flexDirection:"column", gap:16 }}>
+                <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e" }}>第 {n} 個孩子</div>
+                <div>
+                  <label style={lbl}>第 {n} 個孩子的稱呼 <span style={{color:"#d4836a"}}>*</span></label>
+                  <input style={inputBase(k.name)} placeholder="請輸入孩子的稱呼"
+                    value={form[k.name]} onChange={e=>update(k.name,e.target.value)}
+                    onFocus={focusH} onBlur={blurH(k.name)} />
+                  {errors[k.name] && <div style={errS}>{errors[k.name]}</div>}
+                </div>
+                {renderGender(k.gender, `第 ${n} 個孩子的性別`)}
+                {renderBirth(k, `第 ${n} 個孩子的`)}
+              </div>
+            );
+          })}
 
           {/* 媽媽的出生資料：解碼孩子的星盤天賦會加做親子合盤 */}
           {isChild && (
@@ -561,7 +630,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
                 }}>{discount.status==="checking" ? "檢查中…" : "套用"}</button>
               )}
             </div>
-            {discountOk && <div style={{ fontSize:12.5, color:"#2f6f4a", marginTop:5, fontWeight:700 }}>✓ 已套用折扣碼，折抵 ${DISCOUNT_AMOUNT}</div>}
+            {discountOk && <div style={{ fontSize:12.5, color:"#2f6f4a", marginTop:5, fontWeight:700 }}>✓ 已套用折扣碼，折抵 ${discountAmt.toLocaleString()}</div>}
             {discount.status==="invalid" && <div style={errS}>這組折扣碼無效，請確認後再輸入</div>}
             {discount.status==="unavailable" && <div style={errS}>目前無法驗證折扣碼，你可以先清空這個欄位完成預約，之後再用 LINE 告訴我</div>}
             {errors.discount && <div style={errS}>{errors.discount}</div>}
@@ -570,8 +639,8 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
           {/* 金額摘要 */}
           {payable !== null && (
             <div style={{ background:"#eef5fa", border:"1.5px solid #d5e2ec", borderRadius:14, padding:"12px 16px", fontSize:14, color:"#3a4f5e" }}>
-              <div style={{ display:"flex", justifyContent:"space-between" }}><span>諮詢費用</span><span>${listPrice.toLocaleString()}</span></div>
-              {discountOk && <div style={{ display:"flex", justifyContent:"space-between", color:"#2f6f4a" }}><span>折扣碼</span><span>−${DISCOUNT_AMOUNT}</span></div>}
+              <div style={{ display:"flex", justifyContent:"space-between" }}><span>諮詢費用{childCount > 1 ? `（${childCount} 位孩子）` : ""}</span><span>${listPrice.toLocaleString()}</span></div>
+              {discountOk && <div style={{ display:"flex", justifyContent:"space-between", color:"#2f6f4a" }}><span>折扣碼{childCount > 1 ? `（每位孩子 −$${DISCOUNT_AMOUNT}）` : ""}</span><span>−${discountAmt.toLocaleString()}</span></div>}
               <div style={{ display:"flex", justifyContent:"space-between", fontWeight:700, fontSize:16, marginTop:6, paddingTop:6, borderTop:"1px dashed #b7c4d6" }}><span>應匯金額</span><span>${payable.toLocaleString()}</span></div>
             </div>
           )}
@@ -620,7 +689,7 @@ function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
         <p style={{
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:13,
           color:"#3f6f8d", marginBottom:22, fontWeight:600,
-        }}>{ct?.icon} {ct?.label}</p>
+        }}>{ct?.icon} {ct?.label}{pay?.childCount > 1 ? ` × ${pay.childCount} 位孩子` : ""}</p>
 
         <div style={{
           background:"linear-gradient(135deg, #eef5fa, #e6eff5)",
@@ -759,7 +828,7 @@ export default function App() {
       setBookedSlots(nb);
       setLastConsultType(formData.consultType);
       setLastTimeLabel(timeLabel);
-      setLastPay({ price: bookingData.price, discount: bookingData.discountAmount });
+      setLastPay({ price: bookingData.price, discount: bookingData.discountAmount, childCount: bookingData.childCount || 1 });
       setShowForm(false);
       setPickedType(null);
       setShowConfirmation(true);

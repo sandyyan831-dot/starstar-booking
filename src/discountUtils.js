@@ -16,8 +16,13 @@ export function generateCode(len = 6, rand = Math.random) {
   return s;
 }
 
-export function priceAfterDiscount(price, hasDiscount) {
-  return hasDiscount ? Math.max(0, price - DISCOUNT_AMOUNT) : price;
+// units：折幾份（解碼孩子的星盤天賦一次看多位孩子時，每位孩子各折一次）
+export function discountTotal(price, units = 1) {
+  return Math.min(DISCOUNT_AMOUNT * Math.max(1, units), price);
+}
+
+export function priceAfterDiscount(price, hasDiscount, units = 1) {
+  return hasDiscount ? price - discountTotal(price, units) : price;
 }
 
 const NO_REFERRER = "（未填推薦人）";

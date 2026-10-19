@@ -11,6 +11,7 @@ const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
 /** 行事曆備註：給記帳用，只放金額與折扣碼（不放生日等個資，因為行事曆會和家人共用） */
 export function buildCalendarNote(booking) {
   const lines = ["由星語・星心預約後台自動建立", ""];
+  if (Number(booking.childCount) > 1) lines.push(`孩子人數：${booking.childCount} 位`);
   const paid = Number(booking.price);
   if (!Number.isNaN(paid) && booking.price !== undefined && booking.price !== "") {
     lines.push(`實收金額：${money(paid)}`);
@@ -39,11 +40,18 @@ export function buildCalendarEvent(booking) {
     startHM = hm(startMin); endHM = hm(startMin + 30);
   } else return null;
   const day = `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  // 解碼孩子一次看多位孩子：標題標示人數；3 位孩子需要 3 小時，活動比預約的 2 小時時段多 1 小時
+  const kids = Number(booking.childCount) || 1;
+  let end = `${day}T${endHM}:00+08:00`;
+  if (kids >= 3 && SLOT_TIMES[slot]) {
+    const [eh, em] = endHM.split(":").map(Number);
+    end = `${day}T${String(eh + 1).padStart(2, "0")}:${String(em).padStart(2, "0")}:00+08:00`;
+  }
   return {
     id: booking.id,
-    title: `${booking.consultType || "諮詢"}｜LINE: ${booking.line || ""}`,
+    title: `${booking.consultType || "諮詢"}${kids > 1 ? ` ×${kids}位孩子` : ""}｜LINE: ${booking.line || ""}`,
     start: `${day}T${startHM}:00+08:00`,
-    end: `${day}T${endHM}:00+08:00`,
+    end,
     description: buildCalendarNote(booking),
   };
 }
