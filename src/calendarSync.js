@@ -6,6 +6,25 @@ export const CALENDAR_SYNC_URL = "https://script.google.com/macros/s/AKfycbw4Tmn
 
 const SLOT_TIMES = { morning: ["10:00", "12:00"], afternoon: ["14:00", "16:00"] };
 
+const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
+
+/** 行事曆備註：給記帳用，只放金額與折扣碼（不放生日等個資，因為行事曆會和家人共用） */
+export function buildCalendarNote(booking) {
+  const lines = ["由星語・星心預約後台自動建立", ""];
+  const paid = Number(booking.price);
+  if (!Number.isNaN(paid) && booking.price !== undefined && booking.price !== "") {
+    lines.push(`實收金額：${money(paid)}`);
+    const discount = Number(booking.discountAmount) || 0;
+    if (discount > 0 && booking.discountCode) {
+      lines.push(`原價：${money(Number(booking.listPrice) || paid + discount)}`);
+      lines.push(`折扣碼：${booking.discountCode}（折抵 ${money(discount)}）`);
+    } else {
+      lines.push("折扣碼：無");
+    }
+  }
+  return lines.join("\n").trimEnd();
+}
+
 /** 由預約的時段代碼（例如 2026-10-20_morning、2026-10-20_1030）算出行事曆活動；算不出來就回傳 null */
 export function buildCalendarEvent(booking) {
   const m = /^(\d{4})-(\d{1,2})-(\d{1,2})_(\w+)$/.exec(booking.slotKey || booking.id || "");
@@ -25,7 +44,7 @@ export function buildCalendarEvent(booking) {
     title: `${booking.consultType || "諮詢"}｜LINE: ${booking.line || ""}`,
     start: `${day}T${startHM}:00+08:00`,
     end: `${day}T${endHM}:00+08:00`,
-    description: "由星語・星心預約後台自動建立",
+    description: buildCalendarNote(booking),
   };
 }
 
