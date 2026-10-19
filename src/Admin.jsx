@@ -5,6 +5,7 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 import DiscountPanel from "./DiscountPanel.jsx";
 import { CALENDAR_SYNC_URL, syncCalendar } from "./calendarSync.js";
 import { groupByConsultDay } from "./bookingOrder.js";
+import WeekView from "./WeekView.jsx";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -309,12 +310,12 @@ export default function Admin() {
 
         {/* Main tabs: 預約列表 / 封鎖時段 */}
         <div style={{ display:"flex", gap:0, marginBottom:16, background:"#e5ddd0", borderRadius:12, padding:3 }}>
-          {[{key:"bookings",label:"📋 預約列表"},{key:"codes",label:"🎟 折扣碼"},{key:"block",label:"🔒 封鎖時段"}].map(t=>(
+          {[{key:"bookings",label:"📋 預約列表"},{key:"week",label:"🗓 週曆"},{key:"codes",label:"🎟 折扣碼"},{key:"block",label:"🔒 封鎖"}].map(t=>(
             <button key={t.key} onClick={()=>setTab(t.key)} style={{
               flex:1, padding:"10px 0", borderRadius:10, border:"none",
               background:tab===t.key?"#fefcf7":"transparent",
               color:tab===t.key?"#7a6530":"#a09070",
-              fontSize:14, fontWeight:tab===t.key?700:500, cursor:"pointer",
+              fontSize:13, fontWeight:tab===t.key?700:500, cursor:"pointer",
               boxShadow:tab===t.key?"0 1px 6px rgba(0,0,0,0.06)":"none",
               transition:"all 0.2s",
             }}>{t.label}</button>
@@ -490,6 +491,11 @@ export default function Admin() {
             )}
           </div>
         </>)}
+
+        {/* ══════ TAB: 週曆 ══════ */}
+        {tab === "week" && (loading
+          ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
+          : <WeekView bookings={bookings} blockedSlots={blockedSlots} />)}
 
         {/* ══════ TAB: 折扣碼 ══════ */}
         {tab === "codes" && (
