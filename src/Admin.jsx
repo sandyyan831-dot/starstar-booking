@@ -4,6 +4,7 @@ import { collection, getDocs, doc, updateDoc, deleteDoc, setDoc, writeBatch } fr
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 import DiscountPanel from "./DiscountPanel.jsx";
 import { CALENDAR_SYNC_URL, syncCalendar } from "./calendarSync.js";
+import { groupByConsultDay } from "./bookingOrder.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -54,6 +55,8 @@ export default function Admin() {
   const [blockedSlots, setBlockedSlots] = useState(new Set());
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
+  const [sortMode, setSortMode] = useState("consult"); // consult：依諮詢時間分天顯示｜booked：依客人送出預約的時間
+  const [showPast, setShowPast] = useState(false);
   const [tab, setTab] = useState("bookings"); // bookings | block | codes
   const [codes, setCodes] = useState([]);
   const [codesError, setCodesError] = useState(""); // "" | "rules" | "other"
@@ -215,6 +218,22 @@ export default function Admin() {
     return true;
   });
 
+  // 依諮詢時間：今天起由近到遠、一天一組；已過去的收在最下面
+  const dayHeader = (label, count, muted) => (
+    <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"10px 2px 0", color: muted ? "#b5a27a" : "#7a6530" }}>
+      <span style={{ fontSize:15, fontWeight:700 }}>{label}</span>
+      <span style={{ fontSize:12, color:"#b5a27a" }}>{count} 筆</span>
+    </div>
+  );
+  const grouped = useMemo(() => groupByConsultDay(filtered), [filtered]);
+  const pastCount = grouped.past.reduce((n, g) => n + g.items.length, 0);
+  const displayList = sortMode === "booked"
+    ? filtered.map(b => ({ b }))
+    : [
+        ...grouped.upcoming.flatMap(g => g.items.map((b, i) => ({ b, header: i === 0 ? dayHeader(g.label, g.items.length) : null }))),
+        ...(showPast ? grouped.past.flatMap(g => g.items.map((b, i) => ({ b, header: i === 0 ? dayHeader(g.label, g.items.length, true) : null }))) : []),
+      ];
+
   /* ── Login ── */
   if (!authChecked) return null;
   if (!authed) {
@@ -334,6 +353,18 @@ export default function Admin() {
             ))}
           </div>
 
+          {/* 排序 */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12, fontSize:12, color:"#b5a27a" }}>
+            <span>排序</span>
+            {[{key:"consult",label:"依諮詢時間"},{key:"booked",label:"依送出時間"}].map(o => (
+              <button key={o.key} onClick={()=>setSortMode(o.key)} style={{
+                padding:"4px 12px", borderRadius:16, border:`1px solid ${sortMode===o.key?"#b09650":"#e5ddd0"}`,
+                background:sortMode===o.key?"#fefcf7":"transparent", color:sortMode===o.key?"#7a6530":"#b5a27a",
+                fontSize:12, fontWeight:sortMode===o.key?700:500, cursor:"pointer",
+              }}>{o.label}</button>
+            ))}
+          </div>
+
           {CALENDAR_SYNC_URL && filter === "paid" && (
             <button onClick={syncAllPaid} disabled={syncingAll} style={{
               width:"100%", padding:"9px 0", marginBottom:12, borderRadius:10,
@@ -352,13 +383,15 @@ export default function Admin() {
           )}
 
           <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
-            {filtered.map(b => {
+            {displayList.map(({ b, header }) => {
               const isPaid = b.paymentStatus === "已收款";
               // 預約表單要求 3 天內匯款，超過就標示逾期
               const daysSince = b.bookedAt ? Math.floor((Date.now() - new Date(b.bookedAt).getTime()) / 86400000) : 0;
               const overdue = !isPaid && daysSince >= 3;
               return (
-                <div key={b.id} style={{
+                <React.Fragment key={b.id}>
+                {header}
+                <div style={{
                   background:"#fefcf7", border:"1px solid #e5ddd0",
                   borderRadius:14, padding:"16px 18px",
                   borderLeft:`4px solid ${isPaid?"#6a9a5b":"#d4a03a"}`,
@@ -446,8 +479,15 @@ export default function Admin() {
                     >刪除預約</button>
                   </div>
                 </div>
+                </React.Fragment>
               );
             })}
+            {sortMode === "consult" && pastCount > 0 && (
+              <button onClick={()=>setShowPast(v=>!v)} style={{
+                marginTop:8, padding:"9px 0", borderRadius:10, border:"1px dashed #c9b88a",
+                background:"transparent", color:"#8a7340", fontSize:13, fontWeight:600, cursor:"pointer",
+              }}>{showPast ? "收起已過去的預約" : `顯示已過去的預約（${pastCount} 筆）`}</button>
+            )}
           </div>
         </>)}
 
