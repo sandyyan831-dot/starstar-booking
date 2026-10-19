@@ -32,7 +32,7 @@ const CONSULT_TYPES = [
   { id: "child", label: "解碼孩子的星盤天賦", tag: "親子星盤", desc: "一小時", price: 3600, priceLabel: "$3,600", icon: "✧",
     reportSubtitle: "獲得完整報告", reportDesc: "報告內含個性、學習天賦、手足關係與人際相處，並附親子合盤建議。",
     overtimeNote: "超過 1 小時，每半小時以 $1,500 計" },
-  { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true,
+  { id: "returning", label: "問問題 ／ 流年 ／ 合盤", tag: "已諮詢過", desc: "半小時", price: 1500, priceLabel: "$1,500", icon: "◦", quick: true, noDiscount: true,
     reportSubtitle: "適合已看過本命盤的人", reportDesc: "追問、流年、合盤，半小時就能聊。" },
   { id: "textOnly", label: "單一問題．文字回覆", tag: "文字諮詢", desc: "一次一問，純文字回覆", price: 500, priceLabel: "$500", icon: "✎", quick: true, noDiscount: true,
     reportSubtitle: "純文字回覆", reportDesc: "一次問一個問題，用文字回覆，不用通話。" },
@@ -236,7 +236,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const isChild = consultType === "child";
   const showChildName = isChild || consultType === "textOnly";
   const quickOptions = QUICK_TIMES[slot.id] || [];
-  const canDiscount = !selectedType?.noDiscount;   // 單一問題（文字回覆）不能使用折扣碼
+  const canDiscount = !selectedType?.noDiscount;   // 「問問題／流年／合盤」與「單一問題（文字回覆）」不能使用折扣碼
   const discountOk = canDiscount && discount.status === "valid";
   const listPrice = selectedType?.price ?? null;
   const payable = listPrice === null ? null : priceAfterDiscount(listPrice, discountOk);
