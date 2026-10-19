@@ -98,10 +98,16 @@ export function previousMonth(now = new Date()) {
   return { year: d.getFullYear(), month: d.getMonth() + 1 };
 }
 
+// 諮詢當天：優先用時段代碼（2026-10-20_morning），沒有的話讀「2026/10/20（二）」
+export function consultDate(b) {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})_/.exec(String(b.slotKey || "")) || /^(\d{4})\/(\d{1,2})\/(\d{1,2})/.exec(String(b.date || ""));
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+}
+
 export const EXPORT_HEADERS = ["序號", "預約送出日", "諮詢日期", "服務項目", "客人（已遮罩）", "折扣碼", "折抵金額", "付款狀態"];
 
 /**
- * 依推薦人整理某個月的折扣碼使用紀錄（以「預約送出日」算月份）。
+ * 依推薦人整理某個月的折扣碼使用紀錄（以「諮詢當天」算月份）。
  * 只列代碼表裡登錄過的代碼；預設只算已收款，includePending 為 true 時連待匯款一起列。
  * 回傳 [{ referrer, codes, rows: [[...]], total, discount }]，每位推薦人一份。
  */
@@ -120,8 +126,9 @@ export function buildMonthlyExports(codes, bookings, { year, month, includePendi
     const code = String(b.discountCode).toUpperCase();
     const c = codeMap.get(code);
     if (!c) return;
+    const day = consultDate(b);
+    if (!day || day.getFullYear() !== year || day.getMonth() + 1 !== month) return;
     const sent = new Date(b.bookedAt);
-    if (isNaN(sent) || sent.getFullYear() !== year || sent.getMonth() + 1 !== month) return;
     const paid = b.paymentStatus === "已收款";
     if (!paid && !includePending) return;
     const ref = (c.referrer || "").trim() || NO_REFERRER;
@@ -129,9 +136,9 @@ export function buildMonthlyExports(codes, bookings, { year, month, includePendi
   });
 
   return [...groups.values()].map(g => {
-    g.items.sort((x, y) => x.sent - y.sent);
+    g.items.sort((x, y) => consultDate(x.b) - consultDate(y.b) || x.sent - y.sent);
     const rows = g.items.map((it, i) => [
-      i + 1, ymd(it.sent), it.b.date || "", it.b.consultType || "", maskName(it.b.line),
+      i + 1, isNaN(it.sent) ? "" : ymd(it.sent), it.b.date || "", it.b.consultType || "", maskName(it.b.line),
       it.code, Number(it.b.discountAmount) || 0, it.paid ? "已收款" : "待匯款",
     ]);
     return { referrer: g.referrer, codes: g.codes.sort(), rows, total: rows.length, discount: rows.reduce((s, r) => s + r[6], 0) };

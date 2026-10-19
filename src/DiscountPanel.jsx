@@ -121,7 +121,7 @@ export default function DiscountPanel({ codes, bookings, error, loading, onAdd, 
       <div style={{ ...card, marginBottom:18 }}>
         {new Date().getDate() === 7 && <div style={{ fontSize:12.5, color:"#8a6d1f", background:"#fff6d6", borderRadius:8, padding:"6px 10px", marginBottom:10 }}>今天是 7 號，記得匯出上個月的紀錄給團購主 ✦</div>}
         <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", marginBottom:8 }}>
-          <label style={{ fontSize:12, color:"#8a7340", fontWeight:600 }}>月份（以預約送出日算）</label>
+          <label style={{ fontSize:12, color:"#8a7340", fontWeight:600 }}>月份（以諮詢當天算）</label>
           <input type="month" value={monthStr} onChange={e => setMonthStr(e.target.value)} style={{ ...input, width:"auto", padding:"7px 10px" }} />
         </div>
         <label style={{ fontSize:12.5, color:"#5a4d35", display:"flex", alignItems:"center", gap:6, marginBottom:10, cursor:"pointer" }}>
@@ -129,7 +129,7 @@ export default function DiscountPanel({ codes, bookings, error, loading, onAdd, 
           也列出還沒匯款的預約（預設只列已收款）
         </label>
         <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.7, marginBottom:10 }}>
-          匯出內容只有：預約送出日、諮詢日期、服務項目、客人 LINE 名稱（只留第一個字）、折扣碼、折抵金額。不含生日、問題、金額以外的個資。
+          匯出內容只有：諮詢日期、預約送出日、服務項目、客人 LINE 名稱（只留第一個字）、折扣碼、折抵金額。不含生日、問題、金額以外的個資。
         </div>
         {exportsByRef.length === 0 ? (
           <div style={{ fontSize:13, color:"#b5a27a", textAlign:"center" }}>還沒有折扣碼</div>
