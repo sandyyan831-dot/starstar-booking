@@ -6,6 +6,7 @@ import DiscountPanel from "./DiscountPanel.jsx";
 import { CALENDAR_SYNC_URL, syncCalendar } from "./calendarSync.js";
 import { groupByConsultDay } from "./bookingOrder.js";
 import WeekView from "./WeekView.jsx";
+import { bookingRows } from "./bookingRows.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -432,30 +433,7 @@ export default function Admin() {
                   )}
 
                   <div style={{ display:"grid", gridTemplateColumns:"70px 1fr", gap:"6px 8px", fontSize:13 }}>
-                    {(() => {
-                      const isChildBooking = b.consultId === "child" || b.consultTag === "親子星盤";
-                      const multi = b.childCount > 1;
-                      const who = isChildBooking ? (multi ? "孩子1 " : "孩子") : "";
-                      return [
-                        ["Line", b.line],
-                        ...(multi ? [["孩子人數", `${b.childCount} 位（每位各一小時，共 ${b.childCount} 小時）`]] : []),
-                        [`${who}性別`, b.gender],
-                        ...(b.childName ? [[multi ? "孩子1 稱呼" : "孩子稱呼", b.childName]] : []),
-                        [`${who}出生`, `${b.birthYear}/${b.birthMonth}/${b.birthDay} ${b.birthHour}:${b.birthMinute}`],
-                        [`${who}出生地`, b.birthPlace],
-                        ...(b.extraChildren || []).flatMap((c, i) => [
-                          [`孩子${i + 2} 稱呼`, c.childName],
-                          [`孩子${i + 2} 性別`, c.gender],
-                          [`孩子${i + 2} 出生`, `${c.birthYear}/${c.birthMonth}/${c.birthDay} ${c.birthHour}:${c.birthMinute}`],
-                          [`孩子${i + 2} 出生地`, c.birthPlace],
-                        ]),
-                        ...(b.momBirthYear ? [
-                          ["媽媽／照顧者出生", `${b.momBirthYear}/${b.momBirthMonth}/${b.momBirthDay} ${b.momBirthHour}:${b.momBirthMinute}`],
-                          ["媽媽／照顧者出生地", b.momBirthPlace],
-                        ] : []),
-                        ["問題", b.question],
-                      ];
-                    })().map(([label, value]) => (
+                    {bookingRows(b).map(([label, value]) => (
                       <React.Fragment key={label}>
                         <div style={{ color:"#b5a27a", fontWeight:500 }}>{label}</div>
                         <div style={{ color:"#5a4d35", lineHeight:1.6, wordBreak:"break-word" }}>{value}</div>
@@ -495,7 +473,7 @@ export default function Admin() {
         {/* ══════ TAB: 週曆 ══════ */}
         {tab === "week" && (loading
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
-          : <WeekView bookings={bookings} blockedSlots={blockedSlots} />)}
+          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} />)}
 
         {/* ══════ TAB: 折扣碼 ══════ */}
         {tab === "codes" && (

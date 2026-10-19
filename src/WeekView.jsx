@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { buildWeek, mondayOf, addDays, timeText, SERVICE_SHORT } from "./weekData.js";
+import { bookingRows } from "./bookingRows.js";
 
 const font = "'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif";
 const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
@@ -42,23 +43,22 @@ function Cell({ items, closed, blocked, onOpen, dim }) {
   return <div style={{ ...base, background:"#fefcf7", border:"1px solid #e5ddd0" }}>{items.map(b => <Chip key={b.id} b={b} onOpen={onOpen} />)}</div>;
 }
 
-function Detail({ b, onClose }) {
+function Detail({ b, onClose, referrerOf }) {
   const paid = b.paymentStatus === "已收款";
   const rows = [
     ["時間", `${b.date || ""} ${b.time || ""}`],
     ["服務", `${b.consultType || ""}${b.childCount > 1 ? `（${b.childCount} 位孩子）` : ""}`],
     ["付款", paid ? "✓ 已收款" : "⏳ 待匯款"],
     ["金額", b.price != null ? `${money(b.price)}${b.discountAmount > 0 ? `（原價 ${money(b.listPrice)}，折抵 ${money(b.discountAmount)}）` : ""}` : ""],
-    ...(b.discountCode ? [["折扣碼", b.discountCode]] : []),
-    ...(b.childName ? [["孩子稱呼", [b.childName, ...(b.extraChildren || []).map(c => c.childName)].filter(Boolean).join("、")]] : []),
-    ["問題", b.question],
+    ...(b.discountCode ? [["折扣碼", `${b.discountCode}${referrerOf ? `（推薦人：${referrerOf(b.discountCode)}）` : ""}`]] : []),
   ].filter(r => r[1]);
+  const full = bookingRows(b).filter(r => r[1] !== undefined && r[1] !== "");
   return (
     <div onClick={onClose} style={{ position:"fixed", inset:0, background:"rgba(60,50,30,0.35)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}>
       <div onClick={e => e.stopPropagation()} style={{ background:"#fefcf7", borderRadius:16, padding:"20px 20px 16px", width:"100%", maxWidth:420, maxHeight:"85vh", overflowY:"auto", fontFamily:font, boxShadow:"0 8px 30px rgba(0,0,0,0.2)" }}>
         <div style={{ fontSize:16, fontWeight:700, color:"#6b5c3e", marginBottom:2 }}>{b.line || "（沒填）"}</div>
-        <div style={{ fontSize:12, color:"#b5a27a", marginBottom:12 }}>完整出生資料請到「預約列表」查看</div>
-        <div style={{ display:"grid", gridTemplateColumns:"64px 1fr", gap:"6px 8px", fontSize:13 }}>
+        <div style={{ height:10 }} />
+        <div style={{ display:"grid", gridTemplateColumns:"84px 1fr", gap:"6px 8px", fontSize:13 }}>
           {rows.map(([k, v]) => (
             <React.Fragment key={k}>
               <div style={{ color:"#b5a27a" }}>{k}</div>
@@ -66,13 +66,23 @@ function Detail({ b, onClose }) {
             </React.Fragment>
           ))}
         </div>
+        <div style={{ borderTop:"1px solid #f0eadd", margin:"12px 0" }} />
+        <div style={{ display:"grid", gridTemplateColumns:"84px 1fr", gap:"6px 8px", fontSize:13 }}>
+          {full.filter(([k]) => k !== "Line").map(([k, v], i) => (
+            <React.Fragment key={k + i}>
+              <div style={{ color:"#b5a27a" }}>{k}</div>
+              <div style={{ color:"#5a4d35", lineHeight:1.6, wordBreak:"break-word", whiteSpace:"pre-wrap" }}>{v}</div>
+            </React.Fragment>
+          ))}
+        </div>
+        <div style={{ fontSize:10, color:"#c4b48a", marginTop:12 }}>預約時間：{b.bookedAt ? new Date(b.bookedAt).toLocaleString("zh-TW") : "—"}</div>
         <button onClick={onClose} style={{ width:"100%", marginTop:16, padding:"10px 0", borderRadius:10, border:"1.5px solid #cbba95", background:"transparent", color:"#8a7340", fontSize:14, fontWeight:700, cursor:"pointer" }}>關閉</button>
       </div>
     </div>
   );
 }
 
-export default function WeekView({ bookings, blockedSlots }) {
+export default function WeekView({ bookings, blockedSlots, referrerOf }) {
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [open, setOpen] = useState(null);
   const days = useMemo(() => buildWeek(bookings, monday, blockedSlots), [bookings, monday, blockedSlots]);
@@ -121,7 +131,7 @@ export default function WeekView({ bookings, blockedSlots }) {
         <span>點預約可看詳細</span>
       </div>
 
-      {open && <Detail b={open} onClose={() => setOpen(null)} />}
+      {open && <Detail b={open} onClose={() => setOpen(null)} referrerOf={referrerOf} />}
     </div>
   );
 }
