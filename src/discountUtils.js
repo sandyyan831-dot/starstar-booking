@@ -78,3 +78,83 @@ export function summarize(codes, bookings) {
     },
   };
 }
+
+/* ── 每月匯出給團購主（不含生日、問題等個資，姓名只留第一個字） ── */
+
+// 王小明 → 王○○；Amy Chen → A○○；只有一個字就原樣保留
+export function maskName(raw) {
+  const chars = Array.from(String(raw ?? "").trim());
+  if (chars.length === 0) return "";
+  if (chars.length === 1) return chars[0];
+  return chars[0] + "○".repeat(Math.min(chars.length - 1, 2));
+}
+
+const pad2 = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())}`;
+
+// 預設月份：今天往前一個月（每月 7 號匯出上個月）
+export function previousMonth(now = new Date()) {
+  const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return { year: d.getFullYear(), month: d.getMonth() + 1 };
+}
+
+export const EXPORT_HEADERS = ["序號", "預約送出日", "諮詢日期", "服務項目", "客人（已遮罩）", "折扣碼", "折抵金額", "付款狀態"];
+
+/**
+ * 依推薦人整理某個月的折扣碼使用紀錄（以「預約送出日」算月份）。
+ * 只列代碼表裡登錄過的代碼；預設只算已收款，includePending 為 true 時連待匯款一起列。
+ * 回傳 [{ referrer, codes, rows: [[...]], total, discount }]，每位推薦人一份。
+ */
+export function buildMonthlyExports(codes, bookings, { year, month, includePending = false }) {
+  const codeMap = new Map();
+  (codes || []).forEach(c => codeMap.set(String(c.code).toUpperCase(), c));
+
+  const groups = new Map();
+  (codes || []).forEach(c => {
+    const ref = (c.referrer || "").trim() || NO_REFERRER;
+    if (!groups.has(ref)) groups.set(ref, { referrer: ref, codes: [], items: [] });
+    groups.get(ref).codes.push(String(c.code).toUpperCase());
+  });
+
+  (bookings || []).filter(b => b.discountCode).forEach(b => {
+    const code = String(b.discountCode).toUpperCase();
+    const c = codeMap.get(code);
+    if (!c) return;
+    const sent = new Date(b.bookedAt);
+    if (isNaN(sent) || sent.getFullYear() !== year || sent.getMonth() + 1 !== month) return;
+    const paid = b.paymentStatus === "已收款";
+    if (!paid && !includePending) return;
+    const ref = (c.referrer || "").trim() || NO_REFERRER;
+    groups.get(ref).items.push({ sent, b, code, paid });
+  });
+
+  return [...groups.values()].map(g => {
+    g.items.sort((x, y) => x.sent - y.sent);
+    const rows = g.items.map((it, i) => [
+      i + 1, ymd(it.sent), it.b.date || "", it.b.consultType || "", maskName(it.b.line),
+      it.code, Number(it.b.discountAmount) || 0, it.paid ? "已收款" : "待匯款",
+    ]);
+    return { referrer: g.referrer, codes: g.codes.sort(), rows, total: rows.length, discount: rows.reduce((s, r) => s + r[6], 0) };
+  }).sort((a, b) => b.total - a.total || a.referrer.localeCompare(b.referrer));
+}
+
+const csvCell = v => {
+  let s = String(v ?? "");
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;   // 避免被 Excel 當成公式
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+// 轉成 CSV（開頭加 BOM，Excel 才不會把中文變亂碼）
+export function toCsv(group, { year, month }) {
+  const lines = [
+    [`${year} 年 ${month} 月 折扣碼使用紀錄`],
+    ["推薦人", group.referrer],
+    ["折扣碼", group.codes.join("、")],
+    [],
+    EXPORT_HEADERS,
+    ...group.rows,
+    [],
+    ["合計", `${group.total} 筆`, "", "", "", "", group.discount],
+  ];
+  return "﻿" + lines.map(r => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
+}

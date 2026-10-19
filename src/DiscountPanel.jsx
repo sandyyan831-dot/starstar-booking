@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { summarize, normalizeCode, generateCode, DISCOUNT_AMOUNT } from "./discountUtils.js";
+import { summarize, normalizeCode, generateCode, DISCOUNT_AMOUNT, previousMonth, buildMonthlyExports, toCsv, EXPORT_HEADERS } from "./discountUtils.js";
 
 const font = "'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif";
 
@@ -22,8 +22,31 @@ export default function DiscountPanel({ codes, bookings, error, loading, onAdd, 
 
   const sum = useMemo(() => summarize(codes, bookings), [codes, bookings]);
 
+  // 每月匯出：預設上個月，只算已收款
+  const prev = useMemo(() => previousMonth(), []);
+  const [monthStr, setMonthStr] = useState(`${prev.year}-${String(prev.month).padStart(2, "0")}`);
+  const [includePending, setIncludePending] = useState(false);
+  const [openRef, setOpenRef] = useState("");
+  const ym = useMemo(() => ({ year: Number(monthStr.slice(0, 4)), month: Number(monthStr.slice(5, 7)) }), [monthStr]);
+  const exportsByRef = useMemo(
+    () => (ym.year && ym.month ? buildMonthlyExports(codes, bookings, { ...ym, includePending }) : []),
+    [codes, bookings, ym, includePending]
+  );
+
   const copy = async (text, key) => {
     try { await navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(""), 1500); } catch { /* 剪貼簿不可用時略過 */ }
+  };
+
+  const download = (g) => {
+    const blob = new Blob([toCsv(g, ym)], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `折扣碼使用紀錄_${g.referrer.replace(/[\\/:*?"<>|\s]+/g, "")}_${monthStr}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  const downloadAll = async () => {
+    for (const g of exportsByRef.filter(x => x.total > 0)) { download(g); await new Promise(r => setTimeout(r, 400)); }
   };
 
   const add = async () => {
@@ -92,6 +115,54 @@ export default function DiscountPanel({ codes, bookings, error, loading, onAdd, 
           ))}
         </div>
       )}
+
+      {/* 每月匯出 */}
+      <h3 style={{ fontSize:15, color:"#7a6530", margin:"4px 0 8px" }}>每月匯出（給團購主）</h3>
+      <div style={{ ...card, marginBottom:18 }}>
+        {new Date().getDate() === 7 && <div style={{ fontSize:12.5, color:"#8a6d1f", background:"#fff6d6", borderRadius:8, padding:"6px 10px", marginBottom:10 }}>今天是 7 號，記得匯出上個月的紀錄給團購主 ✦</div>}
+        <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", marginBottom:8 }}>
+          <label style={{ fontSize:12, color:"#8a7340", fontWeight:600 }}>月份（以預約送出日算）</label>
+          <input type="month" value={monthStr} onChange={e => setMonthStr(e.target.value)} style={{ ...input, width:"auto", padding:"7px 10px" }} />
+        </div>
+        <label style={{ fontSize:12.5, color:"#5a4d35", display:"flex", alignItems:"center", gap:6, marginBottom:10, cursor:"pointer" }}>
+          <input type="checkbox" checked={includePending} onChange={e => setIncludePending(e.target.checked)} />
+          也列出還沒匯款的預約（預設只列已收款）
+        </label>
+        <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.7, marginBottom:10 }}>
+          匯出內容只有：預約送出日、諮詢日期、服務項目、客人 LINE 名稱（只留第一個字）、折扣碼、折抵金額。不含生日、問題、金額以外的個資。
+        </div>
+        {exportsByRef.length === 0 ? (
+          <div style={{ fontSize:13, color:"#b5a27a", textAlign:"center" }}>還沒有折扣碼</div>
+        ) : (
+          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+            {exportsByRef.map(g => (
+              <div key={g.referrer} style={{ border:"1px solid #e5ddd0", borderRadius:10, padding:"10px 12px", background:"#fffdf8" }}>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:14, fontWeight:700, color:"#6b5c3e" }}>{g.referrer}</div>
+                    <div style={{ fontSize:11.5, color:"#b5a27a" }}>{g.codes.join("、")}・{g.total} 筆・折抵 ${g.discount.toLocaleString()}</div>
+                  </div>
+                  <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                    {g.total > 0 && <button onClick={() => setOpenRef(openRef === g.referrer ? "" : g.referrer)} style={smallBtn("#fefcf7", "#8a7340", "#cbba95")}>{openRef === g.referrer ? "收起" : "預覽"}</button>}
+                    <button onClick={() => download(g)} disabled={g.total === 0} style={{ ...smallBtn("#fefcf7", "#8a7340", "#cbba95"), opacity:g.total === 0 ? 0.45 : 1, cursor:g.total === 0 ? "not-allowed" : "pointer" }}>下載</button>
+                  </div>
+                </div>
+                {openRef === g.referrer && (
+                  <div style={{ overflowX:"auto", marginTop:8 }}>
+                    <table style={{ borderCollapse:"collapse", fontSize:11.5, color:"#5a4d35", whiteSpace:"nowrap" }}>
+                      <thead><tr>{EXPORT_HEADERS.map(h => <th key={h} style={{ textAlign:"left", padding:"3px 8px", borderBottom:"1px solid #e5ddd0", color:"#8a7340" }}>{h}</th>)}</tr></thead>
+                      <tbody>{g.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j} style={{ padding:"3px 8px", borderBottom:"1px solid #f0e9da" }}>{c}</td>)}</tr>)}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
+            {exportsByRef.filter(g => g.total > 0).length > 1 && (
+              <button onClick={downloadAll} style={{ ...smallBtn("#fefcf7", "#8a7340", "#cbba95"), padding:"8px 0" }}>全部下載（每位團購主各一份）</button>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* 新增 */}
       <h3 style={{ fontSize:15, color:"#7a6530", margin:"4px 0 8px" }}>新增折扣碼（每組折抵 ${DISCOUNT_AMOUNT}）</h3>
