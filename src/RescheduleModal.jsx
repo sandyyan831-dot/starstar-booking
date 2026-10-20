@@ -3,7 +3,7 @@ import { currentSlot, defaultMinutes, addMinutes, dateInputValue, dateLabel, tim
 
 const font = "'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif";
 const DURATIONS = [[30, "30 分鐘"], [60, "1 小時"], [90, "1.5 小時"], [120, "2 小時"], [180, "3 小時"]];
-const PRESETS = ["18:00", "18:30", "19:00", "19:30", "20:00"];
+const PRESETS = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00"];
 const input = { width:"100%", padding:"10px 12px", borderRadius:10, border:"1.5px solid #ddd2bb", background:"#fffdf8", color:"#5a4d35", fontSize:15, outline:"none", fontFamily:font, boxSizing:"border-box" };
 const lbl = { display:"block", fontSize:12, color:"#8a7340", fontWeight:600, marginBottom:4 };
 
