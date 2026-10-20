@@ -4,6 +4,7 @@ import { discountTotal } from "./discountUtils.js";
 export const MAX_CHILDREN = 3;
 export const PARTNER_FEE = 600;   // 本命盤解析加做「與別人的合盤」
 export const PARTNER_KEYS = { year:"partnerBirthYear", month:"partnerBirthMonth", day:"partnerBirthDay", hour:"partnerBirthHour", minute:"partnerBirthMinute", place:"partnerBirthPlace", country:"partnerOverseasCountry", region:"partnerOverseasRegion" };
+export const MOM_CHART_FEE = 3000;   // 解碼孩子時，加看媽媽（或主要照顧者）的本命盤（同本命盤解析原價）
 export const DAD_FEE = 600;   // 加做「爸爸的親子合盤」：每位孩子加收
 
 // 爸爸的出生資料欄位（選填加購，點開才會出現）
@@ -33,12 +34,16 @@ export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, disc
   const isChild = ct?.id === "child";
   const childCount = isChild ? clampChildCount(formData.childCount) : 1;   // 一次看幾位孩子，每位各收一次費用、各折一次
   const basePrice = (ct?.price || 0) * childCount;
+  const withMomChart = isChild && !!formData.withMomChart;
+  const momChartFee = withMomChart ? MOM_CHART_FEE : 0;
+  const sessionHours = childCount + (withMomChart ? 1 : 0);   // 每份解讀約一小時
   const withDad = isChild && !!formData.withDad;
   const dadFee = withDad ? DAD_FEE * childCount : 0;   // 加做爸爸合盤的加價（不打折）
   const withPartner = ct?.id === "first" && !!formData.withPartner;
   const partnerFee = withPartner ? PARTNER_FEE : 0;   // 本命盤加做合盤的加價（不打折）
-  const listPrice = basePrice + dadFee + partnerFee;
-  const discountAmount = discountCode && !ct?.noDiscount ? discountTotal(basePrice, childCount) : 0;
+  const listPrice = basePrice + momChartFee + dadFee + partnerFee;
+  // 折扣碼：每一份解讀（每位孩子、媽媽的本命盤）各折一次，合盤加價不打折
+  const discountAmount = discountCode && !ct?.noDiscount ? discountTotal(basePrice + momChartFee, sessionHours) : 0;
 
   const data = {
     slotKey: key,
@@ -78,6 +83,8 @@ export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, disc
   // 解碼孩子的星盤天賦：加做親子合盤，需要媽媽的出生資料
   if (isChild) {
     data.childCount = childCount;
+    data.sessionHours = sessionHours;
+    if (withMomChart) Object.assign(data, { withMomChart: true, momChartFee });
     if (withDad) {
       Object.assign(data, {
         withDad: true, dadFee,

@@ -3,7 +3,7 @@ import { db } from "./firebase.js";
 import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
 import { lookupDiscountCode } from "./lookupDiscount.js";
 import { DISCOUNT_AMOUNT, discountTotal } from "./discountUtils.js";
-import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN, DAD_FEE, DAD_KEYS, PARTNER_FEE, PARTNER_KEYS } from "./bookingData.js";
+import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN, DAD_FEE, DAD_KEYS, PARTNER_FEE, PARTNER_KEYS, MOM_CHART_FEE } from "./bookingData.js";
 import {
   collection, doc, getDocs, writeBatch
 } from "firebase/firestore";
@@ -227,6 +227,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     childCount:1, ...emptyChildFields(),
     withPartner:false, partnerName:"", partnerGender:"", partnerBirthYear:"", partnerBirthMonth:"", partnerBirthDay:"", partnerBirthHour:"", partnerBirthMinute:"",
     partnerBirthPlace:"", partnerOverseasCountry:"", partnerOverseasRegion:"",
+    withMomChart:false,
     withDad:false, dadBirthYear:"", dadBirthMonth:"", dadBirthDay:"", dadBirthHour:"", dadBirthMinute:"",
     dadBirthPlace:"", dadOverseasCountry:"", dadOverseasRegion:"",
     question:"",
@@ -247,10 +248,13 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const withDad = isChild && !!form.withDad;   // 加做爸爸的親子合盤（選填加購，每位孩子 +$600，不打折）
   const basePrice = selectedType ? selectedType.price * childCount : null;
   const dadFee = withDad ? DAD_FEE * childCount : 0;
+  const withMomChart = isChild && !!form.withMomChart;   // 孩子與媽媽的本命盤一起看（選填加購 +$3,000，同一個時段）
+  const momChartFee = withMomChart ? MOM_CHART_FEE : 0;
+  const sessionHours = childCount + (withMomChart ? 1 : 0);   // 每份解讀約一小時
   const withPartner = consultType === "first" && !!form.withPartner;   // 本命盤加做與別人的合盤（選填加購 +$600，不打折）
   const partnerFee = withPartner ? PARTNER_FEE : 0;
-  const listPrice = basePrice === null ? null : basePrice + dadFee + partnerFee;
-  const discountAmt = basePrice === null ? 0 : discountTotal(basePrice, childCount);   // 每位孩子各折一次，只折諮詢費
+  const listPrice = basePrice === null ? null : basePrice + momChartFee + dadFee + partnerFee;
+  const discountAmt = basePrice === null ? 0 : discountTotal(basePrice + momChartFee, sessionHours);   // 每一份解讀各折一次，合盤加價不打折
   const payable = listPrice === null ? null : listPrice - (discountOk ? discountAmt : 0);
   const childPrefix = isChild ? (childCount > 1 ? "第 1 個孩子的" : "孩子的") : "";
 
@@ -572,8 +576,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
               </div>
               {childCount > 1 && (
                 <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.7, marginTop:8 }}>
-                  每個孩子 ${selectedType.price.toLocaleString()}（共 ${listPrice.toLocaleString()}），折扣碼每位孩子各折 ${DISCOUNT_AMOUNT}。孩子們會排在同一個時段一起看
-                  {childCount === 3 ? "；3 位孩子約需 3 小時，比預約的 2 小時時段長，我會再透過 LINE 跟你確認時間" : ""}。
+                  每個孩子 ${selectedType.price.toLocaleString()}（共 ${basePrice.toLocaleString()}），折扣碼每份解讀各折 ${DISCOUNT_AMOUNT}。孩子們會排在同一個時段一起看。
                 </div>
               )}
             </div>
@@ -650,6 +653,26 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
                   {renderBirth(BIRTH_KEYS.partner, "對方的")}
                 </>
               )}
+              <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.7 }}>想連孩子的星盤一起看？請改選「解碼孩子的星盤天賦」，再點「也看媽媽自己的本命盤」。</div>
+            </div>
+          )}
+
+          {/* 孩子與媽媽的本命盤一起看：選填加購，不需要再填資料（媽媽的出生資料上面已經填了） */}
+          {isChild && (
+            <div style={{ borderTop:"1.5px dashed #c9d8ea", paddingTop:16, display:"flex", flexDirection:"column", gap:10 }}>
+              <button type="button" onClick={()=>update("withMomChart", !form.withMomChart)} style={{
+                textAlign:"left", padding:"12px 14px", borderRadius:12, cursor:"pointer",
+                border:`1.5px solid ${withMomChart?"#3a4f5e":"#d5e2ec"}`, background:withMomChart?"#e6eff5":"#fffdf8",
+                fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+              }}>
+                <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e" }}>{withMomChart ? "✓ " : "＋ "}也看媽媽（或主要照顧者）自己的本命盤（+${MOM_CHART_FEE.toLocaleString()}）</div>
+                <div style={{ fontSize:12, color:"#6a737c", marginTop:3, lineHeight:1.6 }}>{withMomChart ? "再點一次可以取消" : "孩子和大人的盤想一起看，點這裡加選；用上面已填的出生資料，不用再填"}</div>
+              </button>
+              {sessionHours > 2 && (
+                <div style={{ fontSize:12, color:"#6a737c", lineHeight:1.7 }}>
+                  共 {sessionHours} 份解讀，約需 {sessionHours} 小時，比預約的 2 小時時段長，我會再透過 LINE 跟你確認時間。
+                </div>
+              )}
             </div>
           )}
 
@@ -715,6 +738,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
           {payable !== null && (
             <div style={{ background:"#eef5fa", border:"1.5px solid #d5e2ec", borderRadius:14, padding:"12px 16px", fontSize:14, color:"#3a4f5e" }}>
               <div style={{ display:"flex", justifyContent:"space-between" }}><span>諮詢費用{childCount > 1 ? `（${childCount} 位孩子）` : ""}</span><span>${basePrice.toLocaleString()}</span></div>
+              {withMomChart && <div style={{ display:"flex", justifyContent:"space-between" }}><span>加看媽媽的本命盤</span><span>+${momChartFee.toLocaleString()}</span></div>}
               {withPartner && <div style={{ display:"flex", justifyContent:"space-between" }}><span>加做與別人的合盤</span><span>+${partnerFee.toLocaleString()}</span></div>}
               {withDad && <div style={{ display:"flex", justifyContent:"space-between" }}><span>加做爸爸合盤{childCount > 1 ? `（${childCount} 位孩子）` : ""}</span><span>+${dadFee.toLocaleString()}</span></div>}
               {discountOk && <div style={{ display:"flex", justifyContent:"space-between", color:"#2f6f4a" }}><span>折扣碼{childCount > 1 ? `（每位孩子 −$${DISCOUNT_AMOUNT}）` : ""}</span><span>−${discountAmt.toLocaleString()}</span></div>}

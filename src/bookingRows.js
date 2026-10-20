@@ -28,6 +28,7 @@ export function bookingRows(b) {
       ["對象出生地", b.partnerBirthPlace],
       ["加做合盤", `是（+$${Number(b.partnerFee || 0).toLocaleString()}）`],
     ] : []),
+    ...(b.withMomChart ? [["加看媽媽本命盤", `是（+$${Number(b.momChartFee || 0).toLocaleString()}，共 ${b.sessionHours || ""} 份解讀）`]] : []),
     ...(b.withDad ? [
       ["爸爸出生", `${b.dadBirthYear}/${b.dadBirthMonth}/${b.dadBirthDay} ${b.dadBirthHour}:${b.dadBirthMinute}`],
       ["爸爸出生地", b.dadBirthPlace],

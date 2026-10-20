@@ -12,6 +12,7 @@ const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
 export function buildCalendarNote(booking) {
   const lines = ["由星語・星心預約後台自動建立", ""];
   if (Number(booking.childCount) > 1) lines.push(`孩子人數：${booking.childCount} 位`);
+  if (booking.withMomChart) lines.push(`加看媽媽本命盤：+${money(Number(booking.momChartFee) || 0)}`);
   if (booking.withPartner) lines.push(`加做合盤：+${money(Number(booking.partnerFee) || 0)}`);
   if (booking.withDad) lines.push(`加做爸爸合盤：+${money(Number(booking.dadFee) || 0)}`);
   const paid = Number(booking.price);
@@ -44,16 +45,17 @@ export function buildCalendarEvent(booking) {
     startHM = hm(startMin); endHM = hm(startMin + 30);
   } else return null;
   const day = `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
-  // 解碼孩子一次看多位孩子：標題標示人數；3 位孩子需要 3 小時，活動比預約的 2 小時時段多 1 小時
+  // 解碼孩子一次看多位孩子、或加看媽媽的本命盤：每份解讀約一小時，超過預約的 2 小時時段就把活動拉長
   const kids = Number(booking.childCount) || 1;
+  const hours = Number(booking.sessionHours) || kids;
   let end = `${day}T${endHM}:00+08:00`;
-  if (kids >= 3 && SLOT_TIMES[slot]) {
+  if (hours > 2 && SLOT_TIMES[slot]) {
     const [eh, em] = endHM.split(":").map(Number);
-    end = `${day}T${String(eh + 1).padStart(2, "0")}:${String(em).padStart(2, "0")}:00+08:00`;
+    end = `${day}T${String(eh + (hours - 2)).padStart(2, "0")}:${String(em).padStart(2, "0")}:00+08:00`;
   }
   return {
     id: booking.id,
-    title: `${booking.consultType || "諮詢"}${kids > 1 ? ` ×${kids}位孩子` : ""}｜LINE: ${booking.line || ""}`,
+    title: `${booking.consultType || "諮詢"}${kids > 1 ? ` ×${kids}位孩子` : ""}${booking.withMomChart ? " ＋媽媽本命盤" : ""}｜LINE: ${booking.line || ""}`,
     start: `${day}T${startHM}:00+08:00`,
     end,
     description: buildCalendarNote(booking),
