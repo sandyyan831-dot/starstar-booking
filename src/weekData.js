@@ -23,14 +23,14 @@ export function addDays(date, n) {
 export function periodOf(b) {
   const c = consultStart(b);
   if (!c) return null;
-  return c.minutes < 720 ? "morning" : "afternoon";
+  return c.minutes < 720 ? "morning" : c.minutes < 1020 ? "afternoon" : "evening";
 }
 
 export function timeText(b) {
   const c = consultStart(b);
   if (!c) return "";
   const slot = String(b.slotKey || b.id).split("_")[1];
-  return /^\d{4}$/.test(slot) ? `${pad(Math.floor(c.minutes / 60))}:${pad(c.minutes % 60)}` : "";
+  return slot === "morning" || slot === "afternoon" ? "" : `${pad(Math.floor(c.minutes / 60))}:${pad(c.minutes % 60)}`;
 }
 
 /**
@@ -45,23 +45,23 @@ export function buildWeek(bookings, weekStart, blockedSlots = new Set()) {
     const c = consultStart(b);
     if (!c) return;
     const k = dayKey(c.date);
-    if (!byDay.has(k)) byDay.set(k, { morning: [], afternoon: [] });
-    byDay.get(k)[c.minutes < 720 ? "morning" : "afternoon"].push({ b, minutes: c.minutes });
+    if (!byDay.has(k)) byDay.set(k, { morning: [], afternoon: [], evening: [] });
+    byDay.get(k)[c.minutes < 720 ? "morning" : c.minutes < 1020 ? "afternoon" : "evening"].push({ b, minutes: c.minutes });
   });
   const days = [];
   for (let i = 0; i < 7; i++) {
     const date = addDays(weekStart, i);
     const k = dayKey(date);
-    const cell = byDay.get(k) || { morning: [], afternoon: [] };
+    const cell = byDay.get(k) || { morning: [], afternoon: [], evening: [] };
     const weekend = date.getDay() === 0 || date.getDay() === 6;
-    if (weekend && !cell.morning.length && !cell.afternoon.length) continue;
+    if (weekend && !cell.morning.length && !cell.afternoon.length && !cell.evening.length) continue;
     const sort = list => list.sort((x, y) => x.minutes - y.minutes).map(x => x.b);
     days.push({
       date, key: k,
       closedMorning: date.getDay() === 2,   // 週二上午不開放
       blockedMorning: blockedSlots.has(`${k}_morning`),
       blockedAfternoon: blockedSlots.has(`${k}_afternoon`),
-      morning: sort(cell.morning), afternoon: sort(cell.afternoon),
+      morning: sort(cell.morning), afternoon: sort(cell.afternoon), evening: sort(cell.evening),
     });
   }
   return days;

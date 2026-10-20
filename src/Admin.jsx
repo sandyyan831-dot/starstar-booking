@@ -7,6 +7,8 @@ import { CALENDAR_SYNC_URL, syncCalendar } from "./calendarSync.js";
 import { groupByConsultDay } from "./bookingOrder.js";
 import WeekView from "./WeekView.jsx";
 import { bookingRows } from "./bookingRows.js";
+import RescheduleModal from "./RescheduleModal.jsx";
+import { buildMovedBooking } from "./reschedule.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -196,6 +198,43 @@ export default function Admin() {
       const r = await syncCalendar("remove", [booking]);
       if (!r.ok) alert(`預約已刪除，但行事曆上的活動沒有刪成功，請手動刪除：\n${r.error}`);
     }
+  };
+
+  // 改時間：搬到新的日期／時間（可以是前台沒開放的晚上）。回傳錯誤文字，成功回傳 ""
+  const [moving, setMoving] = useState(null);
+  const moveBooking = async (booking, spec) => {
+    const { key, data } = buildMovedBooking(booking, spec);
+    if (key === booking.id) return "新時間和原本相同";
+    const originalStatus = booking.paymentStatus;
+    try {
+      // 新預約一定要從「待匯款」開始（資料庫規則規定），所以先用待匯款建立，搬完再改回原本的付款狀態
+      const batch = writeBatch(db);
+      batch.set(doc(db, "bookings", key), data);
+      batch.set(doc(db, "bookedSlots", key), { bookedAt: data.bookedAt || "" });
+      batch.delete(doc(db, "bookings", booking.id));
+      batch.delete(doc(db, "bookedSlots", booking.id));
+      await batch.commit();
+    } catch (e) {
+      console.error(e);
+      return e?.code === "permission-denied" ? "這個時間已經有別的預約或被封鎖了，請換一個時間" : "改時間失敗，請稍後再試";
+    }
+    const moved = { ...data, id: key };
+    if (originalStatus !== "待匯款") {
+      try {
+        await updateDoc(doc(db, "bookings", key), { paymentStatus: originalStatus });
+        moved.paymentStatus = originalStatus;
+      } catch (e) {
+        console.error(e);
+        alert(`時間已經改好，但付款狀態變成了「待匯款」，請到預約上按一次「${originalStatus}」改回來。`);
+      }
+    }
+    setBookings(prev => [moved, ...prev.filter(b => b.id !== booking.id)]);
+    if (originalStatus === "已收款" && moved.paymentStatus === "已收款") {
+      const r1 = await syncCalendar("remove", [booking]);
+      const r2 = await syncCalendar("upsert", [moved]);
+      if (!r1.ok || !r2.ok) alert(`時間已經改好，但行事曆沒有同步成功，請到「已收款」分頁按「補進行事曆」：\n${r1.error || r2.error}`);
+    }
+    return "";
   };
 
   const toggleBlock = async (key) => {
@@ -447,6 +486,13 @@ export default function Admin() {
                     display:"flex", justifyContent:"space-between", alignItems:"center",
                   }}>
                     <span>預約時間：{b.bookedAt ? new Date(b.bookedAt).toLocaleString("zh-TW") : "—"}</span>
+                    <div style={{ display:"flex", gap:6 }}>
+                    <button onClick={()=>setMoving(b)} style={{
+                      padding:"4px 10px", borderRadius:6,
+                      border:"1px solid #cbba95", background:"#fefcf7",
+                      color:"#8a7340", fontSize:11, cursor:"pointer",
+                      fontWeight:600, fontFamily:font,
+                    }}>🕒 改時間</button>
                     <button onClick={()=>deleteBooking(b)} style={{
                       padding:"4px 10px", borderRadius:6,
                       border:"1px solid #e8c4c4", background:"#fdf5f5",
@@ -456,6 +502,7 @@ export default function Admin() {
                       onMouseEnter={e=>{e.target.style.background="#f8e0e0";}}
                       onMouseLeave={e=>{e.target.style.background="#fdf5f5";}}
                     >刪除預約</button>
+                    </div>
                   </div>
                 </div>
                 </React.Fragment>
@@ -473,7 +520,9 @@ export default function Admin() {
         {/* ══════ TAB: 週曆 ══════ */}
         {tab === "week" && (loading
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
-          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} />)}
+          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} />)}
+
+        {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
 
         {/* ══════ TAB: 折扣碼 ══════ */}
         {tab === "codes" && (

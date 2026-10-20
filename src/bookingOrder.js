@@ -2,14 +2,19 @@
 
 const WEEK = ["日", "一", "二", "三", "四", "五", "六"];
 
-// 由時段代碼（2026-10-29_afternoon、2026-10-29_1030）算出諮詢日期與開始分鐘數；算不出來回傳 null
+// 由時段代碼（2026-10-29_afternoon、2026-10-29_1030、2026-10-29_t1900e2100）算出諮詢日期與開始／結束分鐘數；算不出來回傳 null
 export function consultStart(b) {
   const m = /^(\d{4})-(\d{1,2})-(\d{1,2})_(\w+)$/.exec(String(b.slotKey || b.id || ""));
   if (!m) return null;
   const slot = m[4];
-  const minutes = slot === "morning" ? 600 : slot === "afternoon" ? 840
-    : /^\d{4}$/.test(slot) ? Number(slot.slice(0, 2)) * 60 + Number(slot.slice(2)) : 0;
-  return { date: new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])), minutes };
+  const hm = s => Number(s.slice(0, 2)) * 60 + Number(s.slice(2));
+  const custom = /^t(\d{4})e(\d{4})$/.exec(slot);   // 後台手動改的時間，例如 t1900e2100 ＝ 19:00–21:00
+  let minutes = 0, endMinutes = 0;
+  if (slot === "morning") { minutes = 600; endMinutes = 720; }
+  else if (slot === "afternoon") { minutes = 840; endMinutes = 960; }
+  else if (/^\d{4}$/.test(slot)) { minutes = hm(slot); endMinutes = minutes + 30; }
+  else if (custom) { minutes = hm(custom[1]); endMinutes = hm(custom[2]); }
+  return { date: new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])), minutes, endMinutes };
 }
 
 const dayLabel = (d, today) => {

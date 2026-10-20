@@ -32,7 +32,9 @@ export function buildCalendarEvent(booking) {
   if (!m) return null;
   const [, y, mo, d, slot] = m;
   let startHM, endHM;
+  const custom = /^t(\d{2})(\d{2})e(\d{2})(\d{2})$/.exec(slot);   // 後台手動改的時間，例如 t1900e2100
   if (SLOT_TIMES[slot]) [startHM, endHM] = SLOT_TIMES[slot];
+  else if (custom) { startHM = `${custom[1]}:${custom[2]}`; endHM = `${custom[3]}:${custom[4]}`; }
   else if (/^\d{4}$/.test(slot)) {
     // 半小時的時段，例如 1030 → 10:30–11:00
     const startMin = Number(slot.slice(0, 2)) * 60 + Number(slot.slice(2));
