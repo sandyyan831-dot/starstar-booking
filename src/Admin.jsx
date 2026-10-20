@@ -180,9 +180,7 @@ export default function Admin() {
     setSyncingAll(true);
     const r = await syncCalendar("upsert", upcoming);
     setSyncingAll(false);
-    alert(r.ok
-      ? `行事曆同步完成 ✓（共送出 ${r.sent ?? 0} 筆）${(r.sample || []).map(x => `\n\n${x.title}\n${x.description}`).join("")}`
-      : `有些沒有同步成功：\n${r.error}`);
+    alert(r.ok ? "行事曆同步完成 ✓" : `有些沒有同步成功：\n${r.error}`);
   };
 
   const deleteBooking = async (booking) => {
