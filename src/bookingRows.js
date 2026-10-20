@@ -21,6 +21,11 @@ export function bookingRows(b) {
       ["媽媽／照顧者出生", `${b.momBirthYear}/${b.momBirthMonth}/${b.momBirthDay} ${b.momBirthHour}:${b.momBirthMinute}`],
       ["媽媽／照顧者出生地", b.momBirthPlace],
     ] : []),
+    ...(b.withDad ? [
+      ["爸爸出生", `${b.dadBirthYear}/${b.dadBirthMonth}/${b.dadBirthDay} ${b.dadBirthHour}:${b.dadBirthMinute}`],
+      ["爸爸出生地", b.dadBirthPlace],
+      ["加做爸爸合盤", `是（每位孩子 +$600，共 +$${Number(b.dadFee || 0).toLocaleString()}）`],
+    ] : []),
     ["問題", b.question],
   ];
 }

@@ -2,6 +2,10 @@
 import { discountTotal } from "./discountUtils.js";
 
 export const MAX_CHILDREN = 3;
+export const DAD_FEE = 600;   // 加做「爸爸的親子合盤」：每位孩子加收
+
+// 爸爸的出生資料欄位（選填加購，點開才會出現）
+export const DAD_KEYS = { year:"dadBirthYear", month:"dadBirthMonth", day:"dadBirthDay", hour:"dadBirthHour", minute:"dadBirthMinute", place:"dadBirthPlace", country:"dadOverseasCountry", region:"dadOverseasRegion" };
 
 // 第 2、3 個孩子的欄位名稱（表單與資料共用）
 export const childKeys = (n) => ({
@@ -26,8 +30,11 @@ const placeText = (place, country, region) =>
 export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, discountCode = "", now = new Date() }) {
   const isChild = ct?.id === "child";
   const childCount = isChild ? clampChildCount(formData.childCount) : 1;   // 一次看幾位孩子，每位各收一次費用、各折一次
-  const listPrice = (ct?.price || 0) * childCount;
-  const discountAmount = discountCode && !ct?.noDiscount ? discountTotal(listPrice, childCount) : 0;
+  const basePrice = (ct?.price || 0) * childCount;
+  const withDad = isChild && !!formData.withDad;
+  const dadFee = withDad ? DAD_FEE * childCount : 0;   // 加做爸爸合盤的加價（不打折）
+  const listPrice = basePrice + dadFee;
+  const discountAmount = discountCode && !ct?.noDiscount ? discountTotal(basePrice, childCount) : 0;
 
   const data = {
     slotKey: key,
@@ -57,6 +64,14 @@ export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, disc
   // 解碼孩子的星盤天賦：加做親子合盤，需要媽媽的出生資料
   if (isChild) {
     data.childCount = childCount;
+    if (withDad) {
+      Object.assign(data, {
+        withDad: true, dadFee,
+        dadBirthYear: formData.dadBirthYear, dadBirthMonth: formData.dadBirthMonth, dadBirthDay: formData.dadBirthDay,
+        dadBirthHour: formData.dadBirthHour, dadBirthMinute: formData.dadBirthMinute,
+        dadBirthPlace: placeText(formData.dadBirthPlace, formData.dadOverseasCountry, formData.dadOverseasRegion),
+      });
+    }
     // 第 2、3 位孩子
     data.extraChildren = [];
     for (let n = 2; n <= childCount; n++) {

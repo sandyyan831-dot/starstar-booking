@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
 import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
 import { lookupDiscountCode } from "./lookupDiscount.js";
-import { DISCOUNT_AMOUNT, priceAfterDiscount, discountTotal } from "./discountUtils.js";
-import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN } from "./bookingData.js";
+import { DISCOUNT_AMOUNT, discountTotal } from "./discountUtils.js";
+import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN, DAD_FEE, DAD_KEYS } from "./bookingData.js";
 import {
   collection, doc, getDocs, writeBatch
 } from "firebase/firestore";
@@ -225,6 +225,8 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
     momBirthYear:"", momBirthMonth:"", momBirthDay:"", momBirthHour:"", momBirthMinute:"",
     momBirthPlace:"", momOverseasCountry:"", momOverseasRegion:"",
     childCount:1, ...emptyChildFields(),
+    withDad:false, dadBirthYear:"", dadBirthMonth:"", dadBirthDay:"", dadBirthHour:"", dadBirthMinute:"",
+    dadBirthPlace:"", dadOverseasCountry:"", dadOverseasRegion:"",
     question:"",
   });
   const [codeInput, setCodeInput] = useState("");
@@ -240,9 +242,12 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   const canDiscount = !selectedType?.noDiscount;   // 「問問題／流年／合盤」與「單一問題（文字回覆）」不能使用折扣碼
   const discountOk = canDiscount && discount.status === "valid";
   const childCount = isChild ? clampChildCount(form.childCount) : 1;   // 解碼孩子：一次可以看 1～3 位孩子
-  const listPrice = selectedType ? selectedType.price * childCount : null;
-  const discountAmt = listPrice === null ? 0 : discountTotal(listPrice, childCount);   // 每位孩子各折一次
-  const payable = listPrice === null ? null : priceAfterDiscount(listPrice, discountOk, childCount);
+  const withDad = isChild && !!form.withDad;   // 加做爸爸的親子合盤（選填加購，每位孩子 +$600，不打折）
+  const basePrice = selectedType ? selectedType.price * childCount : null;
+  const dadFee = withDad ? DAD_FEE * childCount : 0;
+  const listPrice = basePrice === null ? null : basePrice + dadFee;
+  const discountAmt = basePrice === null ? 0 : discountTotal(basePrice, childCount);   // 每位孩子各折一次，只折諮詢費
+  const payable = listPrice === null ? null : listPrice - (discountOk ? discountAmt : 0);
   const childPrefix = isChild ? (childCount > 1 ? "第 1 個孩子的" : "孩子的") : "";
 
   const applyCode = async () => {
@@ -292,6 +297,14 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
         if (!form.momOverseasRegion.trim()) e.momOverseasRegion="請填寫地區";
       }
     }
+    if (withDad) {   // 加做爸爸合盤：需要爸爸的出生資料
+      ["dadBirthYear","dadBirthMonth","dadBirthDay","dadBirthHour","dadBirthMinute"].forEach(k=>{ if (!form[k].trim()) e[k]="必填"; });
+      if (!form.dadBirthPlace) e.dadBirthPlace="請選擇";
+      if (form.dadBirthPlace==="國外") {
+        if (!form.dadOverseasCountry.trim()) e.dadOverseasCountry="請填寫國家";
+        if (!form.dadOverseasRegion.trim()) e.dadOverseasRegion="請填寫地區";
+      }
+    }
     if (canDiscount && codeInput.trim() && !discountOk) e.discount = discount.status==="checking" ? "折扣碼檢查中，請稍候" : "請先按「套用」確認折扣碼，或清空這個欄位";
     if (!form.question.trim()) e.question="請填寫";
     setErrors(e); return Object.keys(e).length===0;
@@ -313,6 +326,7 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
   // 出生日期／時間／地點（孩子與媽媽共用；k 是欄位名稱對照，who 是標題前綴）
   const BIRTH_KEYS = {
     me:  { year:"birthYear",    month:"birthMonth",    day:"birthDay",    hour:"birthHour",    minute:"birthMinute",    place:"birthPlace",    country:"overseasCountry",    region:"overseasRegion" },
+    dad: DAD_KEYS,
     mom: { year:"momBirthYear", month:"momBirthMonth", day:"momBirthDay", hour:"momBirthHour", minute:"momBirthMinute", place:"momBirthPlace", country:"momOverseasCountry", region:"momOverseasRegion" },
   };
   const renderGender = (field, label) => (
@@ -598,6 +612,26 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
             </div>
           )}
 
+          {/* 加做爸爸的親子合盤：選填加購，點開才會出現爸爸的欄位 */}
+          {isChild && (
+            <div style={{ borderTop:"1.5px dashed #c9d8ea", paddingTop:16, display:"flex", flexDirection:"column", gap:16 }}>
+              <button type="button" onClick={()=>update("withDad", !form.withDad)} style={{
+                textAlign:"left", padding:"12px 14px", borderRadius:12, cursor:"pointer",
+                border:`1.5px solid ${withDad?"#3a4f5e":"#d5e2ec"}`, background:withDad?"#e6eff5":"#fffdf8",
+                fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
+              }}>
+                <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e" }}>{withDad ? "✓ " : "＋ "}也加做爸爸的親子合盤（每位孩子 +${DAD_FEE}）</div>
+                <div style={{ fontSize:12, color:"#6a737c", marginTop:3, lineHeight:1.6 }}>{withDad ? "再點一次可以取消" : "想知道爸爸和孩子之間的互動，點這裡加做"}</div>
+              </button>
+              {withDad && (
+                <>
+                  <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e", marginBottom:-6 }}>爸爸的出生資料 <span style={{color:"#d4836a"}}>*</span></div>
+                  {renderBirth(BIRTH_KEYS.dad, "爸爸的")}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Question */}
           <div>
             <label style={lbl}>想要問的問題</label>
@@ -639,7 +673,8 @@ function BookingForm({ date, slot, bookedSlots, initialType, onSubmit, onCancel,
           {/* 金額摘要 */}
           {payable !== null && (
             <div style={{ background:"#eef5fa", border:"1.5px solid #d5e2ec", borderRadius:14, padding:"12px 16px", fontSize:14, color:"#3a4f5e" }}>
-              <div style={{ display:"flex", justifyContent:"space-between" }}><span>諮詢費用{childCount > 1 ? `（${childCount} 位孩子）` : ""}</span><span>${listPrice.toLocaleString()}</span></div>
+              <div style={{ display:"flex", justifyContent:"space-between" }}><span>諮詢費用{childCount > 1 ? `（${childCount} 位孩子）` : ""}</span><span>${basePrice.toLocaleString()}</span></div>
+              {withDad && <div style={{ display:"flex", justifyContent:"space-between" }}><span>加做爸爸合盤{childCount > 1 ? `（${childCount} 位孩子）` : ""}</span><span>+${dadFee.toLocaleString()}</span></div>}
               {discountOk && <div style={{ display:"flex", justifyContent:"space-between", color:"#2f6f4a" }}><span>折扣碼{childCount > 1 ? `（每位孩子 −$${DISCOUNT_AMOUNT}）` : ""}</span><span>−${discountAmt.toLocaleString()}</span></div>}
               <div style={{ display:"flex", justifyContent:"space-between", fontWeight:700, fontSize:16, marginTop:6, paddingTop:6, borderTop:"1px dashed #b7c4d6" }}><span>應付金額</span><span>${payable.toLocaleString()}</span></div>
             </div>

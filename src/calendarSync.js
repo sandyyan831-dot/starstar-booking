@@ -12,6 +12,7 @@ const money = (n) => `$${Number(n).toLocaleString("en-US")}`;
 export function buildCalendarNote(booking) {
   const lines = ["由星語・星心預約後台自動建立", ""];
   if (Number(booking.childCount) > 1) lines.push(`孩子人數：${booking.childCount} 位`);
+  if (booking.withDad) lines.push(`加做爸爸合盤：+${money(Number(booking.dadFee) || 0)}`);
   const paid = Number(booking.price);
   if (!Number.isNaN(paid) && booking.price !== undefined && booking.price !== "") {
     lines.push(`實收金額：${money(paid)}`);
