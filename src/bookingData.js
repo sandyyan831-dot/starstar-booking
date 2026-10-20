@@ -2,6 +2,8 @@
 import { discountTotal } from "./discountUtils.js";
 
 export const MAX_CHILDREN = 3;
+export const PARTNER_FEE = 600;   // 本命盤解析加做「與別人的合盤」
+export const PARTNER_KEYS = { year:"partnerBirthYear", month:"partnerBirthMonth", day:"partnerBirthDay", hour:"partnerBirthHour", minute:"partnerBirthMinute", place:"partnerBirthPlace", country:"partnerOverseasCountry", region:"partnerOverseasRegion" };
 export const DAD_FEE = 600;   // 加做「爸爸的親子合盤」：每位孩子加收
 
 // 爸爸的出生資料欄位（選填加購，點開才會出現）
@@ -33,7 +35,9 @@ export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, disc
   const basePrice = (ct?.price || 0) * childCount;
   const withDad = isChild && !!formData.withDad;
   const dadFee = withDad ? DAD_FEE * childCount : 0;   // 加做爸爸合盤的加價（不打折）
-  const listPrice = basePrice + dadFee;
+  const withPartner = ct?.id === "first" && !!formData.withPartner;
+  const partnerFee = withPartner ? PARTNER_FEE : 0;   // 本命盤加做合盤的加價（不打折）
+  const listPrice = basePrice + dadFee + partnerFee;
   const discountAmount = discountCode && !ct?.noDiscount ? discountTotal(basePrice, childCount) : 0;
 
   const data = {
@@ -60,6 +64,16 @@ export function buildBookingData({ key, dateLabel, timeLabel, ct, formData, disc
     bookedAt: now.toISOString(),
     paymentStatus: "待匯款",
   };
+
+  if (withPartner) {
+    Object.assign(data, {
+      withPartner: true, partnerFee,
+      partnerName: formData.partnerName || "", partnerGender: formData.partnerGender,
+      partnerBirthYear: formData.partnerBirthYear, partnerBirthMonth: formData.partnerBirthMonth, partnerBirthDay: formData.partnerBirthDay,
+      partnerBirthHour: formData.partnerBirthHour, partnerBirthMinute: formData.partnerBirthMinute,
+      partnerBirthPlace: placeText(formData.partnerBirthPlace, formData.partnerOverseasCountry, formData.partnerOverseasRegion),
+    });
+  }
 
   // 解碼孩子的星盤天賦：加做親子合盤，需要媽媽的出生資料
   if (isChild) {

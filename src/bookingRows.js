@@ -21,6 +21,13 @@ export function bookingRows(b) {
       ["媽媽／照顧者出生", `${b.momBirthYear}/${b.momBirthMonth}/${b.momBirthDay} ${b.momBirthHour}:${b.momBirthMinute}`],
       ["媽媽／照顧者出生地", b.momBirthPlace],
     ] : []),
+    ...(b.withPartner ? [
+      ["合盤對象", b.partnerName || "（沒填）"],
+      ["對象性別", b.partnerGender],
+      ["對象出生", `${b.partnerBirthYear}/${b.partnerBirthMonth}/${b.partnerBirthDay} ${b.partnerBirthHour}:${b.partnerBirthMinute}`],
+      ["對象出生地", b.partnerBirthPlace],
+      ["加做合盤", `是（+$${Number(b.partnerFee || 0).toLocaleString()}）`],
+    ] : []),
     ...(b.withDad ? [
       ["爸爸出生", `${b.dadBirthYear}/${b.dadBirthMonth}/${b.dadBirthDay} ${b.dadBirthHour}:${b.dadBirthMinute}`],
       ["爸爸出生地", b.dadBirthPlace],
