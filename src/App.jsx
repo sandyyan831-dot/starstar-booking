@@ -700,15 +700,9 @@ function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:14,
             color:"#3f6f8d", fontWeight:700, marginBottom:10,
           }}>✦ 請用 LINE Pay 付款</p>
-          <div style={{ background:"#e9f7ee", border:"1px solid #b7e0c6", borderRadius:10, padding:"8px 12px", marginBottom:12, fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12.5, lineHeight:1.7, color:"#1f6b3a" }}>
-            <strong>只能用 LINE Pay 付款</strong><br />這是 LINE Pay 的收款碼，用銀行 App、轉帳或其他支付工具掃描，會付不了款。
-          </div>
-          <div style={{ textAlign:"center", marginBottom:8 }}>
+          <div style={{ textAlign:"center", marginBottom:12 }}>
             <img src={PAYMENT_QR} alt="LINE Pay 付款 QR code" style={{ width:"min(220px, 70%)", height:"auto", borderRadius:10, background:"#fff", border:"1.5px solid #d5e2ec" }} />
           </div>
-          <p style={{ fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12, color:"#6a737c", lineHeight:1.7, marginBottom:10 }}>
-            用手機預約的話：先把這個畫面截圖，再打開 LINE Pay 的掃描功能，從相簿選取截圖就可以付款。
-          </p>
           <p style={{
             fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:16,
             color:"#3a4f5e", fontWeight:700,
@@ -725,7 +719,7 @@ function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
           fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:12,
           color:"#6a737c", lineHeight:1.9, marginBottom:16,
         }}>
-          請於預約後 <strong style={{color:"#3f6f8d"}}>3 天內</strong> 用 LINE Pay 完成付款<br/>
+          請於預約後 <strong style={{color:"#3f6f8d"}}>3 天內</strong> 完成付款<br/>
           付款完成後請點下方按鈕，透過 Line 傳送付款截圖<br/>
           請使用與預約表單<strong style={{color:"#3f6f8d"}}>相同的 Line 顯示名稱</strong>傳送<br/>
           確認收款後才算正式完成預約 ✧
