@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { db } from "./firebase.js";
 import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
 import { lookupDiscountCode } from "./lookupDiscount.js";
+import { newLineCode, lineMessageUrl, LINE_ADD_FRIEND_URL } from "./lineNotify.js";
 import { DISCOUNT_AMOUNT, discountTotal } from "./discountUtils.js";
 import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN, DAD_FEE, DAD_KEYS, PARTNER_FEE, PARTNER_KEYS, MOM_CHART_FEE } from "./bookingData.js";
 import {
@@ -821,19 +822,26 @@ function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
           color:"#6a737c", lineHeight:1.9, marginBottom:16,
         }}>
           請於預約後 <strong style={{color:"#3f6f8d"}}>3 天內</strong> 完成付款<br/>
-          付款完成後請點下方按鈕，透過 Line 傳送付款截圖<br/>
-          請使用與預約表單<strong style={{color:"#3f6f8d"}}>相同的 Line 顯示名稱</strong>傳送<br/>
-          確認收款後才算正式完成預約 ✧
+          付款後點下方按鈕，LINE 會帶入你的預約代碼<br/>
+          {pay?.lineCode && <><strong style={{color:"#3f6f8d", fontSize:15, letterSpacing:2}}>{pay.lineCode}</strong><br/></>}
+          按傳送後，再傳付款截圖就可以了<br/>
+          確認收款後，我會在 LINE 傳預約時間給你 ✧
         </p>
 
-        <a href="https://line.me/R/ti/p/@754atiwp" target="_blank" rel="noopener noreferrer" style={{
+        <a href={pay?.lineCode ? lineMessageUrl(pay.lineCode) : LINE_ADD_FRIEND_URL} target="_blank" rel="noopener noreferrer" style={{
           display:"block", width:"100%", padding:"13px 0", borderRadius:10, border:"none",
           background:"linear-gradient(135deg, #06C755, #05a648)",
           color:"#fff", fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif",
           fontSize:15, fontWeight:700, cursor:"pointer", letterSpacing:2,
           textAlign:"center", textDecoration:"none", marginBottom:12,
           boxShadow:"0 2px 10px rgba(6,199,85,0.25)",
-        }}>💬 開啟 Line 傳送付款截圖</a>
+        }}>💬 開啟 LINE 傳送預約代碼</a>
+        <p style={{
+          fontFamily:"'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif", fontSize:11.5,
+          color:"#8a939b", marginTop:-4, marginBottom:14,
+        }}>
+          還沒加好友的話，請先<a href={LINE_ADD_FRIEND_URL} target="_blank" rel="noopener noreferrer" style={{ color:"#06a648", fontWeight:700 }}>加入官方帳號</a>，才收得到通知
+        </p>
 
         <button onClick={onClose} style={{
           width:"100%", padding:"11px 0", borderRadius:10,
@@ -913,10 +921,13 @@ export default function App() {
     const key = quickOpt ? dateKey(selectedDate, quickOpt.id) : dateKey(selectedDate, selectedSlot.id);
     const timeLabel = quickOpt ? quickOpt.label : selectedSlot.label;
 
-    const bookingData = buildBookingData({
-      key, dateLabel: formatDate(selectedDate), timeLabel, ct, formData,
-      discountCode: formData.discountCode || "",
-    });
+    const bookingData = {
+      ...buildBookingData({
+        key, dateLabel: formatDate(selectedDate), timeLabel, ct, formData,
+        discountCode: formData.discountCode || "",
+      }),
+      lineCode: newLineCode(),   // 客人傳到 LINE 官方帳號，收款後才找得到人自動通知
+    };
 
     try {
       // 客人資料寫進 bookings（只有後台看得到），時段另外寫進公開的 bookedSlots
@@ -929,7 +940,7 @@ export default function App() {
       setBookedSlots(nb);
       setLastConsultType(formData.consultType);
       setLastTimeLabel(timeLabel);
-      setLastPay({ price: bookingData.price, discount: bookingData.discountAmount, childCount: bookingData.childCount || 1 });
+      setLastPay({ price: bookingData.price, discount: bookingData.discountAmount, childCount: bookingData.childCount || 1, lineCode: bookingData.lineCode });
       setShowForm(false);
       setPickedType(null);
       setShowConfirmation(true);

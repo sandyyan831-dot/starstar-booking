@@ -1,8 +1,11 @@
-// 星語・星心：後台按「已收款」時，自動把預約放進 Google 行事曆
+// 星語・星心：後台按「已收款」時，自動把預約放進 Google 行事曆，並用 LINE 官方帳號（@754atiwp）通知客人
 // 這段程式貼在 Google Apps Script（script.google.com），部署成「網頁應用程式」後使用。
 //
-// 安全性：每次呼叫都會帶後台登入的憑證，這裡會拿它去讀一筆「只有管理員讀得到」的資料庫內容，
-// 讀得到才算是管理員本人（跟資料庫權限規則一致），其他人就算知道網址也加不了、刪不了行事曆。
+// 安全性：後台每次呼叫都會帶登入的憑證，這裡會拿它去讀一筆「只有管理員讀得到」的資料庫內容，
+// 讀得到才算是管理員本人（跟資料庫權限規則一致），其他人就算知道網址也加不了、刪不了行事曆、傳不了 LINE。
+//
+// LINE：同一個網址也是 LINE 官方帳號的 Webhook。客人傳「預約代碼 XXXXXX」時記住「代碼＝這位客人」，
+// 之後後台按已收款就能傳訊息給他。需要在「專案設定 → 指令碼屬性」加 LINE_TOKEN（Channel access token）。
 
 const FIREBASE_PROJECT = "starstar-booking";
 const CALENDAR_NAME = "家庭"; // 放進這個名稱的行事曆；找不到就放預設行事曆
@@ -14,6 +17,7 @@ function calendar_() {
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
+    if (Array.isArray(body.events)) return handleLineWebhook_(body.events);   // LINE 傳來的訊息
     const who = checkAdmin_(body.idToken);
     if (!who.ok) return reply_({ ok: false, error: "沒有權限（" + who.reason + "）" });
 
@@ -21,6 +25,7 @@ function doPost(e) {
       try {
         if (body.action === "upsert") upsertEvent_(item);
         else if (body.action === "remove") removeEvent_(item.id);
+        else if (body.action === "notify") notifyLine_(item);
         else throw new Error("不認得的動作：" + body.action);
         return { id: item.id, ok: true };
       } catch (err) {
@@ -75,6 +80,72 @@ function removeEvent_(id) {
   const ev = calendar_().getEventById(eventId);
   if (ev) ev.deleteEvent();
   props.deleteProperty(id);
+}
+
+// ── LINE ──────────────────────────────────────────────
+
+const LINE_API = "https://api.line.me/v2/bot";
+const CODE_PATTERN = /預約代碼\s*[:：]?\s*([A-Za-z0-9]{6})/;
+
+function lineToken_() {
+  const t = PropertiesService.getScriptProperties().getProperty("LINE_TOKEN");
+  if (!t) throw new Error("Apps Script 還沒設定 LINE_TOKEN");
+  return t;
+}
+
+function lineApi_(path, payload) {
+  const res = UrlFetchApp.fetch(LINE_API + path, {
+    method: payload ? "post" : "get",
+    contentType: "application/json",
+    headers: { Authorization: "Bearer " + lineToken_() },
+    payload: payload ? JSON.stringify(payload) : undefined,
+    muteHttpExceptions: true,
+  });
+  return { code: res.getResponseCode(), text: res.getContentText() };
+}
+
+const nameKey_ = name => "line:name:" + String(name || "").trim().toLowerCase();
+
+// 客人傳訊息給官方帳號：記住他的 LINE 名稱；訊息裡有預約代碼就記住「代碼＝這位客人」
+// （Apps Script 讀不到 LINE 的簽章標頭，所以改用「向 LINE 查得到這個人」來確認是真的好友）
+function handleLineWebhook_(events) {
+  const props = PropertiesService.getScriptProperties();
+  events.forEach(ev => {
+    try {
+      const userId = ev.source && ev.source.type === "user" && ev.source.userId;
+      if (!userId || (ev.type !== "message" && ev.type !== "follow")) return;
+      const profile = lineApi_("/profile/" + userId);
+      if (profile.code !== 200) return;
+      const name = JSON.parse(profile.text).displayName || "";
+      // 同名的人不只一位就標記起來，之後不用名字找，以免傳錯人
+      const key = nameKey_(name), had = props.getProperty(key);
+      if (name) props.setProperty(key, had && had !== userId ? "多人同名" : userId);
+
+      const text = ev.message && ev.message.type === "text" ? ev.message.text : "";
+      const m = CODE_PATTERN.exec(text);
+      if (!m) return;
+      props.setProperty("line:code:" + m[1].toUpperCase(), userId);
+      lineApi_("/message/reply", { replyToken: ev.replyToken, messages: [{ type: "text",
+        text: "收到你的預約代碼 ✧\n付款截圖直接傳在這裡就可以，確認收款後我會在這裡跟你說預約時間唷" }] });
+    } catch (err) {
+      console.error(err);
+    }
+  });
+  return reply_({ ok: true });
+}
+
+// 後台按已收款：先用預約代碼找客人，沒有代碼（舊預約）才用 LINE 名稱找
+function notifyLine_(item) {
+  const props = PropertiesService.getScriptProperties();
+  let userId = item.code && props.getProperty("line:code:" + String(item.code).toUpperCase());
+  if (!userId) {
+    const byName = item.line && props.getProperty(nameKey_(item.line));
+    if (byName === "多人同名") throw new Error("有好幾位客人的 LINE 名稱都是「" + item.line + "」，不確定要傳給誰");
+    userId = byName;
+  }
+  if (!userId) throw new Error("找不到這位客人的 LINE：客人還沒在官方帳號傳預約代碼（或 LINE 名稱和表單上不一樣）");
+  const r = lineApi_("/message/push", { to: userId, messages: [{ type: "text", text: item.text }] });
+  if (r.code !== 200) throw new Error("LINE 回應 " + r.code + "：" + r.text.slice(0, 200));
 }
 
 function reply_(obj) {

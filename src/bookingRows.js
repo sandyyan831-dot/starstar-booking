@@ -6,6 +6,7 @@ export function bookingRows(b) {
   const who = isChildBooking ? (multi ? "孩子1 " : "孩子") : "";
   return [
     ["Line", b.line],
+    ...(b.lineCode ? [["預約代碼", b.lineCode]] : []),
     ...(multi ? [["孩子人數", `${b.childCount} 位（每位各一小時，共 ${b.childCount} 小時）`]] : []),
     [`${who}性別`, b.gender],
     ...(b.childName ? [[multi ? "孩子1 稱呼" : "孩子稱呼", b.childName]] : []),

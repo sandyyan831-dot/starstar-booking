@@ -69,6 +69,11 @@ export async function syncCalendar(action, bookings) {
     ? bookings.map(buildCalendarEvent).filter(Boolean)
     : bookings.map(b => ({ id: b.id }));
   if (!items.length) return { ok: true };
+  return callScript(action, items);
+}
+
+/** 呼叫 Apps Script（行事曆、LINE 通知共用同一個網址）。回傳 { ok, error?, results? } */
+export async function callScript(action, items) {
   try {
     const idToken = await auth.currentUser.getIdToken();
     // 用 text/plain 送出，Apps Script 才收得到（避免瀏覽器的跨網域預檢）
@@ -78,7 +83,7 @@ export async function syncCalendar(action, bookings) {
       body: JSON.stringify({ action, idToken, items }),
     });
     const data = await res.json();
-    if (data.ok) return { ok: true };
+    if (data.ok) return { ok: true, results: data.results };
     const failed = (data.results || []).filter(r => !r.ok).map(r => `${r.id}：${r.error}`);
     return { ok: false, error: data.error || failed.join("\n") };
   } catch (e) {

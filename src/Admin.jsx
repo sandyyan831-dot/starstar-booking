@@ -9,6 +9,7 @@ import WeekView from "./WeekView.jsx";
 import { bookingRows } from "./bookingRows.js";
 import RescheduleModal from "./RescheduleModal.jsx";
 import { buildMovedBooking } from "./reschedule.js";
+import { notifyPaid } from "./lineNotify.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -156,7 +157,7 @@ export default function Admin() {
 
   const togglePayment = async (booking) => {
     const newStatus = booking.paymentStatus === "已收款" ? "待匯款" : "已收款";
-    if (newStatus === "已收款" && !window.confirm(`確定已收到款項嗎？\n${booking.date} ${booking.time}\nLine: ${booking.line}\n\n將標記為「已收款」`)) return;
+    if (newStatus === "已收款" && !window.confirm(`確定已收到款項嗎？\n${booking.date} ${booking.time}\nLine: ${booking.line}\n\n將標記為「已收款」，並自動用 LINE 傳預約時間給客人`)) return;
     try {
       await updateDoc(doc(db, "bookings", booking.id), { paymentStatus: newStatus });
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, paymentStatus: newStatus } : b));
@@ -164,6 +165,24 @@ export default function Admin() {
     // 已收款 → 放進行事曆；改回待匯款 → 從行事曆拿掉
     const r = await syncCalendar(newStatus === "已收款" ? "upsert" : "remove", [booking]);
     if (!r.ok) alert(`付款狀態已更新，但行事曆沒有${newStatus === "已收款" ? "加" : "刪"}成功：\n${r.error}`);
+    if (newStatus === "已收款") await sendLine(booking);
+  };
+
+  // 用 LINE 官方帳號傳預約時間給客人；傳不出去就把訊息複製起來，讓 Sandy 手動貼到 LINE
+  const [sendingLine, setSendingLine] = useState(null);
+  const sendLine = async (booking) => {
+    setSendingLine(booking.id);
+    const r = await notifyPaid(booking);
+    setSendingLine(null);
+    if (r.ok) {
+      const at = new Date().toISOString();
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, lineNotifiedAt: at } : b));
+      try { await updateDoc(doc(db, "bookings", booking.id), { lineNotifiedAt: at }); } catch (e) { console.error(e); }
+      return;
+    }
+    let copied = false;
+    try { await navigator.clipboard.writeText(r.text); copied = !!r.text; } catch { /* 複製不了就算了 */ }
+    alert(`LINE 沒有自動傳出去：\n${r.error}\n\n${copied ? "訊息已經複製好，可以直接到 LINE 貼上傳給客人：" : "可以手動傳這段給客人："}\n\n${r.text}`);
   };
 
   // 把所有已收款、還沒過的預約補進行事曆（已經在行事曆上的只會更新，不會重複）
@@ -453,6 +472,19 @@ export default function Admin() {
                       background:"#fdf0ee", border:"1px solid #f0c4bc", borderRadius:8,
                       padding:"6px 10px", marginBottom:10, fontSize:12, color:"#c0392b", fontWeight:700,
                     }}>⚠ 已預約 {daysSince} 天仍未匯款（超過 3 天期限）</div>
+                  )}
+
+                  {isPaid && (
+                    <div style={{ fontSize:12, marginBottom:10, display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
+                      {b.lineNotifiedAt
+                        ? <span style={{ color:"#2d6a3f", fontWeight:600 }}>📩 已用 LINE 通知（{new Date(b.lineNotifiedAt).toLocaleString("zh-TW", { month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" })}）</span>
+                        : <span style={{ color:"#b07a2a", fontWeight:600 }}>📩 還沒用 LINE 通知</span>}
+                      <button onClick={()=>{ if (!b.lineNotifiedAt || window.confirm("已經用 LINE 通知過了，確定要再傳一次嗎？")) sendLine(b); }} disabled={sendingLine===b.id} style={{
+                        padding:"3px 10px", borderRadius:6, border:"1px solid #9fd3b0",
+                        background:"#f1faf4", color:"#2d6a3f", fontSize:11, fontWeight:600,
+                        cursor:sendingLine===b.id?"wait":"pointer", fontFamily:font,
+                      }}>{sendingLine===b.id ? "傳送中…" : b.lineNotifiedAt ? "再傳一次" : "傳 LINE 通知"}</button>
+                    </div>
                   )}
 
                   <div style={{
