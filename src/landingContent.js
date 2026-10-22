@@ -8,6 +8,8 @@ export const TESTIMONIALS = [
   { image: "/feedback/01.jpg", alt: "家長分享：接受孩子的原廠設定後，調整互動方式，孩子變得自動自發" },
   { image: "/feedback/02.jpg", alt: "家長分享：週末去戶外跑跑、上喜歡的畫畫課" },
   { image: "/feedback/19.jpg", alt: "家長分享：理解老二做事的方式，也感受到老三在姐姐的愛下成長" },
+  { image: "/feedback/21.jpg", alt: "家長分享：講解時都能立刻想起生活中的真實情況，講的完全就是我女兒" },
+  { image: "/feedback/22.jpg", alt: "家長分享：曾經覺得是自己教育不對，想轉換方式讓女兒壓力不要那麼大" },
   { image: "/feedback/03.jpg", alt: "家長分享：謝謝妳讓我重新認識孩子一次", teaser: 1 },
   { image: "/feedback/04.jpg", alt: "家長分享：兩個孩子的個性、情緒表達與相處方式" },
   { image: "/feedback/05.jpg", alt: "家長分享：這一小時和這份報告真是太寶貴了" },
