@@ -9,7 +9,8 @@ import WeekView from "./WeekView.jsx";
 import { bookingRows } from "./bookingRows.js";
 import RescheduleModal from "./RescheduleModal.jsx";
 import { buildMovedBooking } from "./reschedule.js";
-import { notifyPaid } from "./lineNotify.js";
+import { notifyPaid, buildPaidMessage } from "./lineNotify.js";
+import LineMessageModal from "./LineMessageModal.jsx";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -168,8 +169,9 @@ export default function Admin() {
     if (newStatus === "已收款") await sendLine(booking);
   };
 
-  // 用 LINE 官方帳號傳預約時間給客人；傳不出去就把訊息複製起來，讓 Sandy 手動貼到 LINE
+  // 用 LINE 官方帳號傳預約時間給客人；傳不出去就跳出訊息視窗，讓 Sandy 複製去 LINE 手動貼
   const [sendingLine, setSendingLine] = useState(null);
+  const [lineMsg, setLineMsg] = useState(null);   // { booking, text, error }
   const sendLine = async (booking) => {
     setSendingLine(booking.id);
     const r = await notifyPaid(booking);
@@ -180,9 +182,7 @@ export default function Admin() {
       try { await updateDoc(doc(db, "bookings", booking.id), { lineNotifiedAt: at }); } catch (e) { console.error(e); }
       return;
     }
-    let copied = false;
-    try { await navigator.clipboard.writeText(r.text); copied = !!r.text; } catch { /* 複製不了就算了 */ }
-    alert(`LINE 沒有自動傳出去：\n${r.error}\n\n${copied ? "訊息已經複製好，可以直接到 LINE 貼上傳給客人：" : "可以手動傳這段給客人："}\n\n${r.text}`);
+    setLineMsg({ booking, text: r.text, error: r.error });
   };
 
   // 把所有已收款、還沒過的預約補進行事曆（已經在行事曆上的只會更新，不會重複）
@@ -484,6 +484,11 @@ export default function Admin() {
                         background:"#f1faf4", color:"#2d6a3f", fontSize:11, fontWeight:600,
                         cursor:sendingLine===b.id?"wait":"pointer", fontFamily:font,
                       }}>{sendingLine===b.id ? "傳送中…" : b.lineNotifiedAt ? "再傳一次" : "傳 LINE 通知"}</button>
+                      <button onClick={()=>setLineMsg({ booking:b, text:buildPaidMessage(b) })} style={{
+                        padding:"3px 10px", borderRadius:6, border:"1px solid #cbba95",
+                        background:"#fefcf7", color:"#8a7340", fontSize:11, fontWeight:600,
+                        cursor:"pointer", fontFamily:font,
+                      }}>📋 複製訊息</button>
                     </div>
                   )}
 
@@ -552,6 +557,7 @@ export default function Admin() {
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
           : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} />)}
 
+        {lineMsg && <LineMessageModal {...lineMsg} onClose={() => setLineMsg(null)} />}
         {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
 
         {/* ══════ TAB: 折扣碼 ══════ */}
