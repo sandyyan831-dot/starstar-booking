@@ -114,19 +114,24 @@ function handleLineWebhook_(events) {
     try {
       const userId = ev.source && ev.source.type === "user" && ev.source.userId;
       if (!userId || (ev.type !== "message" && ev.type !== "follow")) return;
+      // 記住 LINE 名稱（給沒有預約代碼的舊預約用）；查不到通常是對方還沒加好友
       const profile = lineApi_("/profile/" + userId);
-      if (profile.code !== 200) return;
-      const name = JSON.parse(profile.text).displayName || "";
-      // 同名的人不只一位就標記起來，之後不用名字找，以免傳錯人
-      const key = nameKey_(name), had = props.getProperty(key);
-      if (name) props.setProperty(key, had && had !== userId ? "多人同名" : userId);
+      if (profile.code === 200) {
+        const name = JSON.parse(profile.text).displayName || "";
+        // 同名的人不只一位就標記起來，之後不用名字找，以免傳錯人
+        const key = nameKey_(name), had = props.getProperty(key);
+        if (name) props.setProperty(key, had && had !== userId ? "多人同名" : userId);
+      } else {
+        console.log("查不到這位 LINE 用戶（可能還沒加好友，或 LINE_TOKEN 不對）：" + profile.code + " " + profile.text.slice(0, 200));
+      }
 
       const text = ev.message && ev.message.type === "text" ? ev.message.text : "";
       const m = CODE_PATTERN.exec(text);
       if (!m) return;
       props.setProperty("line:code:" + m[1].toUpperCase(), userId);
-      lineApi_("/message/reply", { replyToken: ev.replyToken, messages: [{ type: "text",
+      const r = lineApi_("/message/reply", { replyToken: ev.replyToken, messages: [{ type: "text",
         text: "收到你的預約代碼 ✧\n付款截圖直接傳在這裡就可以，確認收款後我會在這裡跟你說預約時間唷" }] });
+      console.log("收到預約代碼 " + m[1].toUpperCase() + "，自動回覆：" + (r.code === 200 ? "成功" : "失敗 " + r.code + " " + r.text.slice(0, 200)));
     } catch (err) {
       console.error(err);
     }
