@@ -42,7 +42,7 @@ export function buildPaidMessage(booking) {
   if (booking.consultId === "textOnly") {
     return `收到，您預約的是單一問題．文字回覆（${when}）\n那天我會在這裡用文字回覆你的問題唷`;
   }
-  return `收到，您預約的時間是${when}\n那天我會在這裡傳通話按鈕，方便的時候接起來就可以唷`;
+  return `收到，您預約的時間是${when}\n那天我會直接在這裡發送通話邀請給您，找個舒適安靜的空間，我們線上見！`;
 }
 
 /** 傳 LINE 給客人。回傳 { ok, error?, text } — text 是訊息內容，失敗時可以複製去手動傳 */
