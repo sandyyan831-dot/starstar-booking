@@ -104,7 +104,15 @@ function lineApi_(path, payload) {
   return { code: res.getResponseCode(), text: res.getContentText() };
 }
 
-const nameKey_ = name => "line:name:" + String(name || "").trim().toLowerCase();
+// LINE 名稱寬鬆比對：忽略表情符號、空格、標點符號、大小寫、全形半形（例如「小美🌸」＝「小美」、「Amy Lin」＝「amylin」）
+// 整個名稱都是表情符號的話，就照原樣比對
+function looseName_(name) {
+  const raw = String(name || "").trim().toLowerCase();
+  const loose = raw.normalize("NFKC").toLowerCase().replace(/[\s\p{P}\p{S}\p{Extended_Pictographic}\u200d\ufe0f]/gu, "");
+  return loose || raw;
+}
+const nameKey_ = name => "line:name2:" + looseName_(name);
+const oldNameKey_ = name => "line:name:" + String(name || "").trim().toLowerCase();   // 2026-10-23 以前記下的名稱
 
 // 客人傳訊息給官方帳號：記住他的 LINE 名稱；訊息裡有預約代碼就記住「代碼＝這位客人」
 // （Apps Script 讀不到 LINE 的簽章標頭，所以改用「向 LINE 查得到這個人」來確認是真的好友）
@@ -144,7 +152,7 @@ function notifyLine_(item) {
   const props = PropertiesService.getScriptProperties();
   let userId = item.code && props.getProperty("line:code:" + String(item.code).toUpperCase());
   if (!userId) {
-    const byName = item.line && props.getProperty(nameKey_(item.line));
+    const byName = item.line && (props.getProperty(nameKey_(item.line)) || props.getProperty(oldNameKey_(item.line)));
     if (byName === "多人同名") throw new Error("有好幾位客人的 LINE 名稱都是「" + item.line + "」，不確定要傳給誰");
     userId = byName;
   }
