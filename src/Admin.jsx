@@ -11,6 +11,7 @@ import RescheduleModal from "./RescheduleModal.jsx";
 import { buildMovedBooking } from "./reschedule.js";
 import { notifyPaid, buildPaidMessage } from "./lineNotify.js";
 import LineMessageModal from "./LineMessageModal.jsx";
+import ExtraQuestion from "./ExtraQuestion.jsx";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -187,6 +188,15 @@ export default function Admin() {
     }
     setLineMsg({ booking, text: r.text, error: r.error, candidates: r.candidates });
     return false;
+  };
+
+  // 客人在 LINE 私訊補充的問題：Sandy 手動新增或修改。回傳是否儲存成功
+  const saveExtraQuestion = async (booking, text) => {
+    try {
+      await updateDoc(doc(db, "bookings", booking.id), { extraQuestion: text });
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, extraQuestion: text } : b));
+      return true;
+    } catch (e) { console.error(e); alert("儲存失敗，請稍後再試"); return false; }
   };
 
   // 把所有已收款、還沒過的預約補進行事曆（已經在行事曆上的只會更新，不會重複）
@@ -519,6 +529,7 @@ export default function Admin() {
                       </React.Fragment>
                     ))}
                   </div>
+                  <ExtraQuestion key={b.id} booking={b} onSave={saveExtraQuestion} />
 
                   <div style={{
                     fontSize:10, color:"#c4b48a", marginTop:10,
@@ -560,7 +571,7 @@ export default function Admin() {
         {/* ══════ TAB: 週曆 ══════ */}
         {tab === "week" && (loading
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
-          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} />)}
+          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} onSaveExtra={saveExtraQuestion} />)}
 
         {lineMsg && <LineMessageModal {...lineMsg} sending={sendingLine === lineMsg.booking.id}
           onPick={(userId) => sendLine(lineMsg.booking, userId)} onClose={() => setLineMsg(null)} />}
