@@ -171,18 +171,22 @@ export default function Admin() {
 
   // 用 LINE 官方帳號傳預約時間給客人；傳不出去就跳出訊息視窗，讓 Sandy 複製去 LINE 手動貼
   const [sendingLine, setSendingLine] = useState(null);
-  const [lineMsg, setLineMsg] = useState(null);   // { booking, text, error }
-  const sendLine = async (booking) => {
+  const [lineMsg, setLineMsg] = useState(null);   // { booking, text, error, candidates }
+  // pickedUserId：LINE 名稱一樣的好幾位時，Sandy 在視窗裡選的那一位
+  const sendLine = async (booking, pickedUserId = "") => {
     setSendingLine(booking.id);
-    const r = await notifyPaid(booking);
+    const r = await notifyPaid(booking, pickedUserId);
     setSendingLine(null);
     if (r.ok) {
-      const at = new Date().toISOString();
-      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, lineNotifiedAt: at } : b));
-      try { await updateDoc(doc(db, "bookings", booking.id), { lineNotifiedAt: at }); } catch (e) { console.error(e); }
-      return;
+      // 記住這筆預約是哪一位 LINE 客人，之後再傳（例如改時間後）就不用再選
+      const patch = { lineNotifiedAt: new Date().toISOString(), ...(r.userId ? { lineUserId: r.userId } : {}) };
+      setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...patch } : b));
+      setLineMsg(null);
+      try { await updateDoc(doc(db, "bookings", booking.id), patch); } catch (e) { console.error(e); }
+      return true;
     }
-    setLineMsg({ booking, text: r.text, error: r.error });
+    setLineMsg({ booking, text: r.text, error: r.error, candidates: r.candidates });
+    return false;
   };
 
   // 把所有已收款、還沒過的預約補進行事曆（已經在行事曆上的只會更新，不會重複）
@@ -558,7 +562,8 @@ export default function Admin() {
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
           : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} />)}
 
-        {lineMsg && <LineMessageModal {...lineMsg} onClose={() => setLineMsg(null)} />}
+        {lineMsg && <LineMessageModal {...lineMsg} sending={sendingLine === lineMsg.booking.id}
+          onPick={(userId) => sendLine(lineMsg.booking, userId)} onClose={() => setLineMsg(null)} />}
         {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
 
         {/* ══════ TAB: 折扣碼 ══════ */}

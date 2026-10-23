@@ -85,7 +85,7 @@ export async function callScript(action, items) {
     const data = await res.json();
     if (data.ok) return { ok: true, results: data.results };
     const failed = (data.results || []).filter(r => !r.ok).map(r => `${r.id}：${r.error}`);
-    return { ok: false, error: data.error || failed.join("\n") };
+    return { ok: false, error: data.error || failed.join("\n"), results: data.results };
   } catch (e) {
     console.error(e);
     return { ok: false, error: String(e.message || e) };

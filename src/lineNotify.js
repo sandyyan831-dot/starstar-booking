@@ -45,10 +45,17 @@ export function buildPaidMessage(booking) {
   return `收到，你預約的時間是${when}\n那天我會直接在這裡發送通話邀請給你，找個舒適安靜的空間，我們線上見！`;
 }
 
-/** 傳 LINE 給客人。回傳 { ok, error?, text } — text 是訊息內容，失敗時可以複製去手動傳 */
-export async function notifyPaid(booking) {
+/**
+ * 傳 LINE 給客人。userId：後台手動選的人（不給就用預約記住的、預約代碼、LINE 名稱去找）。
+ * 回傳 { ok, error?, text, userId?, candidates? } — text 是訊息內容，失敗時可以複製去手動傳；
+ * candidates 是 LINE 名稱一樣的好幾位客人（{ id, name, pic, at, last }），要讓 Sandy 選。
+ */
+export async function notifyPaid(booking, userId = "") {
   const text = buildPaidMessage(booking);
   if (!text) return { ok: false, error: "算不出預約時間", text };
-  const r = await callScript("notify", [{ id: booking.id, code: booking.lineCode || "", line: booking.line || "", text }]);
-  return { ...r, text };
+  const r = await callScript("notify", [{
+    id: booking.id, userId: userId || booking.lineUserId || "", code: booking.lineCode || "", line: booking.line || "", text,
+  }]);
+  const res = (r.results || [])[0] || {};
+  return { ok: r.ok, error: r.error, text, userId: res.userId, candidates: res.candidates };
 }

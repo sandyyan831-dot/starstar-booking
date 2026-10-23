@@ -15,7 +15,45 @@ async function copyText(text, textarea) {
   }
 }
 
-export default function LineMessageModal({ booking, text, error, onClose }) {
+// 最後一則訊息的時間，例如 10/22 20:19
+const timeText = (ms) => {
+  if (!ms) return "";
+  const d = new Date(ms);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
+
+// LINE 名稱一樣的好幾位客人：顯示大頭貼、名稱、最後一則訊息，點選後直接傳
+function CandidateList({ candidates, sending, onPick }) {
+  return (
+    <div style={{ marginBottom:12 }}>
+      <div style={{ fontSize:13, fontWeight:700, color:"#6b5c3e", marginBottom:6 }}>LINE 名稱一樣的有 {candidates.length} 位，請選是哪一位：</div>
+      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+        {candidates.map(c => (
+          <button key={c.id} disabled={sending} onClick={() => onPick(c.id)} style={{
+            display:"flex", alignItems:"center", gap:10, width:"100%", textAlign:"left",
+            padding:"8px 10px", borderRadius:10, border:"1px solid #9fd3b0", background:"#f1faf4",
+            cursor:sending ? "wait" : "pointer", fontFamily:font,
+          }}>
+            {c.pic
+              ? <img src={c.pic} alt="" style={{ width:38, height:38, borderRadius:"50%", objectFit:"cover", flexShrink:0 }} />
+              : <div style={{ width:38, height:38, borderRadius:"50%", background:"#d5e2ec", flexShrink:0 }} />}
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:14, fontWeight:700, color:"#3a4f5e" }}>{c.name}</div>
+              <div style={{ fontSize:11.5, color:"#8a939b", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                最後訊息 {timeText(c.at)}　{c.last}
+              </div>
+            </div>
+            <span style={{ fontSize:12, fontWeight:700, color:"#2d6a3f", whiteSpace:"nowrap" }}>{sending ? "傳送中…" : "傳給他"}</span>
+          </button>
+        ))}
+      </div>
+      <div style={{ fontSize:11.5, color:"#8a939b", marginTop:6 }}>都不是的話，可以複製下面的訊息到 LINE 手動傳。</div>
+    </div>
+  );
+}
+
+export default function LineMessageModal({ booking, text, error, candidates, sending, onPick, onClose }) {
+  const picking = candidates?.length > 1 && onPick;
   const [copied, setCopied] = useState(null);   // null：還沒按；true：已複製；false：瀏覽器擋住了
   let textarea;
   return (
@@ -24,11 +62,13 @@ export default function LineMessageModal({ booking, text, error, onClose }) {
       display:"flex", alignItems:"center", justifyContent:"center", padding:16, fontFamily:font,
     }}>
       <div onClick={e => e.stopPropagation()} style={{
-        background:"#fefcf7", borderRadius:14, padding:"20px 18px", width:"100%", maxWidth:420,
+        background:"#fefcf7", borderRadius:14, padding:"20px 18px", width:"100%", maxWidth:420, boxSizing:"border-box",
+        maxHeight:"calc(100vh - 32px)", overflowY:"auto",
         boxShadow:"0 8px 30px rgba(0,0,0,0.15)",
       }}>
         <div style={{ fontSize:15, fontWeight:700, color:"#6b5c3e", marginBottom:6 }}>📩 傳給 {booking.line || "客人"} 的 LINE 訊息</div>
-        {error && (
+        {picking && <CandidateList candidates={candidates} sending={sending} onPick={onPick} />}
+        {error && !picking && (
           <div style={{ fontSize:12, color:"#c0392b", background:"#fdf0ee", border:"1px solid #f0c4bc", borderRadius:8, padding:"6px 10px", marginBottom:10, lineHeight:1.6 }}>
             沒有自動傳出去：{error}<br/>請複製下面的訊息，到 LINE 貼上傳給客人。
           </div>
