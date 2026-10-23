@@ -215,6 +215,7 @@ export default function Admin() {
       const r = await syncCalendar("remove", [booking]);
       if (!r.ok) alert(`預約已刪除，但行事曆上的活動沒有刪成功，請手動刪除：\n${r.error}`);
     }
+    return true;
   };
 
   // 改時間：搬到新的日期／時間（可以是前台沒開放的晚上）。回傳錯誤文字，成功回傳 ""
@@ -555,7 +556,7 @@ export default function Admin() {
         {/* ══════ TAB: 週曆 ══════ */}
         {tab === "week" && (loading
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
-          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} />)}
+          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} />)}
 
         {lineMsg && <LineMessageModal {...lineMsg} onClose={() => setLineMsg(null)} />}
         {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}

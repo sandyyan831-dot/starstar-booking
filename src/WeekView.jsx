@@ -43,7 +43,7 @@ function Cell({ items, closed, blocked, onOpen, dim }) {
   return <div style={{ ...base, background:"#fefcf7", border:"1px solid #e5ddd0" }}>{items.map(b => <Chip key={b.id} b={b} onOpen={onOpen} />)}</div>;
 }
 
-function Detail({ b, onClose, referrerOf, onReschedule }) {
+function Detail({ b, onClose, referrerOf, onReschedule, onDelete }) {
   const paid = b.paymentStatus === "已收款";
   const rows = [
     ["時間", `${b.date || ""} ${b.time || ""}`],
@@ -77,13 +77,14 @@ function Detail({ b, onClose, referrerOf, onReschedule }) {
         </div>
         <div style={{ fontSize:10, color:"#c4b48a", marginTop:12 }}>預約時間：{b.bookedAt ? new Date(b.bookedAt).toLocaleString("zh-TW") : "—"}</div>
         {onReschedule && <button onClick={() => onReschedule(b)} style={{ width:"100%", marginTop:16, padding:"10px 0", borderRadius:10, border:"none", background:"linear-gradient(135deg, #c9ab5a, #b09650)", color:"#fffdf8", fontSize:14, fontWeight:700, cursor:"pointer" }}>🕒 改時間</button>}
-        <button onClick={onClose} style={{ width:"100%", marginTop:onReschedule ? 8 : 16, padding:"10px 0", borderRadius:10, border:"1.5px solid #cbba95", background:"transparent", color:"#8a7340", fontSize:14, fontWeight:700, cursor:"pointer" }}>關閉</button>
+        {onDelete && <button onClick={() => onDelete(b)} style={{ width:"100%", marginTop:8, padding:"10px 0", borderRadius:10, border:"1px solid #e8c4c4", background:"#fdf5f5", color:"#c0392b", fontSize:14, fontWeight:700, cursor:"pointer" }}>刪除預約</button>}
+        <button onClick={onClose} style={{ width:"100%", marginTop:onReschedule || onDelete ? 8 : 16, padding:"10px 0", borderRadius:10, border:"1.5px solid #cbba95", background:"transparent", color:"#8a7340", fontSize:14, fontWeight:700, cursor:"pointer" }}>關閉</button>
       </div>
     </div>
   );
 }
 
-export default function WeekView({ bookings, blockedSlots, referrerOf, onReschedule }) {
+export default function WeekView({ bookings, blockedSlots, referrerOf, onReschedule, onDelete }) {
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [open, setOpen] = useState(null);
   const days = useMemo(() => buildWeek(bookings, monday, blockedSlots), [bookings, monday, blockedSlots]);
@@ -138,7 +139,8 @@ export default function WeekView({ bookings, blockedSlots, referrerOf, onResched
         <span>點預約可看詳細</span>
       </div>
 
-      {open && <Detail b={open} onClose={() => setOpen(null)} referrerOf={referrerOf} onReschedule={onReschedule ? (b) => { setOpen(null); onReschedule(b); } : null} />}
+      {open && <Detail b={open} onClose={() => setOpen(null)} referrerOf={referrerOf} onReschedule={onReschedule ? (b) => { setOpen(null); onReschedule(b); } : null}
+        onDelete={onDelete ? async (b) => { if (await onDelete(b)) setOpen(null); } : null} />}
     </div>
   );
 }
