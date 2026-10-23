@@ -33,8 +33,21 @@ function rangeLabel(startHM, endHM) {
   return label;
 }
 
-/** 已收款後傳給客人的訊息；算不出時間回傳 "" */
-export function buildPaidMessage(booking) {
+// 解碼孩子的星盤天賦：傳完預約時間後，再問家長最想解決的面向
+export const CHILD_FOLLOW_UP = "想詢問孩子有無哪些最讓你困擾或最想要解決的面向呢？我多著墨一點";
+
+/** 已收款後傳給客人的訊息（一則一個泡泡）；算不出時間回傳 [] */
+export function buildPaidMessages(booking) {
+  const main = buildMainMessage(booking);
+  if (!main) return [];
+  const isChild = booking.consultId === "child" || booking.consultTag === "親子星盤";
+  return isChild ? [main, CHILD_FOLLOW_UP] : [main];
+}
+
+/** 給「📋 複製訊息」用：每則訊息之間空一行 */
+export const buildPaidMessage = (booking) => buildPaidMessages(booking).join("\n\n");
+
+function buildMainMessage(booking) {
   const ev = buildCalendarEvent(booking);
   if (!ev) return "";
   const [y, m, d] = ev.start.slice(0, 10).split("-").map(Number);
@@ -51,10 +64,11 @@ export function buildPaidMessage(booking) {
  * candidates 是 LINE 名稱一樣的好幾位客人（{ id, name, pic, at, last }），要讓 Sandy 選。
  */
 export async function notifyPaid(booking, userId = "") {
-  const text = buildPaidMessage(booking);
+  const texts = buildPaidMessages(booking);
+  const text = texts.join("\n\n");
   if (!text) return { ok: false, error: "算不出預約時間", text };
   const r = await callScript("notify", [{
-    id: booking.id, userId: userId || booking.lineUserId || "", code: booking.lineCode || "", line: booking.line || "", text,
+    id: booking.id, userId: userId || booking.lineUserId || "", code: booking.lineCode || "", line: booking.line || "", text, texts,
   }]);
   const res = (r.results || [])[0] || {};
   return { ok: r.ok, error: r.error, text, userId: res.userId, candidates: res.candidates };

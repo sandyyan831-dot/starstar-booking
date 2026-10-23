@@ -180,7 +180,9 @@ function notifyLine_(item) {
     }
   }
   if (!userId) throw new Error("找不到這位客人的 LINE：客人還沒在官方帳號傳預約代碼或任何訊息（或 LINE 名稱和表單上差很多）");
-  const r = lineApi_("/message/push", { to: userId, messages: [{ type: "text", text: item.text }] });
+  // texts：好幾則訊息（例如預約時間＋詢問孩子最想解決的面向），一次最多 5 則，只算一則推播
+  const texts = (item.texts && item.texts.length ? item.texts : [item.text]).slice(0, 5);
+  const r = lineApi_("/message/push", { to: userId, messages: texts.map(t => ({ type: "text", text: t })) });
   if (r.code !== 200) throw new Error("LINE 回應 " + r.code + "：" + r.text.slice(0, 200));
   return { userId: userId };
 }
