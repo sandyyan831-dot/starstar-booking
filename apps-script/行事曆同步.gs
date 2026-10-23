@@ -58,9 +58,11 @@ function checkAdmin_(idToken) {
 }
 
 // 每筆預約只會有一個行事曆活動：用預約代碼記住活動編號，重複送出只會更新、不會重複新增
+// 同時記下「前一天的 LINE 提醒」（item.remind），由「每日提醒」每天定時檢查
 function upsertEvent_(item) {
   const cal = calendar_();
   const props = PropertiesService.getScriptProperties();
+  saveReminder_(props, item.id, item.remind);
   const start = new Date(item.start), end = new Date(item.end);
   const existingId = props.getProperty(item.id);
   const existing = existingId && cal.getEventById(existingId);
@@ -76,6 +78,7 @@ function upsertEvent_(item) {
 
 function removeEvent_(id) {
   const props = PropertiesService.getScriptProperties();
+  props.deleteProperty(REMIND_PREFIX + id);   // 改回待匯款、刪除、改時間：原本的提醒一起取消
   const eventId = props.getProperty(id);
   if (!eventId) return;
   const ev = calendar_().getEventById(eventId);
@@ -160,9 +163,8 @@ function rememberName_(props, userId, name, pictureUrl, ev) {
   props.setProperty(key, JSON.stringify(list.slice(0, 5)));
 }
 
-// 後台按已收款：先用後台選過的人，再用預約代碼，最後才用 LINE 名稱找；名稱一樣的有好幾位就交給 Sandy 選
-function notifyLine_(item) {
-  const props = PropertiesService.getScriptProperties();
+// 找客人的 LINE：先用後台選過的人，再用預約代碼，最後才用 LINE 名稱找；名稱一樣的有好幾位就丟出 candidates
+function findLineUser_(props, item) {
   let userId = item.userId || (item.code && props.getProperty("line:code:" + String(item.code).toUpperCase()));
   if (!userId && item.line) {
     let list = [];
@@ -180,11 +182,73 @@ function notifyLine_(item) {
     }
   }
   if (!userId) throw new Error("找不到這位客人的 LINE：客人還沒在官方帳號傳預約代碼或任何訊息（或 LINE 名稱和表單上差很多）");
-  // texts：好幾則訊息（例如預約時間＋詢問孩子最想解決的面向），一次最多 5 則，只算一則推播
-  const texts = (item.texts && item.texts.length ? item.texts : [item.text]).slice(0, 5);
-  const r = lineApi_("/message/push", { to: userId, messages: texts.map(t => ({ type: "text", text: t })) });
+  return userId;
+}
+
+function pushLine_(userId, texts) {
+  const r = lineApi_("/message/push", { to: userId, messages: texts.slice(0, 5).map(t => ({ type: "text", text: t })) });
   if (r.code !== 200) throw new Error("LINE 回應 " + r.code + "：" + r.text.slice(0, 200));
+}
+
+// 後台按已收款：傳預約時間給客人
+function notifyLine_(item) {
+  const props = PropertiesService.getScriptProperties();
+  const userId = findLineUser_(props, item);
+  // texts：好幾則訊息（例如預約時間＋詢問孩子最想解決的面向），一次最多 5 則，只算一則推播
+  pushLine_(userId, item.texts && item.texts.length ? item.texts : [item.text]);
+  // 已經找到人了：記到這筆預約的提醒上，前一天就不用再找（例如同名時 Sandy 手動選的人）
+  const remind = getReminder_(props, item.id);
+  if (remind && remind.userId !== userId) { remind.userId = userId; saveReminder_(props, item.id, remind); }
   return { userId: userId };
+}
+
+// ── 預約前一天的 LINE 提醒 ─────────────────────────────
+
+const REMIND_PREFIX = "line:remind:";
+const REMIND_HOUR = 10;   // 每天上午 10 點左右檢查明天的預約
+
+function saveReminder_(props, id, remind) {
+  if (remind && remind.date && remind.text) props.setProperty(REMIND_PREFIX + id, JSON.stringify(remind));
+  else props.deleteProperty(REMIND_PREFIX + id);
+}
+
+function getReminder_(props, id) {
+  try { return JSON.parse(props.getProperty(REMIND_PREFIX + id) || "null"); } catch (e) { return null; }
+}
+
+// 第一次使用：在編輯器上方選這個函式按「執行」，之後每天會自動跑「每日提醒」
+function 安裝每日提醒() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === "每日提醒")
+    .forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger("每日提醒").timeBased().everyDays(1).atHour(REMIND_HOUR).inTimezone("Asia/Taipei").create();
+  Logger.log("✅ 已設定：每天上午 " + REMIND_HOUR + " 點左右，傳 LINE 提醒明天有預約的客人（已收款的才會提醒）");
+}
+
+// 每天定時跑：傳提醒給「明天」有預約的客人；傳不出去的寄 email 給自己，方便手動傳
+function 每日提醒() {
+  const props = PropertiesService.getScriptProperties();
+  const day = offset => Utilities.formatDate(new Date(Date.now() + offset * 86400000), "Asia/Taipei", "yyyy-MM-dd");
+  const today = day(0), tomorrow = day(1);
+  const failed = [];
+  Object.keys(props.getProperties()).filter(k => k.indexOf(REMIND_PREFIX) === 0).forEach(key => {
+    const id = key.slice(REMIND_PREFIX.length);
+    const remind = getReminder_(props, id);
+    if (!remind || remind.date < today) { props.deleteProperty(key); return; }   // 已經過去的就清掉
+    if (remind.date !== tomorrow) return;
+    try {
+      pushLine_(findLineUser_(props, remind), [remind.text]);
+      props.deleteProperty(key);
+      console.log("已提醒：" + id + "（LINE: " + remind.line + "）");
+    } catch (err) {
+      failed.push("・" + id + "（LINE 名稱：" + remind.line + "）\n原因：" + (err.message || err) + "\n可以傳這段：\n" + remind.text);
+      console.error("提醒失敗：" + id + " " + (err.message || err));
+    }
+  });
+  if (failed.length) {
+    MailApp.sendEmail(Session.getEffectiveUser().getEmail(), "【預約提醒】有 " + failed.length + " 位客人的 LINE 提醒沒傳出去",
+      "下面這幾位明天有預約，但 LINE 提醒沒有自動傳出去，請到 LINE 官方帳號手動傳：\n\n" + failed.join("\n\n────────\n\n"));
+  }
 }
 
 function reply_(obj) {

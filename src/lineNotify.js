@@ -44,6 +44,22 @@ export function buildPaidMessages(booking) {
   return isChild ? [main, CHILD_FOLLOW_UP] : [main];
 }
 
+/**
+ * 預約前一天的 LINE 提醒：跟著行事曆同步一起送到 Apps Script，由它每天定時檢查「明天」的預約再傳。
+ * 單一問題．文字回覆沒有通話，不提醒。回傳 { date: "2026-12-23", text, userId, code, line } 或 null
+ */
+export function buildReminder(booking) {
+  if (booking.consultId === "textOnly") return null;
+  const ev = buildCalendarEvent(booking);
+  if (!ev) return null;
+  const when = rangeLabel(hmOf(ev.start), hmOf(ev.end));
+  return {
+    date: ev.start.slice(0, 10),
+    text: `哈囉！提醒你明天 ${when} 我們有占星諮詢的預約喔\n\n時間到的時候，我會直接在這裡發送通話邀請給你，找個舒適安靜的空間，我們線上見！`,
+    userId: booking.lineUserId || "", code: booking.lineCode || "", line: booking.line || "",
+  };
+}
+
 /** 給「📋 複製訊息」用：每則訊息之間空一行 */
 export const buildPaidMessage = (booking) => buildPaidMessages(booking).join("\n\n");
 

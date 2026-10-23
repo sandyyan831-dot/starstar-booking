@@ -1,5 +1,6 @@
 // 已收款的預約自動放進 Google 行事曆（透過 apps-script/行事曆同步.gs）
 import { auth } from "./firebase.js";
+import { buildReminder } from "./lineNotify.js";
 
 // 部署 Apps Script 後拿到的「網頁應用程式」網址；空白代表還沒設定，就不會同步
 export const CALENDAR_SYNC_URL = "https://script.google.com/macros/s/AKfycbw4TmnDJOJrurwnWscSRRdeghqvxg6Qjtly_ifnREXQAsVMti-Zw702Tu29wjSkqDjx/exec";
@@ -65,8 +66,9 @@ export function buildCalendarEvent(booking) {
 /** action："upsert"（新增或更新）｜"remove"（刪除）。回傳 { ok, error? } */
 export async function syncCalendar(action, bookings) {
   if (!CALENDAR_SYNC_URL) return { ok: true, skipped: true };
+  // 新增／更新行事曆時順便帶上「前一天的 LINE 提醒」；刪除行事曆時 Apps Script 也會一起取消提醒
   const items = action === "upsert"
-    ? bookings.map(buildCalendarEvent).filter(Boolean)
+    ? bookings.map(b => { const ev = buildCalendarEvent(b); return ev && { ...ev, remind: buildReminder(b) }; }).filter(Boolean)
     : bookings.map(b => ({ id: b.id }));
   if (!items.length) return { ok: true };
   return callScript(action, items);
