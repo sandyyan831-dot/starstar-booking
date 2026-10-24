@@ -13,6 +13,7 @@ import { notifyPaid, buildPaidMessage } from "./lineNotify.js";
 import LineMessageModal from "./LineMessageModal.jsx";
 import ExtraQuestion from "./ExtraQuestion.jsx";
 import CustomersPanel from "./CustomersPanel.jsx";
+import { useNewVersion } from "./versionCheck.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -65,6 +66,7 @@ export default function Admin() {
   const [filter, setFilter] = useState("all");
   const [sortMode, setSortMode] = useState("consult"); // consult：依諮詢時間分天顯示｜booked：依客人送出預約的時間
   const [tab, setTab] = useState("bookings"); // bookings | week | customers | codes | block
+  const hasNewVersion = useNewVersion();   // 網站更新了就提醒重新載入（手機上的後台常常一直開著）
   const [codes, setCodes] = useState([]);
   const [codesError, setCodesError] = useState(""); // "" | "rules" | "other"
 
@@ -354,6 +356,12 @@ export default function Admin() {
     }}>
       <style>{`* { margin:0; padding:0; box-sizing:border-box; } body { background:#faf6ef; }`}</style>
 
+      {hasNewVersion && (
+        <button onClick={() => window.location.reload()} style={{
+          display:"block", width:"100%", padding:"10px 16px", border:"none", background:"#06C755", color:"#fff",
+          fontSize:14, fontWeight:700, cursor:"pointer", fontFamily:font, position:"sticky", top:0, zIndex:101,
+        }}>🔄 後台有新版本，點這裡更新</button>
+      )}
       {/* Header */}
       <div style={{
         background:"#fefcf7", borderBottom:"1px solid #e5ddd0",

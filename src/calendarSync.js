@@ -71,7 +71,30 @@ export async function syncCalendar(action, bookings) {
     ? bookings.map(b => { const ev = buildCalendarEvent(b); return ev && { ...ev, remind: buildReminder(b) }; }).filter(Boolean)
     : bookings.map(b => ({ id: b.id }));
   if (!items.length) return { ok: true };
-  return callScript(action, items);
+  // Google 行事曆不讓人在短時間內建立／刪除太多活動，所以一次只送幾筆、中間停一下；被擋的過一會兒再試一次
+  const first = await sendInBatches(action, items);
+  if (!first.failed.length) return { ok: true };
+  await sleep(8000);
+  const second = await sendInBatches(action, first.failed);
+  return second.failed.length ? { ok: false, error: second.errors.join("\n") } : { ok: true };
+}
+
+const BATCH = 3;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// 回傳 { failed: 沒成功的項目, errors: 錯誤說明 }；有逐筆結果就只挑失敗的，整批失敗（例如網路斷掉）就整批算失敗
+async function sendInBatches(action, items) {
+  const failed = [], errors = [];
+  for (let i = 0; i < items.length; i += BATCH) {
+    if (i) await sleep(1500);
+    const batch = items.slice(i, i + BATCH);
+    const r = await callScript(action, batch);
+    if (r.ok) continue;
+    const badIds = (r.results || []).filter(x => !x.ok).map(x => x.id);
+    failed.push(...(badIds.length ? batch.filter(it => badIds.includes(it.id)) : batch));
+    errors.push(r.error);
+  }
+  return { failed, errors };
 }
 
 /** 呼叫 Apps Script（行事曆、LINE 通知共用同一個網址）。回傳 { ok, error?, results? } */
