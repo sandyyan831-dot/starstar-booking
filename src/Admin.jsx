@@ -12,6 +12,7 @@ import { buildMovedBooking } from "./reschedule.js";
 import { notifyPaid, buildPaidMessage } from "./lineNotify.js";
 import LineMessageModal from "./LineMessageModal.jsx";
 import ExtraQuestion from "./ExtraQuestion.jsx";
+import CustomersPanel from "./CustomersPanel.jsx";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -63,8 +64,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [sortMode, setSortMode] = useState("consult"); // consult：依諮詢時間分天顯示｜booked：依客人送出預約的時間
-  const [showPast, setShowPast] = useState(false);
-  const [tab, setTab] = useState("bookings"); // bookings | block | codes
+  const [tab, setTab] = useState("bookings"); // bookings | week | customers | codes | block
   const [codes, setCodes] = useState([]);
   const [codesError, setCodesError] = useState(""); // "" | "rules" | "other"
 
@@ -291,7 +291,7 @@ export default function Admin() {
     return true;
   });
 
-  // 依諮詢時間：今天起由近到遠、一天一組；已過去的收在最下面
+  // 依諮詢時間：今天起由近到遠、一天一組；已過去的移到「👥 客人」分頁
   const dayHeader = (label, count, muted) => (
     <div style={{ display:"flex", alignItems:"baseline", gap:8, margin:"10px 2px 0", color: muted ? "#b5a27a" : "#7a6530" }}>
       <span style={{ fontSize:15, fontWeight:700 }}>{label}</span>
@@ -302,10 +302,7 @@ export default function Admin() {
   const pastCount = grouped.past.reduce((n, g) => n + g.items.length, 0);
   const displayList = sortMode === "booked"
     ? filtered.map(b => ({ b }))
-    : [
-        ...grouped.upcoming.flatMap(g => g.items.map((b, i) => ({ b, header: i === 0 ? dayHeader(g.label, g.items.length) : null }))),
-        ...(showPast ? grouped.past.flatMap(g => g.items.map((b, i) => ({ b, header: i === 0 ? dayHeader(g.label, g.items.length, true) : null }))) : []),
-      ];
+    : grouped.upcoming.flatMap(g => g.items.map((b, i) => ({ b, header: i === 0 ? dayHeader(g.label, g.items.length) : null })));
 
   /* ── Login ── */
   if (!authChecked) return null;
@@ -382,12 +379,12 @@ export default function Admin() {
 
         {/* Main tabs: 預約列表 / 封鎖時段 */}
         <div style={{ display:"flex", gap:0, marginBottom:16, background:"#e5ddd0", borderRadius:12, padding:3 }}>
-          {[{key:"bookings",label:"📋 預約列表"},{key:"week",label:"🗓 週曆"},{key:"codes",label:"🎟 折扣碼"},{key:"block",label:"🔒 封鎖"}].map(t=>(
+          {[{key:"bookings",label:"📋 預約"},{key:"week",label:"🗓 週曆"},{key:"customers",label:"👥 客人"},{key:"codes",label:"🎟 折扣碼"},{key:"block",label:"🔒 封鎖"}].map(t=>(
             <button key={t.key} onClick={()=>setTab(t.key)} style={{
               flex:1, padding:"10px 0", borderRadius:10, border:"none",
               background:tab===t.key?"#fefcf7":"transparent",
               color:tab===t.key?"#7a6530":"#a09070",
-              fontSize:13, fontWeight:tab===t.key?700:500, cursor:"pointer",
+              fontSize:13, fontWeight:tab===t.key?700:500, cursor:"pointer", whiteSpace:"nowrap",
               boxShadow:tab===t.key?"0 1px 6px rgba(0,0,0,0.06)":"none",
               transition:"all 0.2s",
             }}>{t.label}</button>
@@ -560,10 +557,10 @@ export default function Admin() {
               );
             })}
             {sortMode === "consult" && pastCount > 0 && (
-              <button onClick={()=>setShowPast(v=>!v)} style={{
+              <button onClick={()=>setTab("customers")} style={{
                 marginTop:8, padding:"9px 0", borderRadius:10, border:"1px dashed #c9b88a",
                 background:"transparent", color:"#8a7340", fontSize:13, fontWeight:600, cursor:"pointer",
-              }}>{showPast ? "收起已過去的預約" : `顯示已過去的預約（${pastCount} 筆）`}</button>
+              }}>已經諮詢過的 {pastCount} 筆預約，在「👥 客人」分頁 →</button>
             )}
           </div>
         </>)}
@@ -576,6 +573,11 @@ export default function Admin() {
         {lineMsg && <LineMessageModal {...lineMsg} sending={sendingLine === lineMsg.booking.id}
           onPick={(userId) => sendLine(lineMsg.booking, userId)} onClose={() => setLineMsg(null)} />}
         {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
+
+        {/* ══════ TAB: 客人（已經諮詢過的預約） ══════ */}
+        {tab === "customers" && (loading
+          ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
+          : <CustomersPanel bookings={bookings} onSaveExtra={saveExtraQuestion} />)}
 
         {/* ══════ TAB: 折扣碼 ══════ */}
         {tab === "codes" && (
