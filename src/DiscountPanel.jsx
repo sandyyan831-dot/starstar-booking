@@ -129,7 +129,7 @@ export default function DiscountPanel({ codes, bookings, error, loading, onAdd, 
           也列出還沒匯款的預約（預設只列已收款）
         </label>
         <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.7, marginBottom:10 }}>
-          匯出內容只有：諮詢日期、預約送出日、服務項目、客人 LINE 名稱（只留第一個字）、折扣碼、折抵金額。不含生日、問題、金額以外的個資。
+          匯出內容只有：諮詢日期、預約送出日、服務項目、客人 LINE 名稱（只留第一個字）、折扣碼、折抵金額、回饋（每位客人 $500）。不含生日、問題、金額以外的個資。
         </div>
         {exportsByRef.length === 0 ? (
           <div style={{ fontSize:13, color:"#b5a27a", textAlign:"center" }}>還沒有折扣碼</div>
@@ -140,7 +140,7 @@ export default function DiscountPanel({ codes, bookings, error, loading, onAdd, 
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:8 }}>
                   <div style={{ minWidth:0 }}>
                     <div style={{ fontSize:14, fontWeight:700, color:"#6b5c3e" }}>{g.referrer}</div>
-                    <div style={{ fontSize:11.5, color:"#b5a27a" }}>{g.codes.join("、")}・{g.total} 筆・折抵 ${g.discount.toLocaleString()}</div>
+                    <div style={{ fontSize:11.5, color:"#b5a27a" }}>{g.codes.join("、")}・{g.total} 筆・折抵 ${g.discount.toLocaleString()}・回饋 ${g.reward.toLocaleString()}</div>
                   </div>
                   <div style={{ display:"flex", gap:6, flexShrink:0 }}>
                     {g.total > 0 && <button onClick={() => setOpenRef(openRef === g.referrer ? "" : g.referrer)} style={smallBtn("#fefcf7", "#8a7340", "#cbba95")}>{openRef === g.referrer ? "收起" : "預覽"}</button>}

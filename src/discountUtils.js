@@ -1,6 +1,7 @@
 // 折扣碼的共用計算（不碰資料庫，方便測試）
 
 export const DISCOUNT_AMOUNT = 200; // 所有折扣碼一律折 $200
+export const REFERRAL_REWARD = 500; // 每位用折扣碼的客人，回饋推薦人 $500
 
 const SAFE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // 去掉容易看錯的 0/O、1/I
 
@@ -109,12 +110,12 @@ export function consultDate(b) {
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
 }
 
-export const EXPORT_HEADERS = ["序號", "預約送出日", "諮詢日期", "服務項目", "客人（已遮罩）", "折扣碼", "折抵金額", "付款狀態"];
+export const EXPORT_HEADERS = ["序號", "預約送出日", "諮詢日期", "服務項目", "客人（已遮罩）", "折扣碼", "折抵金額", "回饋", "付款狀態"];
 
 /**
  * 依推薦人整理某個月的折扣碼使用紀錄（以「諮詢當天」算月份）。
  * 只列代碼表裡登錄過的代碼；預設只算已收款，includePending 為 true 時連待匯款一起列。
- * 回傳 [{ referrer, codes, rows: [[...]], total, discount }]，每位推薦人一份。
+ * 回傳 [{ referrer, codes, rows: [[...]], total, discount, reward }]，每位推薦人一份。
  */
 export function buildMonthlyExports(codes, bookings, { year, month, includePending = false }) {
   const codeMap = new Map();
@@ -144,9 +145,9 @@ export function buildMonthlyExports(codes, bookings, { year, month, includePendi
     g.items.sort((x, y) => consultDate(x.b) - consultDate(y.b) || x.sent - y.sent);
     const rows = g.items.map((it, i) => [
       i + 1, isNaN(it.sent) ? "" : ymd(it.sent), it.b.date || "", it.b.consultType || "", maskName(it.b.line),
-      it.code, Number(it.b.discountAmount) || 0, it.paid ? "已收款" : "待匯款",
+      it.code, Number(it.b.discountAmount) || 0, REFERRAL_REWARD, it.paid ? "已收款" : "待匯款",
     ]);
-    return { referrer: g.referrer, codes: g.codes.sort(), rows, total: rows.length, discount: rows.reduce((s, r) => s + r[6], 0) };
+    return { referrer: g.referrer, codes: g.codes.sort(), rows, total: rows.length, discount: rows.reduce((s, r) => s + r[6], 0), reward: rows.reduce((s, r) => s + r[7], 0) };
   }).sort((a, b) => b.total - a.total || a.referrer.localeCompare(b.referrer));
 }
 
@@ -166,7 +167,9 @@ export function toCsv(group, { year, month }) {
     EXPORT_HEADERS,
     ...group.rows,
     [],
-    ["合計", `${group.total} 筆`, "", "", "", "", group.discount],
+    ["合計", `${group.total} 筆`, "", "", "", "", group.discount, group.reward],
+    [],
+    [`回饋給 ${group.referrer}`, group.reward],
   ];
   return "﻿" + lines.map(r => r.map(csvCell).join(",")).join("\r\n") + "\r\n";
 }
