@@ -224,8 +224,11 @@ export default function Admin() {
       const batch = writeBatch(db);
       batch.delete(doc(db, "bookings", booking.id));
       batch.delete(doc(db, "bookedSlots", booking.id));
+      const auto = booking.autoBlocked || [];   // 改時間時順便關掉的前台時段，一起打開
+      auto.forEach(k => batch.delete(doc(db, "blockedSlots", k)));
       await batch.commit();
       setBookings(prev => prev.filter(b => b.id !== booking.id));
+      if (auto.length) setBlockedSlots(prev => { const n = new Set(prev); auto.forEach(k => n.delete(k)); return n; });
     } catch (e) { console.error(e); alert("刪除失敗"); return; }
     if (booking.paymentStatus === "已收款") {
       const r = await syncCalendar("remove", [booking]);
@@ -240,14 +243,23 @@ export default function Admin() {
     const { key, data } = buildMovedBooking(booking, spec);
     if (key === booking.id) return "新時間和原本相同";
     const originalStatus = booking.paymentStatus;
+    // 自訂時間前台看不懂，所以把它碰到的前台時段（上午／下午）一起關掉；上一次改時間關的、這次用不到的就打開
+    const oldAuto = booking.autoBlocked || [];
+    const newAuto = data.autoBlocked || [];
+    const reopen = oldAuto.filter(k => !newAuto.includes(k));
     try {
+      // 要搬進去的時段剛好是上次自己關掉的：先打開，不然資料庫會當成「已被封鎖」而拒絕
+      if (oldAuto.includes(key)) await deleteDoc(doc(db, "blockedSlots", key));
       // 新預約一定要從「待匯款」開始（資料庫規則規定），所以先用待匯款建立，搬完再改回原本的付款狀態
       const batch = writeBatch(db);
       batch.set(doc(db, "bookings", key), data);
       batch.set(doc(db, "bookedSlots", key), { bookedAt: data.bookedAt || "" });
       batch.delete(doc(db, "bookings", booking.id));
       batch.delete(doc(db, "bookedSlots", booking.id));
+      newAuto.forEach(k => batch.set(doc(db, "blockedSlots", k), { blockedAt: data.movedAt, autoFor: key }));
+      reopen.filter(k => k !== key).forEach(k => batch.delete(doc(db, "blockedSlots", k)));
       await batch.commit();
+      setBlockedSlots(prev => { const n = new Set(prev); reopen.forEach(k => n.delete(k)); newAuto.forEach(k => n.add(k)); return n; });
     } catch (e) {
       console.error(e);
       return e?.code === "permission-denied" ? "這個時間已經有別的預約或被封鎖了，請換一個時間" : "改時間失敗，請稍後再試";
@@ -580,7 +592,7 @@ export default function Admin() {
 
         {lineMsg && <LineMessageModal {...lineMsg} sending={sendingLine === lineMsg.booking.id}
           onPick={(userId) => sendLine(lineMsg.booking, userId)} onClose={() => setLineMsg(null)} />}
-        {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
+        {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} blockedSlots={blockedSlots} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
 
         {/* ══════ TAB: 客人（已經諮詢過的預約） ══════ */}
         {tab === "customers" && (loading

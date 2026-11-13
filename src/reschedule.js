@@ -32,6 +32,35 @@ export function slotKeyFor(date, startHM, endHM) {
   return `${day}_t${startHM.replace(":", "")}e${endHM.replace(":", "")}`;
 }
 
+// 前台月曆上的兩個時段。自訂時間（t開始e結束）前台看不懂，所以改時間時要另外把碰到的時段關起來
+const FRONT_SLOTS = [
+  { id: "morning", label: "上午", start: 600, end: 720 },
+  { id: "afternoon", label: "下午", start: 840, end: 960 },
+];
+const NEAR_MINUTES = 30;   // 沒有重疊、但前後相隔在這個分鐘數以內，算「緊鄰」
+
+/**
+ * 新時間會碰到前台哪些時段。回傳 [{ id, label, key, overlap }]：
+ * overlap true＝時間真的重疊（一定要關）；false＝只是緊鄰（預設關，可以不關）。
+ * 新時間剛好是前台原本的時段（整個上午／下午、半小時格）時前台自己看得懂，回傳 []。
+ */
+export function frontSlotsTouched(date, startHM, endHM) {
+  const dow = date.getDay();
+  if (dow === 0 || dow === 6) return [];                       // 週末前台本來就沒開
+  const key = slotKeyFor(date, startHM, endHM);
+  if (!/_t\d{4}e\d{4}$/.test(key)) return [];
+  const day = key.split("_")[0];
+  const s = toMin(startHM), e = toMin(endHM);
+  return FRONT_SLOTS
+    .filter(f => !(dow === 2 && f.id === "morning"))            // 週二上午公休
+    .map(f => {
+      const overlap = s < f.end && f.start < e;
+      const gap = overlap ? 0 : (s >= f.end ? s - f.end : f.start - e);
+      return gap <= NEAR_MINUTES ? { id: f.id, label: f.label, key: `${day}_${f.id}`, overlap } : null;
+    })
+    .filter(Boolean);
+}
+
 // 這筆預約目前的日期與起訖時間（HH:MM）；算不出來回傳 null
 export function currentSlot(b) {
   const c = consultStart(b);
@@ -70,9 +99,10 @@ export function findOverlaps(bookings, movingId, date, start, end) {
 
 /**
  * 組出「搬到新時間」之後的預約資料（不含 id）。
+ * blockKeys：要順便關掉的前台時段代碼（見 frontSlotsTouched）。
  * 付款狀態先設成「待匯款」是資料庫規則規定新預約一定要從待匯款開始，搬完之後由呼叫端再改回原本的狀態。
  */
-export function buildMovedBooking(b, { date, start, end }, now = new Date()) {
+export function buildMovedBooking(b, { date, start, end, blockKeys = [] }, now = new Date()) {
   const { id, ...rest } = b;
   const key = slotKeyFor(date, start, end);
   return {
@@ -84,6 +114,7 @@ export function buildMovedBooking(b, { date, start, end }, now = new Date()) {
       time: timeLabel(start, end),
       movedFrom: { slotKey: b.slotKey || id, date: b.date || "", time: b.time || "" },
       movedAt: now.toISOString(),
+      autoBlocked: blockKeys,   // 這次改時間順便關掉的前台時段；之後再改時間或刪除時要一起打開
       paymentStatus: "待匯款",
     },
   };

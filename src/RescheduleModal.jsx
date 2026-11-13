@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { currentSlot, defaultMinutes, addMinutes, dateInputValue, dateLabel, timeLabel, validateMove, findOverlaps } from "./reschedule.js";
+import { currentSlot, defaultMinutes, addMinutes, dateInputValue, dateLabel, timeLabel, validateMove, findOverlaps, frontSlotsTouched } from "./reschedule.js";
 
 const font = "'PingFang TC', 'Microsoft JhengHei', 'Helvetica Neue', sans-serif";
 const DURATIONS = [[30, "30 分鐘"], [60, "1 小時"], [90, "1.5 小時"], [120, "2 小時"], [180, "3 小時"]];
@@ -8,7 +8,7 @@ const input = { width:"100%", padding:"10px 12px", borderRadius:10, border:"1.5p
 const lbl = { display:"block", fontSize:12, color:"#8a7340", fontWeight:600, marginBottom:4 };
 
 /** 改預約的日期與時間（可以改成前台沒開放的時段，例如晚上）。onConfirm 回傳錯誤文字，成功回傳 "" */
-export default function RescheduleModal({ booking, bookings, onClose, onConfirm }) {
+export default function RescheduleModal({ booking, bookings, blockedSlots, onClose, onConfirm }) {
   const cur = currentSlot(booking);
   const [dateStr, setDateStr] = useState(cur ? dateInputValue(cur.date) : "");
   const [start, setStart] = useState(cur ? cur.start : "19:00");
@@ -23,13 +23,23 @@ export default function RescheduleModal({ booking, bookings, onClose, onConfirm 
   const date = dateStr ? new Date(Number(dateStr.slice(0, 4)), Number(dateStr.slice(5, 7)) - 1, Number(dateStr.slice(8, 10))) : null;
   const problem = validateMove({ dateStr, start, end });
   const overlaps = useMemo(() => (date && !problem ? findOverlaps(bookings, booking.id, date, start, end) : []), [bookings, booking.id, dateStr, start, end, problem]);
+  // 新時間碰到的前台時段（上午／下午）：已經被別的預約佔走、或妳自己封鎖過的不用再處理
+  const [keepOpen, setKeepOpen] = useState(() => new Set());   // 只是緊鄰、Sandy 選擇不關的時段
+  const own = booking.autoBlocked || [];
+  const touched = useMemo(() => (date && !problem ? frontSlotsTouched(date, start, end) : []).filter(t =>
+    !(bookings || []).some(o => o.id !== booking.id && (o.slotKey || o.id) === t.key) &&
+    !(blockedSlots?.has(t.key) && !own.includes(t.key))
+  ), [bookings, blockedSlots, booking.id, dateStr, start, end, problem]);
+  const blockKeys = touched.filter(t => t.overlap || !keepOpen.has(t.key)).map(t => t.key);
+  const toggleKeep = key => setKeepOpen(prev => { const n = new Set(prev); n.has(key) ? n.delete(key) : n.add(key); return n; });
+
   const unchanged = cur && date && date.getTime() === cur.date.getTime() && start === cur.start && end === cur.end;
 
   const submit = async () => {
     if (problem || busy || unchanged) return;
     if (overlaps.length && !window.confirm(`這個時間和其他預約重疊：\n${overlaps.map(o => `・${o.line}（${o.time}）`).join("\n")}\n\n還是要改嗎？`)) return;
     setBusy(true); setError("");
-    const err = await onConfirm({ date, start, end });
+    const err = await onConfirm({ date, start, end, blockKeys });
     setBusy(false);
     if (err) setError(err); else onClose();
   };
@@ -66,6 +76,17 @@ export default function RescheduleModal({ booking, bookings, onClose, onConfirm 
         {overlaps.length > 0 && (
           <div style={{ background:"#fff6d6", borderRadius:8, padding:"8px 12px", fontSize:12.5, color:"#8a6d1f", lineHeight:1.7, marginBottom:10 }}>
             ⚠ 和這些預約的時間重疊：{overlaps.map(o => `${o.line}（${o.time}）`).join("、")}
+          </div>
+        )}
+
+        {touched.length > 0 && (
+          <div style={{ background:"#f3f7ee", border:"1.5px solid #d3e0c2", borderRadius:10, padding:"8px 12px", fontSize:12.5, color:"#55683a", lineHeight:1.8, marginBottom:10 }}>
+            {touched.map(t => (
+              <label key={t.key} style={{ display:"flex", alignItems:"center", gap:8, cursor:t.overlap ? "default" : "pointer" }}>
+                <input type="checkbox" checked={t.overlap || !keepOpen.has(t.key)} disabled={t.overlap} onChange={() => toggleKeep(t.key)} />
+                <span>{t.overlap ? `前台這天「${t.label}」會一起關掉（時間重疊）` : `同時關掉前台這天「${t.label}」（時間緊鄰）`}</span>
+              </label>
+            ))}
           </div>
         )}
 
