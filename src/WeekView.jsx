@@ -36,11 +36,23 @@ function Chip({ b, onOpen }) {
   );
 }
 
-function Cell({ items, closed, blocked, onOpen, dim }) {
+// 空的格子點了可以封鎖、已封鎖的點了可以開放（onToggle 沒給、或是過去的日子就只顯示）
+function Cell({ items, closed, blocked, onOpen, onToggle, dim }) {
   const base = { padding:"8px 8px 3px", borderRadius:10, minHeight:54, opacity: dim ? 0.6 : 1 };
-  if (closed) return <div style={{ ...base, background:"#ececec", color:"#9a9a9a", fontSize:12, display:"flex", alignItems:"center", justifyContent:"center" }}>公休</div>;
-  if (blocked && !items.length) return <div style={{ ...base, background:"#f1e6e4", color:"#b07a70", fontSize:12, display:"flex", alignItems:"center", justifyContent:"center" }}>🔒 已封鎖</div>;
-  if (!items.length) return <div style={{ ...base, background:"#fbf8f1", border:"1px dashed #e5ddd0", color:"#cbbf9f", fontSize:12, display:"flex", alignItems:"center", justifyContent:"center" }}>空</div>;
+  const center = { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontSize:12, width:"100%", boxSizing:"border-box", fontFamily:font };
+  const tap = onToggle && !dim ? onToggle : null;
+  const Box = tap ? "button" : "div";
+  if (closed) return <div style={{ ...base, ...center, background:"#ececec", color:"#9a9a9a" }}>公休</div>;
+  if (blocked && !items.length) return (
+    <Box onClick={tap || undefined} style={{ ...base, ...center, background:"#f1e6e4", color:"#b07a70", border:"none", cursor:tap ? "pointer" : "default" }}>
+      🔒 已封鎖{tap && <span style={{ fontSize:10, color:"#c9a39b", marginTop:2 }}>點一下開放</span>}
+    </Box>
+  );
+  if (!items.length) return (
+    <Box onClick={tap || undefined} style={{ ...base, ...center, background:"#fbf8f1", border:"1px dashed #e5ddd0", color:"#cbbf9f", cursor:tap ? "pointer" : "default" }}>
+      空{tap && <span style={{ fontSize:10, color:"#d8ccb0", marginTop:2 }}>點一下封鎖</span>}
+    </Box>
+  );
   return <div style={{ ...base, background:"#fefcf7", border:"1px solid #e5ddd0" }}>{items.map(b => <Chip key={b.id} b={b} onOpen={onOpen} />)}</div>;
 }
 
@@ -86,7 +98,7 @@ function Detail({ b, onClose, referrerOf, onReschedule, onDelete, onSaveExtra })
   );
 }
 
-export default function WeekView({ bookings, blockedSlots, referrerOf, onReschedule, onDelete, onSaveExtra }) {
+export default function WeekView({ bookings, blockedSlots, referrerOf, onReschedule, onDelete, onSaveExtra, onToggleBlock }) {
   const [monday, setMonday] = useState(() => mondayOf(new Date()));
   const [open, setOpen] = useState(null);
   const days = useMemo(() => buildWeek(bookings, monday, blockedSlots), [bookings, monday, blockedSlots]);
@@ -94,6 +106,14 @@ export default function WeekView({ bookings, blockedSlots, referrerOf, onResched
   const thisMonday = mondayOf(new Date());
   const isThisWeek = monday.getTime() === thisMonday.getTime();
   const total = days.reduce((n, d) => n + d.morning.length + d.afternoon.length, 0);
+  // 封鎖／開放前先問一次，避免在手機上誤觸
+  const toggler = (d, period) => onToggleBlock && (() => {
+    const blocked = period === "morning" ? d.blockedMorning : d.blockedAfternoon;
+    const label = `${md(d.date)}（${WEEK[d.date.getDay()]}）${period === "morning" ? "上午 10:00–12:00" : "下午 2:00–4:00"}`;
+    if (window.confirm(blocked ? `要重新開放 ${label} 嗎？\n開放後客人就可以在前台預約這個時段。` : `要封鎖 ${label} 嗎？\n封鎖後客人在前台就約不到這個時段。`)) {
+      onToggleBlock(`${d.key}_${period}`);
+    }
+  });
   const navBtn = { padding:"7px 12px", borderRadius:8, border:"1px solid #d9cfb4", background:"#fefcf7", color:"#7a6530", fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:font };
 
   return (
@@ -121,8 +141,8 @@ export default function WeekView({ bookings, blockedSlots, referrerOf, onResched
                 <div style={{ fontSize:15, fontWeight:700 }}>{WEEK[d.date.getDay()]}</div>
                 <div style={{ fontSize:11 }}>{md(d.date)}</div>
               </div>
-              <Cell items={d.morning} closed={d.closedMorning && !d.morning.length} blocked={d.blockedMorning} onOpen={setOpen} dim={past} />
-              <Cell items={d.afternoon} blocked={d.blockedAfternoon} onOpen={setOpen} dim={past} />
+              <Cell items={d.morning} closed={d.closedMorning && !d.morning.length} blocked={d.blockedMorning} onOpen={setOpen} onToggle={toggler(d, "morning")} dim={past} />
+              <Cell items={d.afternoon} blocked={d.blockedAfternoon} onOpen={setOpen} onToggle={toggler(d, "afternoon")} dim={past} />
               {d.evening.length > 0 && (
                 <>
                   <div style={{ textAlign:"center", fontSize:11, color:"#8a7340", fontWeight:700, paddingTop:10 }}>晚上</div>
@@ -139,6 +159,7 @@ export default function WeekView({ bookings, blockedSlots, referrerOf, onResched
         <span><span style={{ display:"inline-block", width:10, height:10, background:"#fff8e3", borderLeft:"3px solid #d4a03a", marginRight:4 }} />待匯款</span>
         <span>🎟 有用折扣碼</span>
         <span>點預約可看詳細</span>
+        {onToggleBlock && <span>點空的格子可封鎖、點 🔒 可開放</span>}
       </div>
 
       {/* 用最新的預約資料顯示（例如剛存好私訊補充的問題） */}

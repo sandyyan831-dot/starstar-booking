@@ -588,7 +588,7 @@ export default function Admin() {
         {/* ══════ TAB: 週曆 ══════ */}
         {tab === "week" && (loading
           ? <div style={{ textAlign:"center", padding:40, color:"#b5a27a" }}>載入中…</div>
-          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} onSaveExtra={saveExtraQuestion} />)}
+          : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} onSaveExtra={saveExtraQuestion} onToggleBlock={toggleBlock} />)}
 
         {lineMsg && <LineMessageModal {...lineMsg} sending={sendingLine === lineMsg.booking.id}
           onPick={(userId) => sendLine(lineMsg.booking, userId)} onClose={() => setLineMsg(null)} />}
