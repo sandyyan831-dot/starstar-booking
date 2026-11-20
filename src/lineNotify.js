@@ -63,11 +63,27 @@ export function buildReminder(booking) {
 /** 給「📋 複製訊息」用：每則訊息之間空一行 */
 export const buildPaidMessage = (booking) => buildPaidMessages(booking).join("\n\n");
 
-function buildMainMessage(booking) {
+// 例如 2026/11/9（一） 上午 10:00–12:00；算不出時間回傳 ""
+function whenText(booking) {
   const ev = buildCalendarEvent(booking);
   if (!ev) return "";
   const [y, m, d] = ev.start.slice(0, 10).split("-").map(Number);
-  const when = `${dateLabel(new Date(y, m - 1, d))} ${rangeLabel(hmOf(ev.start), hmOf(ev.end))}`;
+  return `${dateLabel(new Date(y, m - 1, d))} ${rangeLabel(hmOf(ev.start), hmOf(ev.end))}`;
+}
+
+/** 已收款的預約改時間後，傳給客人的新時間；算不出時間回傳 [] */
+export function buildMovedMessages(booking) {
+  const when = whenText(booking);
+  if (!when) return [];
+  if (booking.consultId === "textOnly") {
+    return [`時間幫你改好囉！你預約的單一問題．文字回覆改成${when}\n那天我會在這裡用文字回覆你的問題唷`];
+  }
+  return [`時間幫你改好囉！你預約的時間改成${when}\n那天我會直接在這裡發送通話邀請給你，找個舒適安靜的空間，我們線上見！`];
+}
+
+function buildMainMessage(booking) {
+  const when = whenText(booking);
+  if (!when) return "";
   if (booking.consultId === "textOnly") {
     return `收到，你預約的是單一問題．文字回覆（${when}）\n那天我會在這裡用文字回覆你的問題唷`;
   }
@@ -76,11 +92,11 @@ function buildMainMessage(booking) {
 
 /**
  * 傳 LINE 給客人。userId：後台手動選的人（不給就用預約記住的、預約代碼、LINE 名稱去找）。
+ * texts：要傳的訊息，預設是已收款通知（改時間時傳 buildMovedMessages）。
  * 回傳 { ok, error?, text, userId?, candidates? } — text 是訊息內容，失敗時可以複製去手動傳；
  * candidates 是 LINE 名稱一樣的好幾位客人（{ id, name, pic, at, last }），要讓 Sandy 選。
  */
-export async function notifyPaid(booking, userId = "") {
-  const texts = buildPaidMessages(booking);
+export async function notifyPaid(booking, userId = "", texts = buildPaidMessages(booking)) {
   const text = texts.join("\n\n");
   if (!text) return { ok: false, error: "算不出預約時間", text };
   const r = await callScript("notify", [{

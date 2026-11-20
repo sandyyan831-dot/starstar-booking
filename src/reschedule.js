@@ -103,7 +103,7 @@ export function findOverlaps(bookings, movingId, date, start, end) {
  * 付款狀態先設成「待匯款」是資料庫規則規定新預約一定要從待匯款開始，搬完之後由呼叫端再改回原本的狀態。
  */
 export function buildMovedBooking(b, { date, start, end, blockKeys = [] }, now = new Date()) {
-  const { id, ...rest } = b;
+  const { id, lineMovedNotifiedAt, ...rest } = b;   // 上一次改時間的 LINE 通知不帶過去，這次傳成功才會再記
   const key = slotKeyFor(date, start, end);
   return {
     key,

@@ -17,6 +17,8 @@ export default function RescheduleModal({ booking, bookings, blockedSlots, onClo
     return DURATIONS.some(d => d[0] === dm) ? dm : 60;
   });
   const [busy, setBusy] = useState(false);
+  const paid = booking.paymentStatus === "已收款";
+  const [notify, setNotify] = useState(true);   // 已收款的預約：改好後用 LINE 傳新時間給客人
   const [error, setError] = useState("");
 
   const end = addMinutes(start || "00:00", minutes);
@@ -39,7 +41,7 @@ export default function RescheduleModal({ booking, bookings, blockedSlots, onClo
     if (problem || busy || unchanged) return;
     if (overlaps.length && !window.confirm(`這個時間和其他預約重疊：\n${overlaps.map(o => `・${o.line}（${o.time}）`).join("\n")}\n\n還是要改嗎？`)) return;
     setBusy(true); setError("");
-    const err = await onConfirm({ date, start, end, blockKeys });
+    const err = await onConfirm({ date, start, end, blockKeys, notify: paid && notify });
     setBusy(false);
     if (err) setError(err); else onClose();
   };
@@ -90,6 +92,13 @@ export default function RescheduleModal({ booking, bookings, blockedSlots, onClo
           </div>
         )}
 
+        {paid && (
+          <label style={{ display:"flex", alignItems:"center", gap:8, background:"#f1faf4", border:"1.5px solid #9fd3b0", borderRadius:10, padding:"8px 12px", fontSize:12.5, color:"#2d6a3f", fontWeight:600, cursor:"pointer", marginBottom:10 }}>
+            <input type="checkbox" checked={notify} onChange={e => setNotify(e.target.checked)} />
+            <span>改好後用 LINE 傳新時間給客人</span>
+          </label>
+        )}
+
         <div style={{ fontSize:11.5, color:"#b5a27a", lineHeight:1.7, marginBottom:12 }}>
           改好之後：原本的時段會重新開放給前台預約；已收款的預約，行事曆上的時間會一起更新。
         </div>
@@ -98,7 +107,7 @@ export default function RescheduleModal({ booking, bookings, blockedSlots, onClo
 
         <div style={{ display:"flex", gap:8 }}>
           <button onClick={onClose} disabled={busy} style={{ flex:1, padding:"11px 0", borderRadius:10, border:"1.5px solid #cbba95", background:"transparent", color:"#8a7340", fontSize:14, fontWeight:700, cursor:"pointer" }}>取消</button>
-          <button onClick={submit} disabled={!!problem || busy || !!unchanged} style={{ flex:1, padding:"11px 0", borderRadius:10, border:"none", background:"linear-gradient(135deg, #c9ab5a, #b09650)", color:"#fffdf8", fontSize:14, fontWeight:700, cursor:(problem || busy || unchanged) ? "not-allowed" : "pointer", opacity:(problem || unchanged) ? 0.5 : 1 }}>{busy ? "改時間中…" : "確定改時間"}</button>
+          <button onClick={submit} disabled={!!problem || busy || !!unchanged} style={{ flex:1, padding:"11px 0", borderRadius:10, border:"none", background:"linear-gradient(135deg, #c9ab5a, #b09650)", color:"#fffdf8", fontSize:14, fontWeight:700, cursor:(problem || busy || unchanged) ? "not-allowed" : "pointer", opacity:(problem || unchanged) ? 0.5 : 1 }}>{busy ? (paid && notify ? "改時間、傳 LINE 中…" : "改時間中…") : "確定改時間"}</button>
         </div>
       </div>
     </div>

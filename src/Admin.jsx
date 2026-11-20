@@ -9,7 +9,7 @@ import WeekView from "./WeekView.jsx";
 import { bookingRows } from "./bookingRows.js";
 import RescheduleModal from "./RescheduleModal.jsx";
 import { buildMovedBooking } from "./reschedule.js";
-import { notifyPaid, buildPaidMessage } from "./lineNotify.js";
+import { notifyPaid, buildPaidMessage, buildMovedMessages } from "./lineNotify.js";
 import LineMessageModal from "./LineMessageModal.jsx";
 import ExtraQuestion from "./ExtraQuestion.jsx";
 import CustomersPanel from "./CustomersPanel.jsx";
@@ -174,21 +174,22 @@ export default function Admin() {
 
   // 用 LINE 官方帳號傳預約時間給客人；傳不出去就跳出訊息視窗，讓 Sandy 複製去 LINE 手動貼
   const [sendingLine, setSendingLine] = useState(null);
-  const [lineMsg, setLineMsg] = useState(null);   // { booking, text, error, candidates }
+  const [lineMsg, setLineMsg] = useState(null);   // { booking, text, error, candidates, kind }
   // pickedUserId：LINE 名稱一樣的好幾位時，Sandy 在視窗裡選的那一位
-  const sendLine = async (booking, pickedUserId = "") => {
+  // kind："paid"＝已收款通知；"moved"＝改時間後通知新時間
+  const sendLine = async (booking, pickedUserId = "", kind = "paid") => {
     setSendingLine(booking.id);
-    const r = await notifyPaid(booking, pickedUserId);
+    const r = await notifyPaid(booking, pickedUserId, kind === "moved" ? buildMovedMessages(booking) : undefined);
     setSendingLine(null);
     if (r.ok) {
       // 記住這筆預約是哪一位 LINE 客人，之後再傳（例如改時間後）就不用再選
-      const patch = { lineNotifiedAt: new Date().toISOString(), ...(r.userId ? { lineUserId: r.userId } : {}) };
+      const patch = { [kind === "moved" ? "lineMovedNotifiedAt" : "lineNotifiedAt"]: new Date().toISOString(), ...(r.userId ? { lineUserId: r.userId } : {}) };
       setBookings(prev => prev.map(b => b.id === booking.id ? { ...b, ...patch } : b));
       setLineMsg(null);
       try { await updateDoc(doc(db, "bookings", booking.id), patch); } catch (e) { console.error(e); }
       return true;
     }
-    setLineMsg({ booking, text: r.text, error: r.error, candidates: r.candidates });
+    setLineMsg({ booking, text: r.text, error: r.error, candidates: r.candidates, kind });
     return false;
   };
 
@@ -279,6 +280,8 @@ export default function Admin() {
       const r1 = await syncCalendar("remove", [booking]);
       const r2 = await syncCalendar("upsert", [moved]);
       if (!r1.ok || !r2.ok) alert(`時間已經改好，但行事曆沒有同步成功，請到「已收款」分頁按「補進行事曆」：\n${r1.error || r2.error}`);
+      // 用 LINE 傳新時間給客人（找人方式跟已收款通知一樣）；傳不出去會跳出訊息視窗可以複製
+      if (spec.notify) await sendLine(moved, "", "moved");
     }
     return "";
   };
@@ -511,6 +514,7 @@ export default function Admin() {
                       {b.lineNotifiedAt
                         ? <span style={{ color:"#2d6a3f", fontWeight:600 }}>📩 已用 LINE 通知（{new Date(b.lineNotifiedAt).toLocaleString("zh-TW", { month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" })}）</span>
                         : <span style={{ color:"#b07a2a", fontWeight:600 }}>📩 還沒用 LINE 通知</span>}
+                      {b.lineMovedNotifiedAt && <span style={{ color:"#2d6a3f", fontWeight:600 }}>🕒 新時間已用 LINE 通知（{new Date(b.lineMovedNotifiedAt).toLocaleString("zh-TW", { month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit" })}）</span>}
                       <button onClick={()=>{ if (!b.lineNotifiedAt || window.confirm("已經用 LINE 通知過了，確定要再傳一次嗎？")) sendLine(b); }} disabled={sendingLine===b.id} style={{
                         padding:"3px 10px", borderRadius:6, border:"1px solid #9fd3b0",
                         background:"#f1faf4", color:"#2d6a3f", fontSize:11, fontWeight:600,
@@ -591,7 +595,7 @@ export default function Admin() {
           : <WeekView bookings={bookings} blockedSlots={blockedSlots} referrerOf={referrerOf} onReschedule={setMoving} onDelete={deleteBooking} onSaveExtra={saveExtraQuestion} onToggleBlock={toggleBlock} />)}
 
         {lineMsg && <LineMessageModal {...lineMsg} sending={sendingLine === lineMsg.booking.id}
-          onPick={(userId) => sendLine(lineMsg.booking, userId)} onClose={() => setLineMsg(null)} />}
+          onPick={(userId) => sendLine(lineMsg.booking, userId, lineMsg.kind)} onClose={() => setLineMsg(null)} />}
         {moving && <RescheduleModal key={moving.id} booking={moving} bookings={bookings} blockedSlots={blockedSlots} onClose={() => setMoving(null)} onConfirm={(spec) => moveBooking(moving, spec)} />}
 
         {/* ══════ TAB: 客人（已經諮詢過的預約） ══════ */}
