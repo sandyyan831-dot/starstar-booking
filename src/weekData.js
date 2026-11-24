@@ -1,6 +1,6 @@
 // 後台週曆：把預約放進「某一週 × 每天上午／下午」的格子（純函式，不碰資料庫）
 import { consultStart } from "./bookingOrder.js";
-import { readingsOf, DAY_MAX_READINGS } from "./dayLimit.js";
+import { readingsOf, fullDays } from "./dayLimit.js";
 
 export const SERVICE_SHORT = { first: "本命盤", child: "解碼孩子", returning: "問問題", textOnly: "文字回覆", timing: "擇時" };
 
@@ -46,10 +46,11 @@ export function buildWeek(bookings, weekStart, blockedSlots = new Set()) {
     const c = consultStart(b);
     if (!c) return;
     const k = dayKey(c.date);
-    if (!byDay.has(k)) byDay.set(k, { morning: [], afternoon: [], evening: [], full: false });
-    if (readingsOf(b) >= DAY_MAX_READINGS) byDay.get(k).full = true;   // 一天最多 2 份盤
+    if (!byDay.has(k)) byDay.set(k, { morning: [], afternoon: [], evening: [] });
     byDay.get(k)[c.minutes < 720 ? "morning" : c.minutes < 1020 ? "afternoon" : "evening"].push({ b, minutes: c.minutes });
   });
+  // 一天最多 3 份盤：約滿的日子
+  const full = fullDays((bookings || []).filter(b => !b.isBlock).map(b => ({ id: b.slotKey || b.id, readings: readingsOf(b) })));
   const days = [];
   for (let i = 0; i < 7; i++) {
     const date = addDays(weekStart, i);
@@ -60,7 +61,7 @@ export function buildWeek(bookings, weekStart, blockedSlots = new Set()) {
     const sort = list => list.sort((x, y) => x.minutes - y.minutes).map(x => x.b);
     days.push({
       date, key: k,
-      full: !!cell.full,   // 這天已有一筆 2 份以上的預約，前台其他時段自動不開放
+      full: full.has(k),   // 這天已約滿 3 份盤，前台其他時段自動不開放
       closedMorning: date.getDay() === 2,   // 週二上午不開放
       blockedMorning: blockedSlots.has(`${k}_morning`),
       blockedAfternoon: blockedSlots.has(`${k}_afternoon`),
