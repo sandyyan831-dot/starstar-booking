@@ -19,6 +19,11 @@ export const TESTIMONIALS = [
   { image: "/feedback/09.jpg", alt: "家長推薦：育兒遇到瓶頸，可以用不同角度認識孩子" },
   { image: "/feedback/10.jpg", alt: "家長分享：姐姐妹妹的學習方式不同" },
   { image: "/feedback/12.jpg", alt: "家長分享：這種孩子真的很難教育" },
+  { image: "/feedback/23.jpg", alt: "家長分享：原來孩子讓人苦惱的行為，背後是更單純的自我意識" },
+  { image: "/feedback/24.jpg", alt: "家長分享：確定自己觀察的沒錯，老師的建議就像量身打造的方法" },
+  { image: "/feedback/27.jpg", alt: "家長分享：一個半小時的解析，更知道如何跟孩子相處" },
+  { image: "/feedback/29.jpg", alt: "家長分享：聽到女兒的貼心，眼淚控制不住" },
+  { image: "/feedback/30.jpg", alt: "家長分享：完全是我女兒的樣子，也知道我已經做得很好" },
   { image: "/feedback/13.jpg", alt: "客人分享：真是謝謝妳的解題", teaser: 3 },
   { image: "/feedback/14.jpg", alt: "客人分享：你好會說話，讀起來有療癒的感覺" },
   { image: "/feedback/15.jpg", alt: "客人分享：怎麼這麼厲害", teaser: 2 },
@@ -26,6 +31,10 @@ export const TESTIMONIALS = [
   { image: "/feedback/17.jpg", alt: "客人分享：原本很抗拒算命，看了分享後改觀" },
   { image: "/feedback/18.jpg", alt: "客人分享：預見未來的狀況，會更放手去做" },
   { image: "/feedback/20.jpg", alt: "客人分享：最近好多合作，回想星盤說的那些，真的欸" },
+  { image: "/feedback/26.jpg", alt: "客人分享：聊完心態鬆綁，接到夢寐以求的合作" },
+  { image: "/feedback/25.jpg", alt: "客人分享：諮詢前還差點下定決心離開本業，感謝老師感謝宇宙" },
+  { image: "/feedback/28.jpg", alt: "客人分享：終於有人懂我的心，發現我在焦慮什麼" },
+  { image: "/feedback/31.jpg", alt: "客人分享：心裡堵住的地方疏通了" },
 ];
 
 // 關於我：頁面中段的「我懂媽媽，也懂孩子」區塊。
