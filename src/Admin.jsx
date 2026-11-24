@@ -14,6 +14,7 @@ import LineMessageModal from "./LineMessageModal.jsx";
 import ExtraQuestion from "./ExtraQuestion.jsx";
 import CustomersPanel from "./CustomersPanel.jsx";
 import { useNewVersion } from "./versionCheck.js";
+import { bookedSlotData, readingsOf, DAY_MAX_READINGS, dayOf } from "./dayLimit.js";
 
 const SLOT_DAYS = [1, 2, 3, 4, 5];
 const SLOTS = [
@@ -101,13 +102,14 @@ export default function Admin() {
       list.sort((a, b) => (b.bookedAt || "").localeCompare(a.bookedAt || ""));
       setBookings(list);
 
-      // 補上公開時段表裡缺少的預約（例如改版前的舊預約），讓前台能正確顯示已滿
-      const slotIds = new Set();
-      slotSnap.forEach(d => slotIds.add(d.id));
-      const missing = list.filter(b => !slotIds.has(b.id));
+      // 補上公開時段表裡缺少的預約（例如改版前的舊預約），讓前台能正確顯示已滿；
+      // 一筆 2 份以上解讀的也補記 readings，前台才會關掉那天（一天最多 2 份盤）
+      const slotData = new Map();
+      slotSnap.forEach(d => slotData.set(d.id, d.data()));
+      const missing = list.filter(b => (!slotData.has(b.id) || (slotData.get(b.id).readings || 0) !== (bookedSlotData(b).readings || 0)));
       if (missing.length) {
         const batch = writeBatch(db);
-        missing.forEach(b => batch.set(doc(db, "bookedSlots", b.id), { bookedAt: b.bookedAt || "" }));
+        missing.forEach(b => batch.set(doc(db, "bookedSlots", b.id), bookedSlotData(b)));
         await batch.commit();
       }
 
@@ -254,7 +256,7 @@ export default function Admin() {
       // 新預約一定要從「待匯款」開始（資料庫規則規定），所以先用待匯款建立，搬完再改回原本的付款狀態
       const batch = writeBatch(db);
       batch.set(doc(db, "bookings", key), data);
-      batch.set(doc(db, "bookedSlots", key), { bookedAt: data.bookedAt || "" });
+      batch.set(doc(db, "bookedSlots", key), bookedSlotData(data));
       batch.delete(doc(db, "bookings", booking.id));
       batch.delete(doc(db, "bookedSlots", booking.id));
       newAuto.forEach(k => batch.set(doc(db, "blockedSlots", k), { blockedAt: data.movedAt, autoFor: key }));
@@ -301,6 +303,8 @@ export default function Admin() {
   };
 
   const bookedKeys = useMemo(() => new Set(bookings.map(b => b.slotKey)), [bookings]);
+  // 一天最多 2 份盤：有一筆 2 份以上的日子，前台其他時段自動不開放
+  const fullDays = useMemo(() => new Set(bookings.filter(b => !b.isBlock && readingsOf(b) >= DAY_MAX_READINGS).map(b => dayOf(b.slotKey || b.id))), [bookings]);
 
   const filtered = bookings.filter(b => {
     if (filter === "pending") return b.paymentStatus !== "已收款";
@@ -616,6 +620,7 @@ export default function Admin() {
           <BlockSlotsPanel
             blockedSlots={blockedSlots}
             bookedKeys={bookedKeys}
+            fullDays={fullDays}
             onToggle={toggleBlock}
             loading={loading}
           />
@@ -626,7 +631,7 @@ export default function Admin() {
 }
 
 /* ── Block Slots Panel ── */
-function BlockSlotsPanel({ blockedSlots, bookedKeys, onToggle, loading }) {
+function BlockSlotsPanel({ blockedSlots, bookedKeys, fullDays, onToggle, loading }) {
   const dates = useMemo(() => getNext2MonthsDates(), []);
 
   const months = useMemo(() => {
@@ -645,7 +650,7 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, onToggle, loading }) {
     <div>
       <p style={{ fontSize:13, color:"#8a7340", marginBottom:16, lineHeight:1.7 }}>
         點擊按鈕即可封鎖或開放時段。<br/>
-        <span style={{ color:"#b5a27a", fontSize:12 }}>🔴 已封鎖　🟡 已有預約　🟢 可預約</span>
+        <span style={{ color:"#b5a27a", fontSize:12 }}>🔴 已封鎖　🟡 已有預約　🟢 可預約　⚪ 當天已滿（一筆預約就有 2 份盤，前台自動不開放）</span>
       </p>
 
       {months.map(m => (
@@ -672,6 +677,7 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, onToggle, loading }) {
                       const key = dateKey(date, slot.id);
                       const isBooked = bookedKeys.has(key);
                       const isBlocked = blockedSlots.has(key);
+                      const isFull = !isBooked && !isBlocked && fullDays.has(key.split("_")[0]);   // 當天已有一筆 2 份盤
 
                       let bg, color, label, border;
                       if (isBooked) {
@@ -679,6 +685,11 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, onToggle, loading }) {
                         color = "#856404";
                         label = `${slot.short} 已預約`;
                         border = "1px solid #ffeeba";
+                      } else if (isFull) {
+                        bg = "#eef0f3";
+                        color = "#8a949c";
+                        label = `${slot.short} 當天已滿`;
+                        border = "1px solid #dde2e7";
                       } else if (isBlocked) {
                         bg = "linear-gradient(135deg,#fde8e8,#f8d0d0)";
                         color = "#c0392b";
@@ -693,8 +704,8 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, onToggle, loading }) {
 
                       return (
                         <button key={slot.id}
-                          onClick={() => { if (!isBooked) onToggle(key); }}
-                          disabled={isBooked}
+                          onClick={() => { if (!isBooked && !isFull) onToggle(key); }}
+                          disabled={isBooked || isFull}
                           style={{
                             padding:"7px 12px", borderRadius:8,
                             border, background:bg, color,

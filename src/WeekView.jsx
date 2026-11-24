@@ -37,7 +37,7 @@ function Chip({ b, onOpen }) {
 }
 
 // 空的格子點了可以封鎖、已封鎖的點了可以開放（onToggle 沒給、或是過去的日子就只顯示）
-function Cell({ items, closed, blocked, onOpen, onToggle, dim }) {
+function Cell({ items, closed, blocked, full, onOpen, onToggle, dim }) {
   const base = { padding:"8px 8px 3px", borderRadius:10, minHeight:54, opacity: dim ? 0.6 : 1 };
   const center = { display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontSize:12, width:"100%", boxSizing:"border-box", fontFamily:font };
   const tap = onToggle && !dim ? onToggle : null;
@@ -48,6 +48,7 @@ function Cell({ items, closed, blocked, onOpen, onToggle, dim }) {
       🔒 已封鎖{tap && <span style={{ fontSize:10, color:"#c9a39b", marginTop:2 }}>點一下開放</span>}
     </Box>
   );
+  if (full && !items.length) return <div style={{ ...base, ...center, background:"#eef0f3", color:"#8a949c" }}>當天已滿<span style={{ fontSize:10, marginTop:2 }}>（已有 2 份盤）</span></div>;
   if (!items.length) return (
     <Box onClick={tap || undefined} style={{ ...base, ...center, background:"#fbf8f1", border:"1px dashed #e5ddd0", color:"#cbbf9f", cursor:tap ? "pointer" : "default" }}>
       空{tap && <span style={{ fontSize:10, color:"#d8ccb0", marginTop:2 }}>點一下封鎖</span>}
@@ -141,8 +142,8 @@ export default function WeekView({ bookings, blockedSlots, referrerOf, onResched
                 <div style={{ fontSize:15, fontWeight:700 }}>{WEEK[d.date.getDay()]}</div>
                 <div style={{ fontSize:11 }}>{md(d.date)}</div>
               </div>
-              <Cell items={d.morning} closed={d.closedMorning && !d.morning.length} blocked={d.blockedMorning} onOpen={setOpen} onToggle={toggler(d, "morning")} dim={past} />
-              <Cell items={d.afternoon} blocked={d.blockedAfternoon} onOpen={setOpen} onToggle={toggler(d, "afternoon")} dim={past} />
+              <Cell items={d.morning} closed={d.closedMorning && !d.morning.length} blocked={d.blockedMorning} full={d.full} onOpen={setOpen} onToggle={toggler(d, "morning")} dim={past} />
+              <Cell items={d.afternoon} blocked={d.blockedAfternoon} full={d.full} onOpen={setOpen} onToggle={toggler(d, "afternoon")} dim={past} />
               {d.evening.length > 0 && (
                 <>
                   <div style={{ textAlign:"center", fontSize:11, color:"#8a7340", fontWeight:700, paddingTop:10 }}>晚上</div>
