@@ -103,7 +103,7 @@ export default function Admin() {
       setBookings(list);
 
       // 補上公開時段表裡缺少的預約（例如改版前的舊預約），讓前台能正確顯示已滿；
-      // 一筆 2 份以上解讀的也補記 readings，前台才算得出那天還剩幾份（一天最多 3 份盤）
+      // 一筆 2 份以上解讀的也補記 readings，前台才算得出那天還剩幾份（一天最多 2 份盤）
       const slotData = new Map();
       slotSnap.forEach(d => slotData.set(d.id, d.data()));
       const missing = list.filter(b => (!slotData.has(b.id) || (slotData.get(b.id).readings || 0) !== (bookedSlotData(b).readings || 0)));
@@ -303,7 +303,7 @@ export default function Admin() {
   };
 
   const bookedKeys = useMemo(() => new Set(bookings.map(b => b.slotKey)), [bookings]);
-  // 一天最多 3 份盤：加起來滿 3 份的日子，前台其他時段自動不開放
+  // 一天最多 2 份盤：加起來滿 2 份的日子，前台其他時段自動不開放
   const fullDays = useMemo(() => fullDaysOf(bookings.filter(b => !b.isBlock).map(b => ({ id: b.slotKey || b.id, readings: readingsOf(b) }))), [bookings]);
 
   const filtered = bookings.filter(b => {
@@ -650,7 +650,7 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, fullDays, onToggle, loading
     <div>
       <p style={{ fontSize:13, color:"#8a7340", marginBottom:16, lineHeight:1.7 }}>
         點擊按鈕即可封鎖或開放時段。<br/>
-        <span style={{ color:"#b5a27a", fontSize:12 }}>🔴 已封鎖　🟡 已有預約　🟢 可預約　⚪ 當天已滿（已經約滿 3 份盤，前台自動不開放）</span>
+        <span style={{ color:"#b5a27a", fontSize:12 }}>🔴 已封鎖　🟡 已有預約　🟢 可預約　⚪ 當天已滿（已經約滿 2 份盤，前台自動不開放）</span>
       </p>
 
       {months.map(m => (
@@ -677,7 +677,7 @@ function BlockSlotsPanel({ blockedSlots, bookedKeys, fullDays, onToggle, loading
                       const key = dateKey(date, slot.id);
                       const isBooked = bookedKeys.has(key);
                       const isBlocked = blockedSlots.has(key);
-                      const isFull = !isBooked && !isBlocked && fullDays.has(key.split("_")[0]);   // 當天已約滿 3 份盤
+                      const isFull = !isBooked && !isBlocked && fullDays.has(key.split("_")[0]);   // 當天已約滿 2 份盤
 
                       let bg, color, label, border;
                       if (isBooked) {

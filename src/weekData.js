@@ -49,7 +49,7 @@ export function buildWeek(bookings, weekStart, blockedSlots = new Set()) {
     if (!byDay.has(k)) byDay.set(k, { morning: [], afternoon: [], evening: [] });
     byDay.get(k)[c.minutes < 720 ? "morning" : c.minutes < 1020 ? "afternoon" : "evening"].push({ b, minutes: c.minutes });
   });
-  // 一天最多 3 份盤：約滿的日子
+  // 一天最多 2 份盤：約滿的日子
   const full = fullDays((bookings || []).filter(b => !b.isBlock).map(b => ({ id: b.slotKey || b.id, readings: readingsOf(b) })));
   const days = [];
   for (let i = 0; i < 7; i++) {
@@ -61,7 +61,7 @@ export function buildWeek(bookings, weekStart, blockedSlots = new Set()) {
     const sort = list => list.sort((x, y) => x.minutes - y.minutes).map(x => x.b);
     days.push({
       date, key: k,
-      full: full.has(k),   // 這天已約滿 3 份盤，前台其他時段自動不開放
+      full: full.has(k),   // 這天已約滿 2 份盤，前台其他時段自動不開放
       closedMorning: date.getDay() === 2,   // 週二上午不開放
       blockedMorning: blockedSlots.has(`${k}_morning`),
       blockedAfternoon: blockedSlots.has(`${k}_afternoon`),

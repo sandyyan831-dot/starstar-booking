@@ -48,7 +48,7 @@ function Cell({ items, closed, blocked, full, onOpen, onToggle, dim }) {
       🔒 已封鎖{tap && <span style={{ fontSize:10, color:"#c9a39b", marginTop:2 }}>點一下開放</span>}
     </Box>
   );
-  if (full && !items.length) return <div style={{ ...base, ...center, background:"#eef0f3", color:"#8a949c" }}>當天已滿<span style={{ fontSize:10, marginTop:2 }}>（已約滿 3 份盤）</span></div>;
+  if (full && !items.length) return <div style={{ ...base, ...center, background:"#eef0f3", color:"#8a949c" }}>當天已滿<span style={{ fontSize:10, marginTop:2 }}>（已約滿 2 份盤）</span></div>;
   if (!items.length) return (
     <Box onClick={tap || undefined} style={{ ...base, ...center, background:"#fbf8f1", border:"1px dashed #e5ddd0", color:"#cbbf9f", cursor:tap ? "pointer" : "default" }}>
       空{tap && <span style={{ fontSize:10, color:"#d8ccb0", marginTop:2 }}>點一下封鎖</span>}

@@ -3,7 +3,7 @@ import { db } from "./firebase.js";
 import { LandingTop, StartHeading, LandingBottom } from "./Landing.jsx";
 import { lookupDiscountCode } from "./lookupDiscount.js";
 import { newLineCode, lineMessageUrl, LINE_ADD_FRIEND_URL } from "./lineNotify.js";
-import { DAY_MAX_READINGS, fullDays, dayUsage, dayOf, bookedSlotData, readingsOf } from "./dayLimit.js";
+import { DAY_MAX_READINGS, fullDays, dayUsage, dayOf, bookedSlotData, readingsOf, fitsDay } from "./dayLimit.js";
 import { DISCOUNT_AMOUNT, discountTotal } from "./discountUtils.js";
 import { buildBookingData, childKeys, emptyChildFields, clampChildCount, MAX_CHILDREN, DAD_FEE, DAD_KEYS, PARTNER_FEE, PARTNER_KEYS, MOM_CHART_FEE } from "./bookingData.js";
 import {
@@ -80,15 +80,10 @@ function dateKey(date, slotId) {
   return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}_${slotId}`;
 }
 
-// 已經排滿的日子（一天 3 份盤）：上午、下午和所有半小時時段都不開放
+// 已經排滿的日子（一天 2 份盤）：上午、下午都不開放；半小時的問問題、文字回覆不算盤，照常開放
 function withFullDays(slots, days) {
   const all = new Set(slots);
-  days.forEach(day => {
-    SLOT_CONFIG.slots.forEach(s => {
-      all.add(`${day}_${s.id}`);
-      (QUICK_TIMES[s.id] || []).forEach(q => all.add(`${day}_${q.id}`));
-    });
-  });
+  days.forEach(day => SLOT_CONFIG.slots.forEach(s => all.add(`${day}_${s.id}`)));
   return all;
 }
 
@@ -229,7 +224,7 @@ function MonthCalendar({ year, month, availableDates, bookedSlots, onSelect }) {
 }
 
 /* ── Booking Form ── */
-function BookingForm({ date, slot, bookedSlots, dayRemaining = DAY_MAX_READINGS, initialType, onSubmit, onCancel, submitting }) {
+function BookingForm({ date, slot, bookedSlots, dayUsed = 0, initialType, onSubmit, onCancel, submitting }) {
   const [consultType, setConsultType] = useState(initialType || null);
   const [quickTime, setQuickTime] = useState(null);
   const [form, setForm] = useState({
@@ -265,8 +260,9 @@ function BookingForm({ date, slot, bookedSlots, dayRemaining = DAY_MAX_READINGS,
   const withMomChart = isChild && !!form.withMomChart;   // 孩子與媽媽的本命盤一起看（選填加購 +$3,000，同一個時段）
   const momChartFee = withMomChart ? MOM_CHART_FEE : 0;
   const sessionHours = childCount + (withMomChart ? 1 : 0);   // 每份解讀約一小時
-  // 一天最多看 3 份盤：這天其他預約已經用掉的份數，加上這次的不能超過 3 份
-  const overDayLimit = !!selectedType && !isQuick && sessionHours > dayRemaining;
+  // 一天最多看 2 份盤：這天其他預約已經用掉的份數，加上這次的不能超過 2 份（那天沒人約時，一次約 3 份也可以）
+  const dayRemaining = Math.max(DAY_MAX_READINGS - dayUsed, 0);
+  const overDayLimit = !!selectedType && !isQuick && !fitsDay(dayUsed, sessionHours);
   const withPartner = consultType === "first" && !!form.withPartner;   // 本命盤加做與別人的合盤（選填加購 +$600，不打折）
   const partnerFee = withPartner ? PARTNER_FEE : 0;
   const listPrice = basePrice === null ? null : basePrice + momChartFee + dadFee + partnerFee;
@@ -598,7 +594,7 @@ function BookingForm({ date, slot, bookedSlots, dayRemaining = DAY_MAX_READINGS,
               )}
               {overDayLimit && childCount > 1 && (
                 <div style={{ background:"#fdf0ee", border:"1px solid #f0c4bc", borderRadius:10, padding:"10px 12px", fontSize:12.5, color:"#b5483a", lineHeight:1.7, marginTop:8 }}>
-                  我一天最多看 3 份盤，這天只剩 {Math.max(dayRemaining, 0)} 份的名額，這次是 {sessionHours} 份，請改選其他日期，或減少孩子人數 🙏
+                  我一天最多看 2 份盤，這天只剩 {dayRemaining} 份的名額，這次是 {sessionHours} 份，請改選其他日期，或減少孩子人數 🙏
                 </div>
               )}
             </div>
@@ -692,7 +688,7 @@ function BookingForm({ date, slot, bookedSlots, dayRemaining = DAY_MAX_READINGS,
               </button>
               {overDayLimit && childCount === 1 && (
                 <div style={{ background:"#fdf0ee", border:"1px solid #f0c4bc", borderRadius:10, padding:"10px 12px", fontSize:12.5, color:"#b5483a", lineHeight:1.7, marginTop:0 }}>
-                  我一天最多看 3 份盤，這天只剩 {Math.max(dayRemaining, 0)} 份的名額，這次是 {sessionHours} 份，請改選其他日期，或減少孩子人數 🙏
+                  我一天最多看 2 份盤，這天只剩 {dayRemaining} 份的名額，這次是 {sessionHours} 份，請改選其他日期，或減少孩子人數 🙏
                 </div>
               )}
               {sessionHours > 2 && (
@@ -773,7 +769,7 @@ function BookingForm({ date, slot, bookedSlots, dayRemaining = DAY_MAX_READINGS,
             </div>
           )}
 
-          {overDayLimit && <div style={{ fontSize:12.5, color:"#b5483a", textAlign:"center", lineHeight:1.6 }}>這天只剩 {Math.max(dayRemaining, 0)} 份盤的名額，請改選其他日期，或減少孩子人數／不加看媽媽的盤</div>}
+          {overDayLimit && <div style={{ fontSize:12.5, color:"#b5483a", textAlign:"center", lineHeight:1.6 }}>這天只剩 {dayRemaining} 份盤的名額，請改選其他日期，或減少孩子人數／不加看媽媽的盤</div>}
           <button onClick={handleSubmit} disabled={submitting} style={{
             width:"100%", padding:"14px 0", borderRadius:12, border:"none",
             background: submitting ? "#ccc" : "#f4d675",
@@ -887,7 +883,7 @@ function ConfirmationModal({ date, timeLabel, consultType, pay, onClose }) {
 /* ── Main App ── */
 export default function App() {
   const [bookedSlots, setBookedSlots] = useState(new Set());   // 前台不能選的時段（有預約、封鎖、當天已滿）
-  const [booked, setBooked] = useState([]);   // 真的有人預約的時段 [{ id, readings }]（不含封鎖），用來算一天 3 份盤的上限
+  const [booked, setBooked] = useState([]);   // 真的有人預約的時段 [{ id, readings }]（不含封鎖），用來算一天 2 份盤的上限
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -1117,7 +1113,7 @@ export default function App() {
 
         {showForm && selectedDate && selectedSlot && (
           <BookingForm date={selectedDate} slot={selectedSlot} bookedSlots={bookedSlots} initialType={pickedType}
-            dayRemaining={DAY_MAX_READINGS - (dayUsage(booked).get(dayOf(dateKey(selectedDate, selectedSlot.id))) || 0)}
+            dayUsed={dayUsage(booked).get(dayOf(dateKey(selectedDate, selectedSlot.id))) || 0}
             onSubmit={handleSubmit} onCancel={()=>setShowForm(false)} submitting={submitting} />
         )}
         {showConfirmation && selectedDate && selectedSlot && (

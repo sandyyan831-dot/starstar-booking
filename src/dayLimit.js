@@ -1,7 +1,7 @@
-// 一天最多看 3 份盤：同一天所有預約的解讀份數加起來到 3 份，那天其他時段都不開放；
-// 還沒到 3 份時，另一個時段只能約剩下的份數（例如上午 2 份，下午只能約 1 個孩子）
+// 一天最多看 2 份盤：同一天所有預約的解讀份數加起來到 2 份，那天其他時段都不開放；
+// 例外：那天還沒有人約時，一個人一次約 3 份以上也可以（約了之後那天就滿了）
 // 客人看不到預約內容，所以把「這筆有幾份解讀」記在公開的 bookedSlots（readings，沒有個資），前台據此計算
-export const DAY_MAX_READINGS = 3;
+export const DAY_MAX_READINGS = 2;
 
 /** 一筆預約有幾份解讀（每位孩子一份、加看媽媽本命盤一份；與別人／爸爸的合盤不另外算） */
 export const readingsOf = b => Number(b?.sessionHours) || (Number(b?.childCount) || 1) + (b?.withMomChart ? 1 : 0);
@@ -23,12 +23,15 @@ export function dayUsage(slots) {
   return used;
 }
 
-/** 已經排滿（3 份）的日子 */
+/** 已經排滿（2 份以上）的日子 */
 export function fullDays(slots) {
   const days = new Set();
   dayUsage(slots).forEach((n, day) => { if (n >= DAY_MAX_READINGS) days.add(day); });
   return days;
 }
+
+/** 這次要約的份數能不能放進這天：那天已經約了 used 份 */
+export const fitsDay = (used, readings) => used === 0 || used + readings <= DAY_MAX_READINGS;
 
 /** 寫進 bookedSlots 的公開資料：2 份以上才記 readings（沒記的算 1 份） */
 export function bookedSlotData(booking) {
